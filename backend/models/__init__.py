@@ -4,3 +4,4 @@ from .couple import Couple
 from .nichee import Nichee
 from .performance import Performance
 from .sante import Sante
+from .eleveur import Eleveur

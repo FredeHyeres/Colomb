@@ -87,6 +87,11 @@ const pages = {
     title: 'Couples & Reproduction',
     load: () => loadCouples(),
     addLabel: '+ Nouveau couple'
+  },
+  eleveur: {
+    title: 'Mon Élevage',
+    load: () => loadEleveur(),
+    addLabel: null
   }
 };
 

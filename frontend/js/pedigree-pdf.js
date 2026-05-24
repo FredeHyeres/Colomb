@@ -19,68 +19,107 @@ async function imageToBase64(url) {
 async function exportPedigreePDF(pigeonId) {
   showNotification('Génération du PDF...', 'info');
 
-  const [pedigree, lignees] = await Promise.all([
+  const [pedigree, lignees, eleveur] = await Promise.all([
     apiFetch(`/pigeons/${pigeonId}/pedigree`),
     apiFetch('/lignees/'),
+    apiFetch('/eleveur/'),
   ]);
 
   const ligneesMap = {};
   lignees.forEach(l => { ligneesMap[l.id] = l; });
 
-  // Préchargement photos en parallèle (pigeon principal + parents uniquement)
+  // Préchargement photos en parallèle
   const photosBase64 = {};
-  await Promise.all(
-    [pedigree, pedigree.pere, pedigree.mere]
+  await Promise.all([
+    // Pigeon principal + parents
+    ...[pedigree, pedigree.pere, pedigree.mere]
       .filter(p => p && p.photo)
-      .map(async (p) => {
+      .map(async p => {
         photosBase64[p.id] = await imageToBase64(`http://localhost:8001${p.photo}`);
-      })
-  );
+      }),
+    // Photo colombier de l'éleveur
+    eleveur.photo_colombier
+      ? imageToBase64(`http://localhost:8001${eleveur.photo_colombier}`)
+          .then(b64 => { photosBase64['colombier'] = b64; })
+      : Promise.resolve(),
+  ]);
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
   const PW = 297, PH = 210;
   const MARGIN = 8;
-  const HEADER_H = 22;
+  const HEADER_H = 28;
   const today = new Date();
   const dateStr = today.toLocaleDateString('fr-FR');
 
-  // ── En-tête ──────────────────────────────────────────────────────────────────
-  const photoHeader = photosBase64[pedigree.id] || null;
-  let headerPhotoW = 0;
+  // ── En-tête enrichi ──────────────────────────────────────────────────────────
 
-  if (photoHeader) {
+  // Zone gauche : photo colombier
+  let headerX = MARGIN;
+  if (photosBase64['colombier']) {
     try {
-      doc.addImage(photoHeader, 'JPEG', MARGIN, MARGIN, 20, 20);
-      headerPhotoW = 24; // 20mm photo + 4mm gap
-    } catch (e) {
-      headerPhotoW = 0;
-    }
+      doc.addImage(photosBase64['colombier'], 'JPEG', MARGIN, MARGIN, 22, 22);
+      headerX = MARGIN + 26;
+    } catch (e) { /* photo ignorée */ }
   }
 
-  doc.setFontSize(16);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(44, 62, 80);
-  doc.text('PEDIGREE', MARGIN + headerPhotoW, MARGIN + 10);
-
-  doc.setFontSize(20);
-  doc.setTextColor(41, 128, 185);
-  doc.text(pedigree.matricule, PW / 2, MARGIN + 10, { align: 'center' });
-
-  doc.setFontSize(9);
+  // Centre-gauche : label PEDIGREE + matricule
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(127, 140, 141);
-  doc.text('Élevage Colombophile', PW - MARGIN, MARGIN + 6,  { align: 'right' });
-  doc.text(dateStr,                PW - MARGIN, MARGIN + 13, { align: 'right' });
+  doc.text('PEDIGREE', headerX, MARGIN + 8);
 
+  doc.setFontSize(18);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(41, 128, 185);
+  doc.text(pedigree.matricule, headerX, MARGIN + 20);
+
+  // Centre-droit : infos éleveur
+  const eleveurX = Math.round(PW * 0.52);
+  let ety = MARGIN + 7;
+
+  const nomEleveur = [eleveur.prenom, eleveur.nom].filter(Boolean).join(' ');
+  if (nomEleveur) {
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(44, 62, 80);
+    doc.text(nomEleveur, eleveurX, ety);
+    ety += 5;
+  }
+  if (eleveur.nom_colombier) {
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(44, 62, 80);
+    doc.text(eleveur.nom_colombier, eleveurX, ety);
+    ety += 4.5;
+  }
+  if (eleveur.ville) {
+    doc.setFontSize(8);
+    doc.setTextColor(127, 140, 141);
+    doc.text(eleveur.ville, eleveurX, ety);
+    ety += 4;
+  }
+  if (eleveur.numero_licence) {
+    doc.setFontSize(7);
+    doc.setTextColor(127, 140, 141);
+    doc.text(`Licence : ${eleveur.numero_licence}`, eleveurX, ety);
+  }
+
+  // Droite : date
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(127, 140, 141);
+  doc.text(dateStr, PW - MARGIN, MARGIN + 7, { align: 'right' });
+
+  // Ligne séparatrice
   doc.setDrawColor(189, 195, 199);
   doc.setLineWidth(0.3);
   doc.line(MARGIN, MARGIN + HEADER_H, PW - MARGIN, MARGIN + HEADER_H);
 
   // ── Coordonnées fixes ─────────────────────────────────────────────────────
-  const BODY_TOP = 30;
-  const BODY_H   = 155;
+  const BODY_TOP = MARGIN + HEADER_H + 2; // 38mm
+  const BODY_H   = PH - BODY_TOP - 10;   // ~162mm
   const COL_W = [55, 50, 50, 50, 42];
   const COL_X = [5, 62, 114, 166, 218];
 
