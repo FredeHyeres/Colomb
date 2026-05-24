@@ -241,6 +241,36 @@ async def create_nichee(couple_id: str, body: NicheeCreate, db: AsyncSession = D
     return _nichee_dict(nichee)
 
 
+@router.get("/nichees/{nichee_id}")
+async def get_nichee(nichee_id: str, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Nichee).where(Nichee.id == nichee_id))
+    nichee = result.scalar_one_or_none()
+    if not nichee:
+        raise HTTPException(status_code=404, detail="Nichée non trouvée")
+    return _nichee_dict(nichee)
+
+
+@router.put("/nichees/{nichee_id}")
+async def update_nichee(nichee_id: str, body: NicheeCreate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Nichee).where(Nichee.id == nichee_id))
+    nichee = result.scalar_one_or_none()
+    if not nichee:
+        raise HTTPException(status_code=404, detail="Nichée non trouvée")
+
+    def parse(s):
+        return date_type.fromisoformat(s) if s else None
+
+    for field, value in body.model_dump(exclude_unset=True).items():
+        if field in ('date_ponte', 'date_eclosion'):
+            setattr(nichee, field, parse(value))
+        else:
+            setattr(nichee, field, value)
+
+    await db.commit()
+    await db.refresh(nichee)
+    return _nichee_dict(nichee)
+
+
 @router.delete("/nichees/{nichee_id}", status_code=204)
 async def delete_nichee(nichee_id: str, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Nichee).where(Nichee.id == nichee_id))

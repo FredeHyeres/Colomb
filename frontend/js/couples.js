@@ -124,22 +124,33 @@ async function openDetailCouple(id) {
   const c = await apiFetch(`/couples/${id}`);
 
   const nicheeRows = c.nichees.length === 0
-    ? `<tr><td colspan="5" style="text-align:center; color:var(--text-light);
+    ? `<tr><td colspan="6" style="text-align:center; color:var(--text-light);
          padding:16px;">Aucune nichée enregistrée</td></tr>`
-    : c.nichees.map(n => `
+    : c.nichees.map(n => {
+        const anneeEclosion = n.date_eclosion
+          ? new Date(n.date_eclosion).getFullYear()
+          : new Date().getFullYear();
+        return `
         <tr>
           <td style="padding:8px;">${fmtDate(n.date_ponte)}</td>
           <td style="padding:8px;">${fmtDate(n.date_eclosion)}</td>
           <td style="padding:8px; text-align:center;">${n.nombre_oeufs ?? '—'}</td>
-          <td style="padding:8px; font-size:13px; max-width:200px; white-space:normal;">
+          <td style="padding:8px; font-size:13px; max-width:160px; white-space:normal;">
             ${n.notes || '—'}
           </td>
-          <td style="padding:8px;">
+          <td style="padding:8px; white-space:nowrap;">
+            <button class="btn btn-secondary"
+              onclick="openEditNichee('${n.id}', '${id}')"
+              style="padding:4px 8px; font-size:11px;" title="Modifier">✏️</button>
+            <button class="btn btn-secondary"
+              onclick="openCreateJeuneFromNichee('${id}', ${anneeEclosion})"
+              style="padding:4px 8px; font-size:11px; margin-left:4px;" title="Créer un jeune">🐣</button>
             <button class="btn btn-danger"
               onclick="deleteNichee('${n.id}', '${id}')"
-              style="padding:4px 8px; font-size:12px;">🗑️</button>
+              style="padding:4px 8px; font-size:11px; margin-left:4px;" title="Supprimer">🗑️</button>
           </td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
 
   const html = `
     <!-- Infos couple -->
@@ -234,6 +245,187 @@ async function openDetailCouple(id) {
 
   openModal(`💑 ${c.male?.matricule || '?'} × ${c.femelle?.matricule || '?'}`, html);
   document.getElementById('modal').style.width = '800px';
+}
+
+// ── Modifier une nichée ───────────────────────────────────────────────────────
+
+async function openEditNichee(nicheeId, coupleId) {
+  const n = await apiFetch(`/nichees/${nicheeId}`);
+
+  openModal('✏️ Modifier la nichée', `
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date de ponte</label>
+        <input type="date" class="form-control" id="en-ponte"
+          value="${n.date_ponte || ''}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date d'éclosion</label>
+        <input type="date" class="form-control" id="en-eclosion"
+          value="${n.date_eclosion || ''}">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nombre d'œufs</label>
+      <input type="number" class="form-control" id="en-oeufs"
+        value="${n.nombre_oeufs ?? 2}" min="1" max="3">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-control" id="en-notes" rows="2"
+        placeholder="Observations...">${n.notes || ''}</textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary"
+        onclick="openDetailCouple('${coupleId}')">Annuler</button>
+      <button class="btn btn-primary"
+        onclick="saveEditNichee('${nicheeId}', '${coupleId}')">💾 Modifier</button>
+    </div>`);
+  document.getElementById('modal').style.width = '500px';
+}
+
+async function saveEditNichee(nicheeId, coupleId) {
+  const data = {
+    date_ponte:    document.getElementById('en-ponte').value    || null,
+    date_eclosion: document.getElementById('en-eclosion').value || null,
+    nombre_oeufs:  parseInt(document.getElementById('en-oeufs').value) || 2,
+    notes:         document.getElementById('en-notes').value.trim() || null,
+  };
+
+  try {
+    await apiFetch(`/nichees/${nicheeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    showNotification('Nichée modifiée ✅');
+    openDetailCouple(coupleId);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+// ── Créer un jeune depuis une nichée ─────────────────────────────────────────
+
+async function openCreateJeuneFromNichee(coupleId, annee) {
+  const [couple, lignees] = await Promise.all([
+    apiFetch(`/couples/${coupleId}`),
+    apiFetch('/lignees/'),
+  ]);
+
+  const maleMatricule    = couple.male?.matricule    || '—';
+  const femelleMatricule = couple.femelle?.matricule || '—';
+  const maleId           = couple.male_id;
+  const femelleId        = couple.femelle_id;
+
+  openModal('🐣 Créer un jeune pigeon', `
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Matricule *</label>
+        <input type="text" class="form-control" id="cj-matricule"
+          placeholder="ex: FR-${annee}-XXX" autofocus>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Année de naissance *</label>
+        <input type="number" class="form-control" id="cj-annee"
+          value="${annee}" min="2000" max="2099">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Sexe *</label>
+        <select class="form-control" id="cj-sexe">
+          <option value="">— Choisir —</option>
+          <option value="male">Mâle</option>
+          <option value="femelle">Femelle</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Statut</label>
+        <select class="form-control" id="cj-statut">
+          <option value="actif" selected>Actif</option>
+          <option value="concours">Concours</option>
+          <option value="reproducteur">Reproducteur</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">♂️ Père</label>
+        <input type="text" class="form-control" value="${maleMatricule}" readonly
+          style="background:var(--bg); color:var(--text-light); cursor:not-allowed;">
+        <input type="hidden" id="cj-pere-id" value="${maleId}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">♀️ Mère</label>
+        <input type="text" class="form-control" value="${femelleMatricule}" readonly
+          style="background:var(--bg); color:var(--text-light); cursor:not-allowed;">
+        <input type="hidden" id="cj-mere-id" value="${femelleId}">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Lignée</label>
+        <select class="form-control" id="cj-lignee">
+          <option value="">— Aucune —</option>
+          ${lignees.map(l => `<option value="${l.id}">${l.nom}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Case colombier</label>
+        <input type="text" class="form-control" id="cj-case" placeholder="ex: D5">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Couleur du plumage</label>
+      <input type="text" class="form-control" id="cj-couleur"
+        placeholder="ex: Bleu barré">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-control" id="cj-notes" rows="2"
+        placeholder="Observations..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary"
+        onclick="openDetailCouple('${coupleId}')">Annuler</button>
+      <button class="btn btn-primary"
+        onclick="saveJeuneFromNichee('${coupleId}')">🐣 Créer le jeune</button>
+    </div>`);
+  document.getElementById('modal').style.width = '660px';
+
+  // Focus auto sur le matricule
+  setTimeout(() => document.getElementById('cj-matricule')?.focus(), 100);
+}
+
+async function saveJeuneFromNichee(coupleId) {
+  const matricule = document.getElementById('cj-matricule').value.trim();
+  const sexe      = document.getElementById('cj-sexe').value;
+  const annee     = parseInt(document.getElementById('cj-annee').value);
+
+  if (!matricule) { showNotification('Le matricule est obligatoire', 'danger'); return; }
+  if (!sexe)      { showNotification('Le sexe est obligatoire', 'danger'); return; }
+  if (!annee)     { showNotification("L'année est obligatoire", 'danger'); return; }
+
+  const data = {
+    matricule,
+    annee_naissance: annee,
+    sexe,
+    statut:        document.getElementById('cj-statut').value || 'actif',
+    pere_id:       document.getElementById('cj-pere-id').value   || null,
+    mere_id:       document.getElementById('cj-mere-id').value   || null,
+    lignee_id:     document.getElementById('cj-lignee').value    || null,
+    colombier_case: document.getElementById('cj-case').value.trim()    || null,
+    couleur_plumage: document.getElementById('cj-couleur').value.trim() || null,
+    notes:         document.getElementById('cj-notes').value.trim()    || null,
+  };
+
+  try {
+    await apiFetch('/pigeons/', { method: 'POST', body: JSON.stringify(data) });
+    showNotification('Jeune créé et bagué ✅');
+    openDetailCouple(coupleId);
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // ── Formulaire ajout couple ───────────────────────────────────────────────────
@@ -406,3 +598,4 @@ async function deleteNichee(nicheeId, coupleId) {
     console.error(err);
   }
 }
+
