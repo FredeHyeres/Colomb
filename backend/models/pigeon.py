@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Integer, Text, ForeignKey, Enum
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
+from datetime import datetime, timezone
 import uuid
 import enum
 from database import Base
@@ -23,6 +24,11 @@ class Pigeon(Base):
     __tablename__ = "pigeons"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    date_creation = Column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(timezone.utc),
+        nullable=False,
+    )
     matricule = Column(String(50), nullable=False, unique=True)
     annee_naissance = Column(Integer, nullable=False)
     sexe = Column(Enum(Sexe), nullable=False)

@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
+from datetime import datetime
 
 
 class SexeEnum(str, Enum):
@@ -53,6 +54,7 @@ class PigeonUpdate(PigeonBase):
 class PigeonResponse(PigeonBase):
     id: str
     photo: Optional[str] = None
+    date_creation: Optional[datetime] = None
 
     class Config:
         from_attributes = True

@@ -36,7 +36,9 @@ async def _validate_parents(pere_id: str | None, mere_id: str | None, db: AsyncS
 @router.get("/", response_model=List[PigeonResponse])
 async def get_pigeons(db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(Pigeon).options(selectinload(Pigeon.lignee))
+        select(Pigeon)
+        .options(selectinload(Pigeon.lignee))
+        .order_by(Pigeon.date_creation.asc())
     )
     return result.scalars().all()
 
