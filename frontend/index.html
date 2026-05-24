@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colombophilie - Gestion d'élevage</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <span class="logo-icon">🕊️</span>
+      <span class="logo-text">Colombophilie</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-page="dashboard">
+        <span class="nav-icon">🏠</span>
+        <span>Tableau de bord</span>
+      </a>
+      <a href="#" class="nav-item" data-page="pigeons">
+        <span class="nav-icon">🕊️</span>
+        <span>Pigeons</span>
+      </a>
+      <a href="#" class="nav-item" data-page="lignees">
+        <span class="nav-icon">🌳</span>
+        <span>Lignées</span>
+      </a>
+      <a href="#" class="nav-item" data-page="performances">
+        <span class="nav-icon">🏆</span>
+        <span>Performances</span>
+      </a>
+      <a href="#" class="nav-item" data-page="sante">
+        <span class="nav-icon">🏥</span>
+        <span>Santé</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <span>v1.0.0</span>
+    </div>
+  </aside>
+
+  <!-- CONTENU PRINCIPAL -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <h1 class="page-title" id="page-title">Tableau de bord</h1>
+      <div class="topbar-actions">
+        <input type="text" class="search-input" placeholder="Rechercher un pigeon..." id="search-input">
+        <button class="btn btn-primary" id="btn-add">+ Ajouter</button>
+      </div>
+    </header>
+
+    <!-- CONTENU DYNAMIQUE -->
+    <div class="content" id="content">
+      <!-- Chargé dynamiquement par JS -->
+    </div>
+
+  </main>
+
+  <!-- MODAL -->
+  <div class="modal-overlay" id="modal-overlay" style="display:none;">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Titre</h2>
+        <button class="modal-close" id="modal-close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/lignees.js"></script>
+  <script src="js/pigeons.js"></script>
+
+</body>
+</html>
