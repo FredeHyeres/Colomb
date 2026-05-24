@@ -55,6 +55,7 @@ services:
   frontend:
       image: nginx:alpine
       container_name: colombo_frontend
+      restart: unless-stopped
       volumes:
         - ./frontend:/usr/share/nginx/html
       ports:
