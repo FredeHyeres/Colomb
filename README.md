@@ -5,7 +5,7 @@
 ![Python](https://img.shields.io/badge/Python-FastAPI-blue?logo=python)
 ![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
 ![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker)
-![License](https://img.shields.io/badge/License-MIT-green)
+
 
 ---
 
@@ -73,7 +73,9 @@ docker exec colombo_backend python seed.py
 
 ## 📸 Captures d'écran
 
-> *(Ajoute ici quelques screenshots de l'interface)*
+![Accueil](Images/acceuil.PNG)
+![Mon élevage](Images/mon_elevage.PNG)
+![Menu](Images/Menu.PNG)
 
 ---
 
