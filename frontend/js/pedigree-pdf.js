@@ -1,5 +1,21 @@
 // ===== EXPORT PDF PEDIGREE =====
 
+async function imageToBase64(url) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.width;
+      canvas.height = img.height;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
 async function exportPedigreePDF(pigeonId) {
   showNotification('Génération du PDF...', 'info');
 
@@ -11,6 +27,16 @@ async function exportPedigreePDF(pigeonId) {
   const ligneesMap = {};
   lignees.forEach(l => { ligneesMap[l.id] = l; });
 
+  // Préchargement photos en parallèle (pigeon principal + parents uniquement)
+  const photosBase64 = {};
+  await Promise.all(
+    [pedigree, pedigree.pere, pedigree.mere]
+      .filter(p => p && p.photo)
+      .map(async (p) => {
+        photosBase64[p.id] = await imageToBase64(`http://localhost:8001${p.photo}`);
+      })
+  );
+
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
@@ -21,10 +47,22 @@ async function exportPedigreePDF(pigeonId) {
   const dateStr = today.toLocaleDateString('fr-FR');
 
   // ── En-tête ──────────────────────────────────────────────────────────────────
+  const photoHeader = photosBase64[pedigree.id] || null;
+  let headerPhotoW = 0;
+
+  if (photoHeader) {
+    try {
+      doc.addImage(photoHeader, 'JPEG', MARGIN, MARGIN, 20, 20);
+      headerPhotoW = 24; // 20mm photo + 4mm gap
+    } catch (e) {
+      headerPhotoW = 0;
+    }
+  }
+
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(44, 62, 80);
-  doc.text('PEDIGREE', MARGIN, MARGIN + 10);
+  doc.text('PEDIGREE', MARGIN + headerPhotoW, MARGIN + 10);
 
   doc.setFontSize(20);
   doc.setTextColor(41, 128, 185);
@@ -33,20 +71,19 @@ async function exportPedigreePDF(pigeonId) {
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(127, 140, 141);
-  doc.text('Élevage Colombophile', PW - MARGIN, MARGIN + 6, { align: 'right' });
-  doc.text(dateStr, PW - MARGIN, MARGIN + 13, { align: 'right' });
+  doc.text('Élevage Colombophile', PW - MARGIN, MARGIN + 6,  { align: 'right' });
+  doc.text(dateStr,                PW - MARGIN, MARGIN + 13, { align: 'right' });
 
   doc.setDrawColor(189, 195, 199);
   doc.setLineWidth(0.3);
   doc.line(MARGIN, MARGIN + HEADER_H, PW - MARGIN, MARGIN + HEADER_H);
 
-  // ── Coordonnées fixes (pas de calcul chaîné susceptible de produire NaN) ────
+  // ── Coordonnées fixes ─────────────────────────────────────────────────────
   const BODY_TOP = 30;
   const BODY_H   = 155;
   const COL_W = [55, 50, 50, 50, 42];
   const COL_X = [5, 62, 114, 166, 218];
 
-  // Centres Y de chaque génération (fractions exactes)
   const positions = {
     g0: [BODY_TOP + BODY_H / 2],
     g1: [
@@ -71,7 +108,6 @@ async function exportPedigreePDF(pigeonId) {
     ],
   };
 
-  // Hauteur des cases par génération (chaque case remplit son slot)
   const heights = {
     g0: BODY_H,
     g1: BODY_H / 2,
@@ -90,7 +126,8 @@ async function exportPedigreePDF(pigeonId) {
     };
   }
 
-  function drawCell(p, x, y, w, h) {
+  // generation : 0=pigeon, 1=parents, 2=GP, 3=AGP
+  function drawCell(p, x, y, w, h, generation = 2) {
     if ([x, y, w, h].some(v => isNaN(v) || v == null)) {
       console.warn('drawCell: coordonnées invalides', { x, y, w, h, matricule: p?.matricule });
       return;
@@ -122,6 +159,19 @@ async function exportPedigreePDF(pigeonId) {
 
     const pad = 1.8;
     let ty = y + 4.5;
+
+    // Photo — seulement pour gen 0 et gen 1
+    if (generation <= 1 && p.id && photosBase64[p.id]) {
+      const photoSize = generation === 0 ? 20 : 14;
+      const photoX = x + (w - photoSize) / 2;
+      const photoY = y + 2;
+      try {
+        doc.addImage(photosBase64[p.id], 'JPEG', photoX, photoY, photoSize, photoSize);
+        ty = photoY + photoSize + 2;
+      } catch (e) {
+        console.warn('Photo non insérée:', e);
+      }
+    }
 
     // Matricule
     doc.setFontSize(6.5);
@@ -162,8 +212,6 @@ async function exportPedigreePDF(pigeonId) {
   }
 
   // Connecteur en L entre deux cellules adjacentes
-  // (x1,y1) = bord droit de la cellule source au centre Y
-  // (x2,y2) = bord gauche de la cellule cible au centre Y
   function drawConnector(x1, y1, x2, y2) {
     if ([x1, y1, x2, y2].some(v => isNaN(v) || v == null)) return;
     const midX = (x1 + x2) / 2;
@@ -180,11 +228,11 @@ async function exportPedigreePDF(pigeonId) {
     const p = pedigree;
 
     // Génération 0 — pigeon principal
-    drawCell(p, COL_X[0], positions.g0[0] - heights.g0 / 2, COL_W[0], heights.g0);
+    drawCell(p, COL_X[0], positions.g0[0] - heights.g0 / 2, COL_W[0], heights.g0, 0);
 
     // Génération 1 — parents
-    drawCell(p.pere,  COL_X[1], positions.g1[0] - heights.g1 / 2, COL_W[1], heights.g1);
-    drawCell(p.mere, COL_X[1], positions.g1[1] - heights.g1 / 2, COL_W[1], heights.g1);
+    drawCell(p.pere,  COL_X[1], positions.g1[0] - heights.g1 / 2, COL_W[1], heights.g1, 1);
+    drawCell(p.mere, COL_X[1], positions.g1[1] - heights.g1 / 2, COL_W[1], heights.g1, 1);
 
     drawConnector(COL_X[0] + COL_W[0], positions.g0[0], COL_X[1], positions.g1[0]);
     drawConnector(COL_X[0] + COL_W[0], positions.g0[0], COL_X[1], positions.g1[1]);
@@ -192,7 +240,7 @@ async function exportPedigreePDF(pigeonId) {
     // Génération 2 — grands-parents
     const gps = [p.pere?.pere, p.pere?.mere, p.mere?.pere, p.mere?.mere];
     gps.forEach((gp, i) => {
-      drawCell(gp, COL_X[2], positions.g2[i] - heights.g2 / 2, COL_W[2], heights.g2);
+      drawCell(gp, COL_X[2], positions.g2[i] - heights.g2 / 2, COL_W[2], heights.g2, 2);
     });
 
     drawConnector(COL_X[1] + COL_W[1], positions.g1[0], COL_X[2], positions.g2[0]);
@@ -208,7 +256,7 @@ async function exportPedigreePDF(pigeonId) {
       p.mere?.mere?.pere, p.mere?.mere?.mere,
     ];
     agps.forEach((agp, i) => {
-      drawCell(agp, COL_X[3], positions.g3[i] - heights.g3 / 2, COL_W[3], heights.g3);
+      drawCell(agp, COL_X[3], positions.g3[i] - heights.g3 / 2, COL_W[3], heights.g3, 3);
     });
 
     gps.forEach((_, gi) => {
