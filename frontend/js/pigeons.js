@@ -415,6 +415,9 @@ async function openDetailPigeon(id) {
     ${sectionSante}
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-secondary" onclick="exportFichePDF('${p.id}')">
+        🖨️ Imprimer
+      </button>
       <button class="btn btn-secondary"
         onclick="closeModal(); setTimeout(()=>{ document.getElementById('modal').style.width='560px'; openPedigree('${p.id}'); },150);">
         🌳 Pedigree
