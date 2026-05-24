@@ -51,6 +51,16 @@ services:
     volumes:
       - pgadmin_data:/var/lib/pgadmin
 
+  frontend:
+      image: nginx:alpine
+      container_name: colombo_frontend
+      volumes:
+        - ./frontend:/usr/share/nginx/html
+      ports:
+        - "8080:80"
+      depends_on:
+        - backend
+
 volumes:
   postgres_data:
   uploads_data:

@@ -10,7 +10,7 @@ class Lignee(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     nom = Column(String(100), nullable=False, unique=True)
     origine = Column(String(100))          # ex: Belgique, Pays-Bas
-    description = Column(Text, blank=True)
+    description = Column(Text, nullable=True)
     couleur_label = Column(String(7))      # couleur hex ex: #C4963A
 
     # Relations

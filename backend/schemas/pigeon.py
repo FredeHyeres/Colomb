@@ -17,6 +17,16 @@ class StatutEnum(str, Enum):
     decede = "décédé"
 
 
+class LigneeResponse(BaseModel):
+    id: str
+    nom: str
+    origine: Optional[str] = None
+    couleur_label: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
 class PigeonBase(BaseModel):
     matricule: str
     annee_naissance: int
@@ -55,6 +65,3 @@ class PigeonDetail(PigeonResponse):
 
     class Config:
         from_attributes = True
-
-
-from .lignee import LigneeResponse
