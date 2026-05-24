@@ -16,6 +16,14 @@ async function imageToBase64(url) {
   });
 }
 
+function collectIds(node, ids = new Set()) {
+  if (!node) return ids;
+  ids.add(node.id);
+  if (node.pere) collectIds(node.pere, ids);
+  if (node.mere) collectIds(node.mere, ids);
+  return ids;
+}
+
 async function exportPedigreePDF(pigeonId) {
   showNotification('Génération du PDF...', 'info');
 
@@ -28,16 +36,29 @@ async function exportPedigreePDF(pigeonId) {
   const ligneesMap = {};
   lignees.forEach(l => { ligneesMap[l.id] = l; });
 
-  // Préchargement photos en parallèle
+  const allIds = collectIds(pedigree);
+
+  // Chargement parallèle : photos + performances + santé
   const photosBase64 = {};
+
+  const [perfsMap, santeMap] = await Promise.all([
+    Promise.all([...allIds].map(async id => {
+      const perfs = await apiFetch(`/performances/pigeon/${id}`).catch(() => []);
+      return [id, perfs];
+    })).then(Object.fromEntries),
+
+    Promise.all([...allIds].map(async id => {
+      const sante = await apiFetch(`/sante/pigeon/${id}`).catch(() => []);
+      return [id, sante];
+    })).then(Object.fromEntries),
+  ]);
+
   await Promise.all([
-    // Pigeon principal + parents
     ...[pedigree, pedigree.pere, pedigree.mere]
       .filter(p => p && p.photo)
       .map(async p => {
         photosBase64[p.id] = await imageToBase64(`http://localhost:8001${p.photo}`);
       }),
-    // Photo colombier de l'éleveur
     eleveur.photo_colombier
       ? imageToBase64(`http://localhost:8001${eleveur.photo_colombier}`)
           .then(b64 => { photosBase64['colombier'] = b64; })
@@ -53,18 +74,16 @@ async function exportPedigreePDF(pigeonId) {
   const today = new Date();
   const dateStr = today.toLocaleDateString('fr-FR');
 
-  // ── En-tête enrichi ──────────────────────────────────────────────────────────
+  // ── En-tête ───────────────────────────────────────────────────────────────────
 
-  // Zone gauche : photo colombier
   let headerX = MARGIN;
   if (photosBase64['colombier']) {
     try {
       doc.addImage(photosBase64['colombier'], 'JPEG', MARGIN, MARGIN, 22, 22);
       headerX = MARGIN + 26;
-    } catch (e) { /* photo ignorée */ }
+    } catch (e) { /* ignorée */ }
   }
 
-  // Centre-gauche : label PEDIGREE + matricule
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(127, 140, 141);
@@ -75,7 +94,6 @@ async function exportPedigreePDF(pigeonId) {
   doc.setTextColor(41, 128, 185);
   doc.text(pedigree.matricule, headerX, MARGIN + 20);
 
-  // Centre-droit : infos éleveur
   const eleveurX = Math.round(PW * 0.52);
   let ety = MARGIN + 7;
 
@@ -106,20 +124,18 @@ async function exportPedigreePDF(pigeonId) {
     doc.text(`Licence : ${eleveur.numero_licence}`, eleveurX, ety);
   }
 
-  // Droite : date
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(127, 140, 141);
   doc.text(dateStr, PW - MARGIN, MARGIN + 7, { align: 'right' });
 
-  // Ligne séparatrice
   doc.setDrawColor(189, 195, 199);
   doc.setLineWidth(0.3);
   doc.line(MARGIN, MARGIN + HEADER_H, PW - MARGIN, MARGIN + HEADER_H);
 
-  // ── Coordonnées fixes ─────────────────────────────────────────────────────
-  const BODY_TOP = MARGIN + HEADER_H + 2; // 38mm
-  const BODY_H   = PH - BODY_TOP - 10;   // ~162mm
+  // ── Coordonnées fixes ─────────────────────────────────────────────────────────
+  const BODY_TOP = MARGIN + HEADER_H + 2;
+  const BODY_H   = PH - BODY_TOP - 10;
   const COL_W = [55, 50, 50, 50, 42];
   const COL_X = [5, 62, 114, 166, 218];
 
@@ -154,7 +170,7 @@ async function exportPedigreePDF(pigeonId) {
     g3: BODY_H / 8,
   };
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────────
 
   function hexToRgb(hex) {
     if (!hex || hex.length < 7) return { r: 127, g: 140, b: 141 };
@@ -163,6 +179,19 @@ async function exportPedigreePDF(pigeonId) {
       g: parseInt(hex.slice(3, 5), 16),
       b: parseInt(hex.slice(5, 7), 16),
     };
+  }
+
+  function truncate(text, maxChars) {
+    if (!text) return '';
+    return text.length > maxChars ? text.substring(0, maxChars - 1) + '…' : text;
+  }
+
+  function drawSeparator(x, ty, w) {
+    doc.setDrawColor(221, 227, 234);
+    doc.setLineWidth(0.2);
+    doc.setLineDashPattern([], 0);
+    doc.line(x + 1.5, ty, x + w - 1.5, ty);
+    return ty + 1.5;
   }
 
   // generation : 0=pigeon, 1=parents, 2=GP, 3=AGP
@@ -199,7 +228,7 @@ async function exportPedigreePDF(pigeonId) {
     const pad = 1.8;
     let ty = y + 4.5;
 
-    // Photo — seulement pour gen 0 et gen 1
+    // Photo — gen 0 et gen 1 seulement
     if (generation <= 1 && p.id && photosBase64[p.id]) {
       const photoSize = generation === 0 ? 20 : 14;
       const photoX = x + (w - photoSize) / 2;
@@ -233,8 +262,7 @@ async function exportPedigreePDF(pigeonId) {
     if (p.couleur_plumage && ty < y + h - 2) {
       doc.setFontSize(5);
       doc.setTextColor(127, 140, 141);
-      const c = p.couleur_plumage.length > 20 ? p.couleur_plumage.substring(0, 19) + '…' : p.couleur_plumage;
-      doc.text(c, x + pad, ty);
+      doc.text(truncate(p.couleur_plumage, 20), x + pad, ty);
       ty += 2.8;
     }
 
@@ -245,8 +273,170 @@ async function exportPedigreePDF(pigeonId) {
       doc.setFontSize(5);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(rgb.r, rgb.g, rgb.b);
-      const ln = lig.nom.length > 20 ? lig.nom.substring(0, 19) + '…' : lig.nom;
-      doc.text(ln, x + pad, ty);
+      doc.text(truncate(lig.nom, 20), x + pad, ty);
+      ty += 3;
+    }
+
+    // AGP et au-delà : matricule + lignée seulement
+    if (generation >= 3) return;
+
+    // ── Données perfs et santé ────────────────────────────────────────────────
+
+    const perfs = (perfsMap[p.id] || [])
+      .slice()
+      .sort((a, b) => (a.classement || 999) - (b.classement || 999));
+
+    const santeBrute = santeMap[p.id] || [];
+    const vaccinations = santeBrute
+      .filter(e => e.type === 'vaccination')
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    const derniereVisite = santeBrute
+      .filter(e => e.type === 'visite vétérinaire')
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 1);
+    const santeAffichee = [...vaccinations, ...derniereVisite]
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    const hasPerfs = perfs.length > 0;
+    const hasSante = santeAffichee.length > 0;
+
+    if (!hasPerfs && !hasSante) return;
+
+    if (ty < y + h - 2) {
+      ty = drawSeparator(x, ty, w);
+    }
+
+    // ── GÉNÉRATION 0 — tout ──────────────────────────────────────────────────
+
+    if (generation === 0) {
+      if (hasPerfs && ty < y + h - 2) {
+        doc.setFontSize(5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(230, 126, 34);
+        doc.text('Performances', x + pad, ty);
+        ty += 3;
+
+        for (const perf of perfs) {
+          if (ty + 3 > y + h - 2) break;
+          const concours = truncate(perf.nom_concours || '', 25);
+          doc.setFontSize(5);
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(230, 126, 34);
+          doc.text(`cl.${perf.classement} - ${concours}`, x + pad, ty);
+          ty += 2.8;
+
+          if (ty + 2.5 > y + h - 2) break;
+          const dist = perf.distance_km ? `${perf.distance_km}km` : '';
+          const eng  = perf.nb_pigeons_engages ? `${perf.nb_pigeons_engages} eng.` : '';
+          const detail = [dist, eng].filter(Boolean).join(' | ');
+          if (detail) {
+            doc.setFontSize(4.5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(149, 165, 166);
+            doc.text(detail, x + pad, ty);
+            ty += 2.5;
+          }
+        }
+      }
+
+      if (hasPerfs && hasSante && ty < y + h - 2) {
+        ty = drawSeparator(x, ty, w);
+      }
+
+      if (hasSante && ty < y + h - 2) {
+        doc.setFontSize(5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(39, 174, 96);
+        doc.text('Sante', x + pad, ty);
+        ty += 3;
+
+        for (const evt of santeAffichee) {
+          if (ty + 3 > y + h - 2) break;
+          if (evt.type === 'vaccination') {
+            doc.setFontSize(5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(39, 174, 96);
+            doc.text('Vaccin: ' + truncate(evt.produit || '', 25), x + pad, ty);
+            ty += 2.5;
+            if (evt.date && ty < y + h - 2) {
+              doc.setFontSize(4);
+              doc.setFont('helvetica', 'normal');
+              doc.setTextColor(149, 165, 166);
+              doc.text(new Date(evt.date).toLocaleDateString('fr-FR'), x + pad, ty);
+              ty += 2.5;
+            }
+          } else if (evt.type === 'visite vétérinaire') {
+            const dateEvt = evt.date ? new Date(evt.date).toLocaleDateString('fr-FR') : '';
+            doc.setFontSize(5);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(41, 128, 185);
+            doc.text('Visite ' + dateEvt, x + pad, ty);
+            ty += 2.5;
+          }
+        }
+      }
+    }
+
+    // ── GÉNÉRATION 1 — essentiel ─────────────────────────────────────────────
+
+    if (generation === 1) {
+      const top2Perfs = perfs.slice(0, 2);
+      const top2Sante = [...vaccinations.slice(0, 2), ...derniereVisite]
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      for (const perf of top2Perfs) {
+        if (ty + 3 > y + h - 2) break;
+        const concours = truncate(perf.nom_concours || '', 18);
+        doc.setFontSize(4.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(230, 126, 34);
+        doc.text(`cl.${perf.classement} ${concours}`, x + pad, ty);
+        ty += 2.8;
+      }
+
+      if (top2Perfs.length > 0 && top2Sante.length > 0 && ty < y + h - 2) {
+        ty = drawSeparator(x, ty, w);
+      }
+
+      for (const evt of top2Sante) {
+        if (ty + 3 > y + h - 2) break;
+        if (evt.type === 'vaccination') {
+          doc.setFontSize(4);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(39, 174, 96);
+          doc.text('Vaccin: ' + truncate(evt.produit || '', 18), x + pad, ty);
+        } else if (evt.type === 'visite vétérinaire') {
+          const dateEvt = evt.date ? new Date(evt.date).toLocaleDateString('fr-FR') : '';
+          doc.setFontSize(4);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(41, 128, 185);
+          doc.text('Visite ' + dateEvt, x + pad, ty);
+        }
+        ty += 2.5;
+      }
+    }
+
+    // ── GÉNÉRATION 2 — minimum ───────────────────────────────────────────────
+
+    if (generation === 2) {
+      const bestPerf  = perfs[0];
+      const lastVaccin = vaccinations[0];
+
+      if (bestPerf && ty < y + h - 2) {
+        const concours = truncate(bestPerf.nom_concours || '', 15);
+        doc.setFontSize(4);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(230, 126, 34);
+        doc.text(`Perf: cl.${bestPerf.classement} ${concours}`, x + pad, ty);
+        ty += 2.5;
+      }
+
+      if (lastVaccin && ty < y + h - 2) {
+        doc.setFontSize(4);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(39, 174, 96);
+        doc.text('Vaccin: ' + truncate(lastVaccin.produit || '', 15), x + pad, ty);
+      }
     }
   }
 
@@ -262,7 +452,7 @@ async function exportPedigreePDF(pigeonId) {
     doc.line(midX, y2, x2, y2);
   }
 
-  // ── Dessin ───────────────────────────────────────────────────────────────────
+  // ── Dessin ────────────────────────────────────────────────────────────────────
   try {
     const p = pedigree;
 
@@ -270,7 +460,7 @@ async function exportPedigreePDF(pigeonId) {
     drawCell(p, COL_X[0], positions.g0[0] - heights.g0 / 2, COL_W[0], heights.g0, 0);
 
     // Génération 1 — parents
-    drawCell(p.pere,  COL_X[1], positions.g1[0] - heights.g1 / 2, COL_W[1], heights.g1, 1);
+    drawCell(p.pere, COL_X[1], positions.g1[0] - heights.g1 / 2, COL_W[1], heights.g1, 1);
     drawCell(p.mere, COL_X[1], positions.g1[1] - heights.g1 / 2, COL_W[1], heights.g1, 1);
 
     drawConnector(COL_X[0] + COL_W[0], positions.g0[0], COL_X[1], positions.g1[0]);
@@ -303,7 +493,7 @@ async function exportPedigreePDF(pigeonId) {
       drawConnector(COL_X[2] + COL_W[2], positions.g2[gi], COL_X[3], positions.g3[gi * 2 + 1]);
     });
 
-    // ── Pied de page ─────────────────────────────────────────────────────────
+    // ── Pied de page ──────────────────────────────────────────────────────────
     const footerY = PH - 4;
     doc.setFontSize(7);
     doc.setFont('helvetica', 'normal');
@@ -312,7 +502,6 @@ async function exportPedigreePDF(pigeonId) {
     doc.text(pedigree.matricule, PW / 2, footerY, { align: 'center' });
     doc.text('1 / 1', PW - MARGIN, footerY, { align: 'right' });
 
-    // ── Sauvegarde ───────────────────────────────────────────────────────────
     const safe = pedigree.matricule.replace(/[^a-zA-Z0-9-]/g, '_');
     doc.save(`pedigree-${safe}.pdf`);
     showNotification('PDF téléchargé ✅');
