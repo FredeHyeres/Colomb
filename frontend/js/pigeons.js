@@ -242,20 +242,54 @@ function reinitialiserFiltres() {
 
 // ===== DETAIL PIGEON =====
 async function openDetailPigeon(id) {
-  const p = await apiFetch(`/pigeons/${id}`);
-  const html = `
-    <div style="display:flex; gap:24px; margin-bottom:24px;">
+  const [p, perfs, sante] = await Promise.all([
+    apiFetch(`/pigeons/${id}`),
+    apiFetch(`/performances/pigeon/${id}`),
+    apiFetch(`/sante/pigeon/${id}`),
+  ]);
+
+  const perfsTriees = [...perfs].sort((a, b) => b.date.localeCompare(a.date));
+  const santeTriee  = [...sante].sort((a, b) => b.date.localeCompare(a.date));
+
+  // ── Helpers locaux ────────────────────────────────────────────────────────
+  const section = (contenu) =>
+    `<div style="background:var(--bg); border-radius:10px; padding:16px;
+       margin-bottom:16px;">${contenu}</div>`;
+
+  const titreSection = (texte) =>
+    `<div style="font-family:'Playfair Display',serif; font-weight:600;
+       font-size:15px; margin-bottom:12px;">${texte}</div>`;
+
+  const tableCompact = (thead, tbody) => `
+    <div style="overflow-x:auto;">
+      <table style="width:100%; font-size:13px; border-collapse:collapse;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            ${thead.map(h =>
+              `<th style="padding:6px 8px; text-align:left;
+                color:var(--text-light); font-weight:600;
+                font-size:11px; text-transform:uppercase;">${h}</th>`
+            ).join('')}
+          </tr>
+        </thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>`;
+
+  // ── Section infos principales ─────────────────────────────────────────────
+  const sectionInfos = `
+    <div style="display:flex; gap:24px; margin-bottom:16px;">
       <div style="flex-shrink:0;">
         ${p.photo
-          ? `<img src="http://localhost:8001${p.photo}" 
-               style="width:100px; height:100px; border-radius:12px; 
-               object-fit:cover; border:2px solid var(--border);">`
+          ? `<img src="http://localhost:8001${p.photo}"
+               style="width:100px; height:100px; border-radius:12px;
+                      object-fit:cover; border:2px solid var(--border);">`
           : `<div style="width:100px; height:100px; border-radius:12px;
                background:var(--bg); display:flex; align-items:center;
-               justify-content:center; font-size:48px; 
+               justify-content:center; font-size:48px;
                border:2px solid var(--border);">🕊️</div>`}
         <div style="margin-top:10px; text-align:center;">
-          <label class="btn btn-secondary" 
+          <label class="btn btn-secondary"
             style="padding:6px 12px; font-size:12px; cursor:pointer;">
             📷 Photo
             <input type="file" accept="image/*" style="display:none;"
@@ -264,65 +298,126 @@ async function openDetailPigeon(id) {
         </div>
       </div>
       <div style="flex:1;">
-        <h3 style="font-family:'Playfair Display',serif; 
-          font-size:22px; margin-bottom:12px;">
-          ${p.matricule}
-        </h3>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-          <div><span style="color:var(--text-light); font-size:12px;">
-            ANNÉE</span><br>${p.annee_naissance}</div>
-          <div><span style="color:var(--text-light); font-size:12px;">
-            SEXE</span><br>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</div>
-          <div><span style="color:var(--text-light); font-size:12px;">
-            STATUT</span><br>${badgeStatut(p.statut)}</div>
-          <div><span style="color:var(--text-light); font-size:12px;">
-            CASE</span><br>${p.colombier_case || '—'}</div>
-          <div><span style="color:var(--text-light); font-size:12px;">
-            COULEUR</span><br>${p.couleur_plumage || '—'}</div>
+        <h3 style="font-family:'Playfair Display',serif;
+          font-size:22px; margin-bottom:14px;">${p.matricule}</h3>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
+          <div><span style="color:var(--text-light); font-size:11px;
+            text-transform:uppercase;">Année</span><br>
+            <strong>${p.annee_naissance}</strong></div>
+          <div><span style="color:var(--text-light); font-size:11px;
+            text-transform:uppercase;">Sexe</span><br>
+            ${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</div>
+          <div><span style="color:var(--text-light); font-size:11px;
+            text-transform:uppercase;">Statut</span><br>
+            ${badgeStatut(p.statut)}</div>
+          <div><span style="color:var(--text-light); font-size:11px;
+            text-transform:uppercase;">Case</span><br>
+            ${p.colombier_case || '—'}</div>
+          <div style="grid-column:span 2;">
+            <span style="color:var(--text-light); font-size:11px;
+              text-transform:uppercase;">Couleur</span><br>
+            ${p.couleur_plumage || '—'}</div>
         </div>
       </div>
-    </div>
+    </div>`;
 
-    <!-- GÉNÉALOGIE -->
-    <div style="background:var(--bg); border-radius:10px; padding:16px; 
-      margin-bottom:20px;">
-      <div style="font-weight:600; margin-bottom:12px;">
-        🌳 Généalogie
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div style="background:white; border-radius:8px; padding:12px;
-          border:1px solid var(--border);">
-          <div style="font-size:11px; color:var(--text-light); 
-            margin-bottom:4px;">PÈRE ♂️</div>
-          <div style="font-weight:600;">
-            ${p.pere ? p.pere.matricule : 'Inconnu'}
-          </div>
+  // ── Section notes ──────────────────────────────────────────────────────────
+  const sectionNotes = section(`
+    ${titreSection('📝 Notes')}
+    <div style="border-left:3px solid var(--accent); padding:10px 14px;
+      background:white; border-radius:0 8px 8px 0; font-size:14px;
+      color:${p.notes ? 'var(--text)' : 'var(--text-light)'};">
+      ${p.notes ? p.notes.replace(/\n/g, '<br>') : 'Aucune note'}
+    </div>`);
+
+  // ── Section généalogie ────────────────────────────────────────────────────
+  const sectionGenea = section(`
+    ${titreSection('🌳 Généalogie')}
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div style="background:white; border-radius:8px; padding:12px;
+        border:1px solid var(--border);">
+        <div style="font-size:11px; color:var(--text-light);
+          margin-bottom:4px;">PÈRE ♂️</div>
+        <div style="font-weight:600;">
+          ${p.pere
+            ? `<span style="cursor:pointer; color:var(--accent);"
+                 onclick="closeModal(); setTimeout(()=>openDetailPigeon('${p.pere.id}'),150);">
+                 ${p.pere.matricule}</span>`
+            : 'Inconnu'}
         </div>
-        <div style="background:white; border-radius:8px; padding:12px;
-          border:1px solid var(--border);">
-          <div style="font-size:11px; color:var(--text-light); 
-            margin-bottom:4px;">MÈRE ♀️</div>
-          <div style="font-weight:600;">
-            ${p.mere ? p.mere.matricule : 'Inconnue'}
-          </div>
+      </div>
+      <div style="background:white; border-radius:8px; padding:12px;
+        border:1px solid var(--border);">
+        <div style="font-size:11px; color:var(--text-light);
+          margin-bottom:4px;">MÈRE ♀️</div>
+        <div style="font-weight:600;">
+          ${p.mere
+            ? `<span style="cursor:pointer; color:var(--accent);"
+                 onclick="closeModal(); setTimeout(()=>openDetailPigeon('${p.mere.id}'),150);">
+                 ${p.mere.matricule}</span>`
+            : 'Inconnue'}
         </div>
       </div>
-    </div>
+    </div>`);
 
-    ${p.notes ? `
-      <div style="background:var(--bg); border-radius:10px; padding:16px;">
-        <div style="font-weight:600; margin-bottom:8px;">📝 Notes</div>
-        <div style="font-size:14px; color:var(--text-light);">${p.notes}</div>
-      </div>` : ''}
+  // ── Section performances ──────────────────────────────────────────────────
+  const sectionPerfs = section(`
+    ${titreSection(`🏆 Performances (${perfsTriees.length} concours)`)}
+    ${perfsTriees.length === 0
+      ? `<div style="color:var(--text-light); font-size:14px;">
+           Aucune performance enregistrée</div>`
+      : tableCompact(
+          ['Date', 'Concours', 'Dist.', 'Class.', 'Vitesse'],
+          perfsTriees.map(pf => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px;">${fmtDate(pf.date)}</td>
+              <td style="padding:8px;">${pf.nom_concours}</td>
+              <td style="padding:8px;">${pf.distance_km ? pf.distance_km + ' km' : '—'}</td>
+              <td style="padding:8px;">${badgeClassement(pf.classement)}</td>
+              <td style="padding:8px;">${pf.vitesse_m_min ? pf.vitesse_m_min.toFixed(1) + ' m/min' : '—'}</td>
+            </tr>`).join('')
+        )
+    }`);
 
+  // ── Section santé ─────────────────────────────────────────────────────────
+  const sectionSante = section(`
+    ${titreSection(`🏥 Suivi santé (${santeTriee.length} événements)`)}
+    ${santeTriee.length === 0
+      ? `<div style="color:var(--text-light); font-size:14px;">
+           Aucun événement santé enregistré</div>`
+      : tableCompact(
+          ['Date', 'Type', 'Description', 'Produit'],
+          santeTriee.map(ev => `
+            <tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px;">${fmtDate(ev.date)}</td>
+              <td style="padding:8px;">${badgeType(ev.type)}</td>
+              <td style="padding:8px; max-width:220px; white-space:normal;">
+                ${ev.description || '—'}</td>
+              <td style="padding:8px;">${ev.produit || '—'}</td>
+            </tr>`).join('')
+        )
+    }`);
+
+  // ── Assemblage ────────────────────────────────────────────────────────────
+  const html = `
+    ${sectionInfos}
+    ${sectionNotes}
+    ${sectionGenea}
+    ${sectionPerfs}
+    ${sectionSante}
     <div class="form-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-secondary"
+        onclick="closeModal(); setTimeout(()=>{ document.getElementById('modal').style.width='560px'; openPedigree('${p.id}'); },150);">
+        🌳 Pedigree
+      </button>
       <button class="btn btn-primary" onclick="openEditPigeon('${p.id}')">
         ✏️ Modifier
       </button>
     </div>`;
 
   openModal(`🕊️ ${p.matricule}`, html);
+  document.getElementById('modal').style.width = '750px';
 }
 
 // ===== UPLOAD PHOTO =====
