@@ -12,7 +12,7 @@ async function imageToBase64(url) {
       resolve(canvas.toDataURL('image/jpeg', 0.8));
     };
     img.onerror = () => resolve(null);
-    img.src = url;
+    img.src = url + '?t=' + Date.now();
   });
 }
 
