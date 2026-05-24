@@ -115,7 +115,7 @@ async def seed():
             id=str(uuid.uuid4()), matricule="FR-2024-002", annee_naissance=2024,
             sexe=Sexe.femelle, statut=Statut.actif,
             lignee_id=maison.id, colombier_case="D3", couleur_plumage="Écaillée croisée",
-            pere_id=p_fr22_001.id, mere_id=p_be22_001.id,
+            pere_id=p_fr22_001.id, mere_id=p_fr22_002.id,
         )
         session.add_all([p_fr24_001, p_fr24_002])
         await session.flush()
