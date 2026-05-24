@@ -17,13 +17,10 @@ async function exportPedigreePDF(pigeonId) {
   const PW = 297, PH = 210;
   const MARGIN = 8;
   const HEADER_H = 22;
-  const BODY_TOP = MARGIN + HEADER_H + 4;
-  const BODY_H = PH - BODY_TOP - 12; // ~160mm
-
-  // ── En-tête ──────────────────────────────────────────────────────────────────
   const today = new Date();
   const dateStr = today.toLocaleDateString('fr-FR');
 
+  // ── En-tête ──────────────────────────────────────────────────────────────────
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(44, 62, 80);
@@ -43,58 +40,46 @@ async function exportPedigreePDF(pigeonId) {
   doc.setLineWidth(0.3);
   doc.line(MARGIN, MARGIN + HEADER_H, PW - MARGIN, MARGIN + HEADER_H);
 
-  // ── Colonnes (5 colonnes, de gauche à droite) ─────────────────────────────
-  // Pigeon | Parents | GP | AGP | AAGP
-  const COL_W = [52, 48, 48, 48, 42];
-  const GAP = 4;
-  const colX = [];
-  let cx = MARGIN;
-  for (let i = 0; i < 5; i++) {
-    colX.push(cx);
-    cx += COL_W[i] + GAP;
-  }
+  // ── Coordonnées fixes (pas de calcul chaîné susceptible de produire NaN) ────
+  const BODY_TOP = 30;
+  const BODY_H   = 155;
+  const COL_W = [55, 50, 50, 50, 42];
+  const COL_X = [5, 62, 114, 166, 218];
 
-  const CELL_H = 17;
+  // Centres Y de chaque génération (fractions exactes)
+  const positions = {
+    g0: [BODY_TOP + BODY_H / 2],
+    g1: [
+      BODY_TOP + BODY_H * 1 / 4,
+      BODY_TOP + BODY_H * 3 / 4,
+    ],
+    g2: [
+      BODY_TOP + BODY_H * 1 / 8,
+      BODY_TOP + BODY_H * 3 / 8,
+      BODY_TOP + BODY_H * 5 / 8,
+      BODY_TOP + BODY_H * 7 / 8,
+    ],
+    g3: [
+      BODY_TOP + BODY_H *  1 / 16,
+      BODY_TOP + BODY_H *  3 / 16,
+      BODY_TOP + BODY_H *  5 / 16,
+      BODY_TOP + BODY_H *  7 / 16,
+      BODY_TOP + BODY_H *  9 / 16,
+      BODY_TOP + BODY_H * 11 / 16,
+      BODY_TOP + BODY_H * 13 / 16,
+      BODY_TOP + BODY_H * 15 / 16,
+    ],
+  };
 
-  // ── Positions Y centrées (depuis BODY_TOP) ────────────────────────────────
-  // AAGP : 8 cases, slot = BODY_H/8
-  const slot = BODY_H / 8;
-  const yAAGP = Array.from({ length: 8 }, (_, i) => BODY_TOP + slot * i + slot / 2);
+  // Hauteur des cases par génération (chaque case remplit son slot)
+  const heights = {
+    g0: BODY_H,
+    g1: BODY_H / 2,
+    g2: BODY_H / 4,
+    g3: BODY_H / 8,
+  };
 
-  // AGP : 4 cases, chacune centrée entre 2 AAGP
-  const yAGP = [
-    (yAAGP[0] + yAAGP[1]) / 2,
-    (yAAGP[2] + yAAGP[3]) / 2,
-    (yAAGP[4] + yAAGP[5]) / 2,
-    (yAAGP[6] + yAAGP[7]) / 2,
-  ];
-
-  // GP : 4 cases, chacune centrée entre 2 AGP
-  const yGP = [
-    (yAGP[0] + yAGP[1]) / 2,
-    (yAGP[2] + yAGP[3]) / 2,
-    (yAGP[4] + yAGP[5]) / 2, // unused if only 2 GP groups
-    (yAGP[6] + yAGP[7]) / 2, // unused
-  ];
-  // Les 4 GP sont : père.père, père.mère, mère.père, mère.mère
-  // Regroupés : GP[0,1] pour le père, GP[2,3] pour la mère
-  const yGP4 = [
-    (yAGP[0] + yAGP[1]) / 2,
-    (yAGP[2] + yAGP[3]) / 2,
-    (yAGP[4] + yAGP[5]) / 2,
-    (yAGP[6] + yAGP[7]) / 2,
-  ];
-
-  // Parents : 2 cases, centrées entre leurs 2 GP
-  const yParents = [
-    (yGP4[0] + yGP4[1]) / 2,
-    (yGP4[2] + yGP4[3]) / 2,
-  ];
-
-  // Pigeon : centré entre les 2 parents
-  const yPigeon = (yParents[0] + yParents[1]) / 2;
-
-  // ── Dessin des cases ──────────────────────────────────────────────────────
+  // ── Helpers ───────────────────────────────────────────────────────────────
 
   function hexToRgb(hex) {
     if (!hex || hex.length < 7) return { r: 127, g: 140, b: 141 };
@@ -105,11 +90,11 @@ async function exportPedigreePDF(pigeonId) {
     };
   }
 
-  function drawCell(p, colIdx, yCentre) {
-    const x = colX[colIdx];
-    const w = COL_W[colIdx];
-    const h = CELL_H;
-    const y = yCentre - h / 2;
+  function drawCell(p, x, y, w, h) {
+    if ([x, y, w, h].some(v => isNaN(v) || v == null)) {
+      console.warn('drawCell: coordonnées invalides', { x, y, w, h, matricule: p?.matricule });
+      return;
+    }
 
     if (!p) {
       doc.setFillColor(248, 249, 250);
@@ -121,7 +106,7 @@ async function exportPedigreePDF(pigeonId) {
       doc.setFontSize(6);
       doc.setFont('helvetica', 'italic');
       doc.setTextColor(127, 140, 141);
-      doc.text('Inconnu', x + w / 2, yCentre + 1.5, { align: 'center' });
+      doc.text('Inconnu', x + w / 2, y + h / 2 + 1.5, { align: 'center' });
       return;
     }
 
@@ -147,7 +132,7 @@ async function exportPedigreePDF(pigeonId) {
     ty += 3.5;
 
     // Année
-    if (p.annee_naissance) {
+    if (p.annee_naissance && ty < y + h - 2) {
       doc.setFontSize(5.5);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(127, 140, 141);
@@ -156,7 +141,7 @@ async function exportPedigreePDF(pigeonId) {
     }
 
     // Couleur plumage
-    if (p.couleur_plumage) {
+    if (p.couleur_plumage && ty < y + h - 2) {
       doc.setFontSize(5);
       doc.setTextColor(127, 140, 141);
       const c = p.couleur_plumage.length > 20 ? p.couleur_plumage.substring(0, 19) + '…' : p.couleur_plumage;
@@ -165,7 +150,7 @@ async function exportPedigreePDF(pigeonId) {
     }
 
     // Lignée
-    if (p.lignee_id && ligneesMap[p.lignee_id]) {
+    if (p.lignee_id && ligneesMap[p.lignee_id] && ty < y + h - 2) {
       const lig = ligneesMap[p.lignee_id];
       const rgb = hexToRgb(lig.couleur_label);
       doc.setFontSize(5);
@@ -176,102 +161,76 @@ async function exportPedigreePDF(pigeonId) {
     }
   }
 
-  // ── Connecteur : bracket depuis un ancêtre vers ses 2 descendants ─────────
-  // indivRx  : bord droit de la case ancêtre (gauche dans le pedigree)
-  // indivY   : Y centre de l'ancêtre
-  // childLx  : bord gauche de la colonne descendants (à droite)
-  // topY     : Y centre du descendant du haut
-  // botY     : Y centre du descendant du bas
-  function drawBracket(indivRx, indivY, childLx, topY, botY) {
-    const midX = (indivRx + childLx) / 2;
+  // Connecteur en L entre deux cellules adjacentes
+  // (x1,y1) = bord droit de la cellule source au centre Y
+  // (x2,y2) = bord gauche de la cellule cible au centre Y
+  function drawConnector(x1, y1, x2, y2) {
+    if ([x1, y1, x2, y2].some(v => isNaN(v) || v == null)) return;
+    const midX = (x1 + x2) / 2;
     doc.setDrawColor(189, 195, 199);
     doc.setLineWidth(0.2);
     doc.setLineDashPattern([], 0);
-    doc.line(indivRx, indivY, midX, indivY); // ancêtre → jonction
-    doc.line(midX, topY, midX, botY);         // vertical reliant les 2 descendants
-    doc.line(midX, topY, childLx, topY);      // → descendant haut
-    doc.line(midX, botY, childLx, botY);      // → descendant bas
+    doc.line(x1, y1, midX, y1);
+    doc.line(midX, y1, midX, y2);
+    doc.line(midX, y2, x2, y2);
   }
 
-  // ── Génération 0 : pigeon ─────────────────────────────────────────────────
-  drawCell(pedigree, 0, yPigeon);
+  // ── Dessin ───────────────────────────────────────────────────────────────────
+  try {
+    const p = pedigree;
 
-  // ── Génération 1 : parents ────────────────────────────────────────────────
-  drawCell(pedigree.pere,  1, yParents[0]);
-  drawCell(pedigree.mere, 1, yParents[1]);
+    // Génération 0 — pigeon principal
+    drawCell(p, COL_X[0], positions.g0[0] - heights.g0 / 2, COL_W[0], heights.g0);
 
-  // Connecteur pigeon → parents
-  drawBracket(
-    colX[0] + COL_W[0], yPigeon,
-    colX[1],
-    yParents[0], yParents[1]
-  );
+    // Génération 1 — parents
+    drawCell(p.pere,  COL_X[1], positions.g1[0] - heights.g1 / 2, COL_W[1], heights.g1);
+    drawCell(p.mere, COL_X[1], positions.g1[1] - heights.g1 / 2, COL_W[1], heights.g1);
 
-  // ── Génération 2 : grands-parents ────────────────────────────────────────
-  const gps = [
-    pedigree.pere?.pere,
-    pedigree.pere?.mere,
-    pedigree.mere?.pere,
-    pedigree.mere?.mere,
-  ];
-  gps.forEach((gp, i) => drawCell(gp, 2, yGP4[i]));
+    drawConnector(COL_X[0] + COL_W[0], positions.g0[0], COL_X[1], positions.g1[0]);
+    drawConnector(COL_X[0] + COL_W[0], positions.g0[0], COL_X[1], positions.g1[1]);
 
-  // Connecteurs parents → GP
-  [0, 1].forEach(pi => {
-    drawBracket(
-      colX[1] + COL_W[1], yParents[pi],
-      colX[2],
-      yGP4[pi * 2], yGP4[pi * 2 + 1]
-    );
-  });
+    // Génération 2 — grands-parents
+    const gps = [p.pere?.pere, p.pere?.mere, p.mere?.pere, p.mere?.mere];
+    gps.forEach((gp, i) => {
+      drawCell(gp, COL_X[2], positions.g2[i] - heights.g2 / 2, COL_W[2], heights.g2);
+    });
 
-  // ── Génération 3 : arrière-grands-parents ─────────────────────────────────
-  const agps = [
-    pedigree.pere?.pere?.pere,
-    pedigree.pere?.pere?.mere,
-    pedigree.pere?.mere?.pere,
-    pedigree.pere?.mere?.mere,
-    pedigree.mere?.pere?.pere,
-    pedigree.mere?.pere?.mere,
-    pedigree.mere?.mere?.pere,
-    pedigree.mere?.mere?.mere,
-  ];
-  agps.forEach((agp, i) => drawCell(agp, 3, yAGP[i]));
+    drawConnector(COL_X[1] + COL_W[1], positions.g1[0], COL_X[2], positions.g2[0]);
+    drawConnector(COL_X[1] + COL_W[1], positions.g1[0], COL_X[2], positions.g2[1]);
+    drawConnector(COL_X[1] + COL_W[1], positions.g1[1], COL_X[2], positions.g2[2]);
+    drawConnector(COL_X[1] + COL_W[1], positions.g1[1], COL_X[2], positions.g2[3]);
 
-  // Connecteurs GP → AGP
-  gps.forEach((_, gi) => {
-    drawBracket(
-      colX[2] + COL_W[2], yGP4[gi],
-      colX[3],
-      yAGP[gi * 2], yAGP[gi * 2 + 1]
-    );
-  });
+    // Génération 3 — arrière-grands-parents
+    const agps = [
+      p.pere?.pere?.pere, p.pere?.pere?.mere,
+      p.pere?.mere?.pere, p.pere?.mere?.mere,
+      p.mere?.pere?.pere, p.mere?.pere?.mere,
+      p.mere?.mere?.pere, p.mere?.mere?.mere,
+    ];
+    agps.forEach((agp, i) => {
+      drawCell(agp, COL_X[3], positions.g3[i] - heights.g3 / 2, COL_W[3], heights.g3);
+    });
 
-  // ── Génération 4 : AAGP (backend s'arrête ici, toujours Inconnu) ──────────
-  // Les arrière-arrière-grands-parents ne sont pas retournés par l'API
-  // (generation > 4 → null), on affiche les cases vides pour le gabarit
-  yAAGP.forEach(y => drawCell(null, 4, y));
+    gps.forEach((_, gi) => {
+      drawConnector(COL_X[2] + COL_W[2], positions.g2[gi], COL_X[3], positions.g3[gi * 2]);
+      drawConnector(COL_X[2] + COL_W[2], positions.g2[gi], COL_X[3], positions.g3[gi * 2 + 1]);
+    });
 
-  // Connecteurs AGP → AAGP
-  agps.forEach((_, ai) => {
-    drawBracket(
-      colX[3] + COL_W[3], yAGP[ai],
-      colX[4],
-      yAAGP[ai * 2], yAAGP[ai * 2 + 1]
-    );
-  });
+    // ── Pied de page ─────────────────────────────────────────────────────────
+    const footerY = PH - 4;
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(127, 140, 141);
+    doc.text(`Généré le ${dateStr}`, MARGIN, footerY);
+    doc.text(pedigree.matricule, PW / 2, footerY, { align: 'center' });
+    doc.text('1 / 1', PW - MARGIN, footerY, { align: 'right' });
 
-  // ── Pied de page ─────────────────────────────────────────────────────────
-  const footerY = PH - 4;
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(127, 140, 141);
-  doc.text(`Généré le ${dateStr}`, MARGIN, footerY);
-  doc.text(pedigree.matricule, PW / 2, footerY, { align: 'center' });
-  doc.text('1 / 1', PW - MARGIN, footerY, { align: 'right' });
-
-  // ── Sauvegarde ───────────────────────────────────────────────────────────
-  const safe = pedigree.matricule.replace(/[^a-zA-Z0-9-]/g, '_');
-  doc.save(`pedigree-${safe}.pdf`);
-  showNotification(`PDF téléchargé ✅`);
+    // ── Sauvegarde ───────────────────────────────────────────────────────────
+    const safe = pedigree.matricule.replace(/[^a-zA-Z0-9-]/g, '_');
+    doc.save(`pedigree-${safe}.pdf`);
+    showNotification('PDF téléchargé ✅');
+  } catch (err) {
+    console.error('Erreur PDF:', err);
+    showNotification('Erreur PDF : ' + err.message, 'danger');
+  }
 }
