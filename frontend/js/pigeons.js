@@ -66,6 +66,11 @@ async function loadPigeons() {
                         style="padding:6px 10px; font-size:12px;">
                         🗑️
                       </button>
+                      <button class="btn btn-primary" onclick="
+                         document.getElementById('modal').style.width='560px';
+                          openPedigree('${p.id}');">
+                          🌳 Voir le pedigree
+                      </button>
                     </div>
                   </td>
                 </tr>`;

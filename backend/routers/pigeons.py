@@ -101,3 +101,32 @@ async def upload_photo(
     await db.commit()
     await db.refresh(db_pigeon)
     return db_pigeonen
+
+@router.get("/{pigeon_id}/pedigree")
+async def get_pedigree(pigeon_id: str, db: AsyncSession = Depends(get_db)):
+    async def get_ancetre(pid: str, generation: int):
+        if not pid or generation > 4:
+            return None
+        result = await db.execute(
+            select(Pigeon).where(Pigeon.id == pid)
+        )
+        p = result.scalar_one_or_none()
+        if not p:
+            return None
+        return {
+            "id": p.id,
+            "matricule": p.matricule,
+            "sexe": p.sexe.value if p.sexe else None,
+            "annee_naissance": p.annee_naissance,
+            "couleur_plumage": p.couleur_plumage,
+            "statut": p.statut.value if p.statut else None,
+            "photo": p.photo,
+            "lignee_id": p.lignee_id,
+            "pere": await get_ancetre(p.pere_id, generation + 1),
+            "mere": await get_ancetre(p.mere_id, generation + 1),
+        }
+
+    data = await get_ancetre(pigeon_id, 1)
+    if not data:
+        raise HTTPException(status_code=404, detail="Pigeon non trouvé")
+    return data
