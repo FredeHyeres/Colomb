@@ -1,6 +1,6 @@
 # Colomd — Gestion d'élevage colombophile
 
-Application web de gestion complète pour éleveurs de pigeons voyageurs.
+Application web de gestion complète pour éleveurs de pigeons voyageurs. sous DOCKER DESKTOP
 
 ## Fonctionnalités
 
