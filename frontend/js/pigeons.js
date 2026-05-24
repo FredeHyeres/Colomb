@@ -39,7 +39,7 @@ async function loadPigeons() {
                   <td>${pigeonPhoto(p.photo, p.matricule)}</td>
                   <td><strong>${p.matricule}</strong></td>
                   <td>${p.annee_naissance}</td>
-                  <td>${p.sexe === 'mâle' ? '♂️' : '♀️'} ${p.sexe}</td>
+                  <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
                   <td>
                     ${lignee
                       ? `<span class="lignee-dot" 
@@ -113,7 +113,7 @@ async function openDetailPigeon(id) {
           <div><span style="color:var(--text-light); font-size:12px;">
             ANNÉE</span><br>${p.annee_naissance}</div>
           <div><span style="color:var(--text-light); font-size:12px;">
-            SEXE</span><br>${p.sexe === 'mâle' ? '♂️' : '♀️'} ${p.sexe}</div>
+            SEXE</span><br>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</div>
           <div><span style="color:var(--text-light); font-size:12px;">
             STATUT</span><br>${badgeStatut(p.statut)}</div>
           <div><span style="color:var(--text-light); font-size:12px;">
@@ -203,7 +203,7 @@ async function openEditPigeon(id) {
 
 function formPigeon(p = {}, lignees = [], pigeons = []) {
   const malesOptions = pigeons
-    .filter(x => x.sexe === 'mâle' && x.id !== p.id)
+    .filter(x => x.sexe === 'male' && x.id !== p.id)
     .map(x => `<option value="${x.id}" 
       ${p.pere_id === x.id ? 'selected' : ''}>
       ${x.matricule}</option>`)
@@ -234,7 +234,7 @@ function formPigeon(p = {}, lignees = [], pigeons = []) {
       <div class="form-group">
         <label class="form-label">Sexe *</label>
         <select class="form-control" id="f-sexe">
-          <option value="mâle" ${p.sexe === 'mâle' ? 'selected' : ''}>
+          <option value="male" ${p.sexe === 'male' ? 'selected' : ''}>
             ♂️ Mâle</option>
           <option value="femelle" ${p.sexe === 'femelle' ? 'selected' : ''}>
             ♀️ Femelle</option>
@@ -250,11 +250,11 @@ function formPigeon(p = {}, lignees = [], pigeons = []) {
             Reproducteur</option>
           <option value="concours" ${p.statut === 'concours' ? 'selected' : ''}>
             Concours</option>
-          <option value="retraité" ${p.statut === 'retraité' ? 'selected' : ''}>
+          <option value="retraite" ${p.statut === 'retraite' ? 'selected' : ''}>
             Retraité</option>
           <option value="perdu" ${p.statut === 'perdu' ? 'selected' : ''}>
             Perdu</option>
-          <option value="décédé" ${p.statut === 'décédé' ? 'selected' : ''}>
+          <option value="decede" ${p.statut === 'decede' ? 'selected' : ''}>
             Décédé</option>
         </select>
       </div>

@@ -4,7 +4,7 @@ from enum import Enum
 
 
 class SexeEnum(str, Enum):
-    male = "mâle"
+    male = "male"
     femelle = "femelle"
 
 
@@ -12,9 +12,9 @@ class StatutEnum(str, Enum):
     actif = "actif"
     reproducteur = "reproducteur"
     concours = "concours"
-    retraite = "retraité"
+    retraite = "retraite"
     perdu = "perdu"
-    decede = "décédé"
+    decede = "decede"
 
 
 class LigneeResponse(BaseModel):

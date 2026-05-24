@@ -6,7 +6,7 @@ from database import Base
 
 
 class Sexe(enum.Enum):
-    male = "mâle"
+    male = "male"
     femelle = "femelle"
 
 
@@ -14,9 +14,9 @@ class Statut(enum.Enum):
     actif = "actif"
     reproducteur = "reproducteur"
     concours = "concours"
-    retraite = "retraité"
+    retraite = "retraite"
     perdu = "perdu"
-    decede = "décédé"
+    decede = "decede"
 
 
 class Pigeon(Base):

@@ -126,14 +126,15 @@ document.getElementById('btn-add').addEventListener('click', () => {
 // ===== BADGES STATUT =====
 function badgeStatut(statut) {
   const map = {
-    'actif': 'badge-actif',
-    'reproducteur': 'badge-reproducteur',
-    'concours': 'badge-concours',
-    'perdu': 'badge-perdu',
-    'retraité': 'badge-retraite',
-    'décédé': 'badge-decede'
+    'actif':        ['badge-actif',        'Actif'],
+    'reproducteur': ['badge-reproducteur', 'Reproducteur'],
+    'concours':     ['badge-concours',     'Concours'],
+    'perdu':        ['badge-perdu',        'Perdu'],
+    'retraite':     ['badge-retraite',     'Retraité'],
+    'decede':       ['badge-decede',       'Décédé'],
   };
-  return `<span class="badge ${map[statut] || ''}">${statut}</span>`;
+  const [cls, label] = map[statut] || ['', statut];
+  return `<span class="badge ${cls}">${label}</span>`;
 }
 
 // ===== PHOTO PIGEON =====
