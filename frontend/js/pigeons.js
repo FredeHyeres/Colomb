@@ -1,9 +1,20 @@
+// ===== ÉTAT PIGEONS (filtres + tri persistants) =====
+const pigeonState = {
+  tous: [],
+  lignees: [],
+  filtres: { lignee_id: '', statut: '', sexe: '', annee: '' },
+  tri: { colonne: 'date_creation', direction: 'asc' },
+};
+
 async function loadPigeons() {
   const content = document.getElementById('content');
   const [pigeons, lignees] = await Promise.all([
     apiFetch('/pigeons/'),
     apiFetch('/lignees/')
   ]);
+
+  pigeonState.tous    = pigeons;
+  pigeonState.lignees = lignees;
 
   if (pigeons.length === 0) {
     content.innerHTML = `
@@ -15,70 +26,218 @@ async function loadPigeons() {
     return;
   }
 
+  // Injecte les styles tri une seule fois
+  if (!document.getElementById('tri-styles')) {
+    const s = document.createElement('style');
+    s.id = 'tri-styles';
+    s.textContent = `
+      th.triable { cursor:pointer; user-select:none; }
+      th.triable:hover { background:var(--border); color:var(--text); }
+      th.tri-actif { color:var(--accent) !important; background:#EBF5FB !important; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  const annees = [...new Set(pigeons.map(p => p.annee_naissance))].sort();
+
   content.innerHTML = `
+    <!-- BARRE DE FILTRES -->
+    <div style="background:white; padding:16px; border-radius:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:20px;
+      display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <select class="form-control" style="width:auto;" id="f-lignee-filtre"
+        onchange="changerFiltre('lignee_id', this.value)">
+        <option value="">Toutes les lignées</option>
+        ${lignees.map(l =>
+          `<option value="${l.id}">${l.nom}</option>`
+        ).join('')}
+      </select>
+      <select class="form-control" style="width:auto;" id="f-statut-filtre"
+        onchange="changerFiltre('statut', this.value)">
+        <option value="">Tous les statuts</option>
+        <option value="actif">Actif</option>
+        <option value="reproducteur">Reproducteur</option>
+        <option value="concours">Concours</option>
+        <option value="retraite">Retraité</option>
+        <option value="perdu">Perdu</option>
+        <option value="decede">Décédé</option>
+      </select>
+      <select class="form-control" style="width:auto;" id="f-sexe-filtre"
+        onchange="changerFiltre('sexe', this.value)">
+        <option value="">Tous les sexes</option>
+        <option value="male">♂️ Mâle</option>
+        <option value="femelle">♀️ Femelle</option>
+      </select>
+      <select class="form-control" style="width:auto;" id="f-annee-filtre"
+        onchange="changerFiltre('annee', this.value)">
+        <option value="">Toutes les années</option>
+        ${annees.map(a => `<option value="${a}">${a}</option>`).join('')}
+      </select>
+      <button class="btn btn-secondary" onclick="reinitialiserFiltres()"
+        style="white-space:nowrap;">✕ Réinitialiser</button>
+    </div>
+
+    <!-- COMPTEUR -->
+    <div id="pigeons-compteur"
+      style="font-size:13px; color:var(--text-light); margin-bottom:10px;"></div>
+
+    <!-- TABLEAU -->
     <div class="card">
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>Photo</th>
-              <th>Matricule</th>
-              <th>Année</th>
-              <th>Sexe</th>
-              <th>Lignée</th>
+              <th class="triable" id="th-matricule"
+                onclick="changerTri('matricule')">Matricule</th>
+              <th class="triable" id="th-annee_naissance"
+                onclick="changerTri('annee_naissance')">Année</th>
+              <th class="triable" id="th-sexe"
+                onclick="changerTri('sexe')">Sexe</th>
+              <th class="triable" id="th-lignee"
+                onclick="changerTri('lignee')">Lignée</th>
               <th>Case</th>
-              <th>Statut</th>
+              <th class="triable" id="th-statut"
+                onclick="changerTri('statut')">Statut</th>
               <th>Actions</th>
             </tr>
           </thead>
-          <tbody>
-            ${pigeons.map(p => {
-              const lignee = lignees.find(l => l.id === p.lignee_id);
-              return `
-                <tr>
-                  <td>${pigeonPhoto(p.photo, p.matricule)}</td>
-                  <td><strong>${p.matricule}</strong></td>
-                  <td>${p.annee_naissance}</td>
-                  <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
-                  <td>
-                    ${lignee
-                      ? `<span class="lignee-dot" 
-                           style="background:${lignee.couleur_label || '#95A5A6'}">
-                         </span>${lignee.nom}`
-                      : '—'}
-                  </td>
-                  <td>${p.colombier_case || '—'}</td>
-                  <td>${badgeStatut(p.statut)}</td>
-                  <td>
-                    <div style="display:flex; gap:6px;">
-                      <button class="btn btn-secondary"
-                        onclick="openDetailPigeon('${p.id}')"
-                        style="padding:6px 10px; font-size:12px;">
-                        👁️
-                      </button>
-                      <button class="btn btn-secondary"
-                        onclick="openEditPigeon('${p.id}')"
-                        style="padding:6px 10px; font-size:12px;">
-                        ✏️
-                      </button>
-                      <button class="btn btn-danger"
-                        onclick="deletePigeon('${p.id}', '${p.matricule}')"
-                        style="padding:6px 10px; font-size:12px;">
-                        🗑️
-                      </button>
-                      <button class="btn btn-primary" onclick="
-                         document.getElementById('modal').style.width='560px';
-                          openPedigree('${p.id}');">
-                          🌳 Voir le pedigree
-                      </button>
-                    </div>
-                  </td>
-                </tr>`;
-            }).join('')}
-          </tbody>
+          <tbody id="pigeons-tbody"></tbody>
         </table>
       </div>
     </div>`;
+
+  // Restaure l'état des selects si on revient sur la page
+  document.getElementById('f-lignee-filtre').value = pigeonState.filtres.lignee_id;
+  document.getElementById('f-statut-filtre').value  = pigeonState.filtres.statut;
+  document.getElementById('f-sexe-filtre').value    = pigeonState.filtres.sexe;
+  document.getElementById('f-annee-filtre').value   = pigeonState.filtres.annee;
+
+  appliquerFiltresEtTri();
+}
+
+// Met à jour le tbody et le compteur sans rappeler l'API
+function appliquerFiltresEtTri() {
+  const { filtres, tri } = pigeonState;
+
+  // 1. Filtrage
+  let result = pigeonState.tous.filter(p => {
+    if (filtres.lignee_id && p.lignee_id !== filtres.lignee_id) return false;
+    if (filtres.statut    && p.statut    !== filtres.statut)    return false;
+    if (filtres.sexe      && p.sexe      !== filtres.sexe)      return false;
+    if (filtres.annee     && p.annee_naissance !== parseInt(filtres.annee)) return false;
+    return true;
+  });
+
+  // 2. Tri (ordre API = date_creation asc = pas de re-tri nécessaire)
+  if (tri.colonne !== 'date_creation') {
+    result = [...result].sort((a, b) => {
+      let va, vb;
+      if (tri.colonne === 'lignee') {
+        const la = pigeonState.lignees.find(l => l.id === a.lignee_id);
+        const lb = pigeonState.lignees.find(l => l.id === b.lignee_id);
+        va = la?.nom ?? '';
+        vb = lb?.nom ?? '';
+      } else {
+        va = a[tri.colonne] ?? '';
+        vb = b[tri.colonne] ?? '';
+      }
+      const cmp = typeof va === 'number'
+        ? va - vb
+        : String(va).localeCompare(String(vb), 'fr');
+      return tri.direction === 'asc' ? cmp : -cmp;
+    });
+  }
+
+  // 3. Compteur
+  const total    = pigeonState.tous.length;
+  const affiches = result.length;
+  const cpt = document.getElementById('pigeons-compteur');
+  if (cpt) {
+    cpt.textContent = affiches === total
+      ? `${total} pigeon${total > 1 ? 's' : ''}`
+      : `Affichage de ${affiches} pigeon${affiches > 1 ? 's' : ''} sur ${total}`;
+  }
+
+  // 4. Indicateurs d'entête
+  const LABELS = {
+    matricule: 'Matricule', annee_naissance: 'Année',
+    sexe: 'Sexe', lignee: 'Lignée', statut: 'Statut',
+  };
+  Object.keys(LABELS).forEach(col => {
+    const th = document.getElementById(`th-${col}`);
+    if (!th) return;
+    const actif = tri.colonne === col;
+    th.classList.toggle('tri-actif', actif);
+    th.textContent = LABELS[col] + (actif ? (tri.direction === 'asc' ? ' ↑' : ' ↓') : '');
+  });
+
+  // 5. Rendu tbody
+  const tbody = document.getElementById('pigeons-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = result.map(p => {
+    const lignee = pigeonState.lignees.find(l => l.id === p.lignee_id);
+    return `
+      <tr>
+        <td>${pigeonPhoto(p.photo, p.matricule)}</td>
+        <td><strong>${p.matricule}</strong></td>
+        <td>${p.annee_naissance}</td>
+        <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
+        <td>${lignee
+          ? `<span class="lignee-dot"
+               style="background:${lignee.couleur_label || '#95A5A6'}"></span>${lignee.nom}`
+          : '—'}</td>
+        <td>${p.colombier_case || '—'}</td>
+        <td>${badgeStatut(p.statut)}</td>
+        <td>
+          <div style="display:flex; gap:6px;">
+            <button class="btn btn-secondary"
+              onclick="openDetailPigeon('${p.id}')"
+              style="padding:6px 10px; font-size:12px;">👁️</button>
+            <button class="btn btn-secondary"
+              onclick="openEditPigeon('${p.id}')"
+              style="padding:6px 10px; font-size:12px;">✏️</button>
+            <button class="btn btn-danger"
+              onclick="deletePigeon('${p.id}', '${p.matricule}')"
+              style="padding:6px 10px; font-size:12px;">🗑️</button>
+            <button class="btn btn-primary"
+              onclick="document.getElementById('modal').style.width='560px';
+                       openPedigree('${p.id}');"
+              style="font-size:12px; padding:6px 10px;">🌳 Pedigree</button>
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+function changerFiltre(cle, valeur) {
+  pigeonState.filtres[cle] = valeur;
+  appliquerFiltresEtTri();
+}
+
+function changerTri(colonne) {
+  const tri = pigeonState.tri;
+  if (tri.colonne !== colonne) {
+    // Nouvelle colonne → ASC
+    tri.colonne    = colonne;
+    tri.direction  = 'asc';
+  } else if (tri.direction === 'asc') {
+    tri.direction  = 'desc';
+  } else {
+    // 3ème clic → retour ordre original (date_creation asc)
+    tri.colonne    = 'date_creation';
+    tri.direction  = 'asc';
+  }
+  appliquerFiltresEtTri();
+}
+
+function reinitialiserFiltres() {
+  pigeonState.filtres = { lignee_id: '', statut: '', sexe: '', annee: '' };
+  ['f-lignee-filtre', 'f-statut-filtre', 'f-sexe-filtre', 'f-annee-filtre'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  appliquerFiltresEtTri();
 }
 
 // ===== DETAIL PIGEON =====
