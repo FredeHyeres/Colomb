@@ -151,10 +151,21 @@ function badgeStatut(statut) {
 // ===== PHOTO PIGEON =====
 function pigeonPhoto(photo, nom) {
   if (photo) {
-    return `<img src="http://localhost:8001${photo}" 
+    return `<img src="http://localhost:8001${photo}"
             class="pigeon-photo" alt="${nom}">`;
   }
   return `<div class="pigeon-photo-placeholder">🕊️</div>`;
+}
+
+// ===== STYLE LIGNÉE =====
+function ligneeStyle(lignee) {
+  if (!lignee || !lignee.couleur_label) return { rowBg: '', borderLeft: '', badge: '' };
+  const c = lignee.couleur_label;
+  return {
+    rowBg: `background: ${c}1A;`,
+    borderLeft: `border-left: 3px solid ${c};`,
+    badge: `background:${c}; color:white; padding:3px 8px; border-radius:12px; font-size:11px; font-weight:600;`,
+  };
 }
 
 // ===== RETRY =====

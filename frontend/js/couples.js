@@ -2,7 +2,10 @@
 
 async function loadCouples() {
   const content = document.getElementById('content');
-  const couples = await apiFetch('/couples/');
+  const [couples, lignees] = await Promise.all([
+    apiFetch('/couples/'),
+    apiFetch('/lignees/'),
+  ]);
 
   const actifs   = couples.filter(c => c.actif);
   const inactifs = couples.filter(c => !c.actif);
@@ -21,7 +24,7 @@ async function loadCouples() {
     ${actifs.length > 0 ? `
       <div class="card" style="margin-bottom:20px;">
         <div class="card-title">💑 Couples actifs (${actifs.length})</div>
-        ${renderCouplesTable(actifs)}
+        ${renderCouplesTable(actifs, false, lignees)}
       </div>` : ''}
 
     ${inactifs.length > 0 ? `
@@ -37,7 +40,7 @@ async function loadCouples() {
           </button>
         </div>
         <div id="historique-content" style="display:none;">
-          ${renderCouplesTable(inactifs, true)}
+          ${renderCouplesTable(inactifs, true, lignees)}
         </div>
       </div>` : ''}`;
 }
@@ -50,8 +53,8 @@ function toggleHistorique() {
   lbl.textContent   = hidden ? '▲ Masquer' : '▼ Afficher';
 }
 
-function renderCouplesTable(couples, grise = false) {
-  const rowStyle = grise ? 'opacity:0.7;' : '';
+function renderCouplesTable(couples, grise = false, lignees = []) {
+  const opacite = grise ? 'opacity:0.7;' : '';
   return `
     <div class="table-container">
       <table>
@@ -66,8 +69,13 @@ function renderCouplesTable(couples, grise = false) {
           </tr>
         </thead>
         <tbody>
-          ${couples.map(c => `
-            <tr style="${rowStyle}">
+          ${couples.map(c => {
+            const ligneeMale    = lignees.find(l => l.id === c.male?.lignee_id);
+            const ligneeFemelle = lignees.find(l => l.id === c.femelle?.lignee_id);
+            const styleMale    = ligneeStyle(ligneeMale);
+            const styleFemelle = ligneeStyle(ligneeFemelle);
+            return `
+            <tr style="${opacite} ${styleMale.rowBg} ${styleMale.borderLeft}">
               <td>
                 ${c.case_numero
                   ? `<span style="display:inline-block; padding:2px 10px;
@@ -76,18 +84,20 @@ function renderCouplesTable(couples, grise = false) {
                   : '—'}
               </td>
               <td>
-                <strong>${c.male ? c.male.matricule : '—'}</strong>
-                ${c.male?.couleur_plumage
-                  ? `<br><span style="font-size:12px; color:var(--text-light);">
-                       ${c.male.couleur_plumage}</span>`
-                  : ''}
+                <div><strong>${c.male ? c.male.matricule : '—'}</strong></div>
+                ${ligneeMale
+                  ? `<span style="${styleMale.badge}">${ligneeMale.nom}</span>`
+                  : (c.male?.couleur_plumage
+                      ? `<span style="font-size:12px; color:var(--text-light);">${c.male.couleur_plumage}</span>`
+                      : '')}
               </td>
               <td>
-                <strong>${c.femelle ? c.femelle.matricule : '—'}</strong>
-                ${c.femelle?.couleur_plumage
-                  ? `<br><span style="font-size:12px; color:var(--text-light);">
-                       ${c.femelle.couleur_plumage}</span>`
-                  : ''}
+                <div><strong>${c.femelle ? c.femelle.matricule : '—'}</strong></div>
+                ${ligneeFemelle
+                  ? `<span style="${styleFemelle.badge}">${ligneeFemelle.nom}</span>`
+                  : (c.femelle?.couleur_plumage
+                      ? `<span style="font-size:12px; color:var(--text-light);">${c.femelle.couleur_plumage}</span>`
+                      : '')}
               </td>
               <td>${c.annee}</td>
               <td>
@@ -112,7 +122,8 @@ function renderCouplesTable(couples, grise = false) {
                     style="padding:6px 10px; font-size:12px;">🗑️</button>
                 </div>
               </td>
-            </tr>`).join('')}
+            </tr>`;
+          }).join('')}
         </tbody>
       </table>
     </div>`;
@@ -121,7 +132,14 @@ function renderCouplesTable(couples, grise = false) {
 // ── Détail couple ─────────────────────────────────────────────────────────────
 
 async function openDetailCouple(id) {
-  const c = await apiFetch(`/couples/${id}`);
+  const [c, lignees] = await Promise.all([
+    apiFetch(`/couples/${id}`),
+    apiFetch('/lignees/'),
+  ]);
+  const ligneeMale    = lignees.find(l => l.id === c.male?.lignee_id);
+  const ligneeFemelle = lignees.find(l => l.id === c.femelle?.lignee_id);
+  const styleMale    = ligneeStyle(ligneeMale);
+  const styleFemelle = ligneeStyle(ligneeFemelle);
 
   const nicheeRows = c.nichees.length === 0
     ? `<tr><td colspan="6" style="text-align:center; color:var(--text-light);
@@ -156,8 +174,9 @@ async function openDetailCouple(id) {
     <!-- Infos couple -->
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;
       margin-bottom:16px;">
-      <div style="background:var(--bg); border-radius:10px; padding:16px;
-        border-left:4px solid #2980B9;">
+      <div style="background:${ligneeMale ? ligneeMale.couleur_label + '1A' : 'var(--bg)'};
+        border-radius:10px; padding:16px;
+        border-left:4px solid ${ligneeMale?.couleur_label || '#2980B9'};">
         <div style="font-size:11px; color:var(--text-light); margin-bottom:6px;
           text-transform:uppercase; font-weight:600;">♂️ Mâle</div>
         <div style="font-size:18px; font-weight:700; font-family:'Playfair Display',serif;">
@@ -166,10 +185,14 @@ async function openDetailCouple(id) {
         ${c.male?.couleur_plumage
           ? `<div style="font-size:13px; color:var(--text-light); margin-top:4px;">
                ${c.male.couleur_plumage}</div>` : ''}
-        ${c.male ? `<div style="margin-top:8px;">${badgeStatut(c.male.statut)}</div>` : ''}
+        <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+          ${c.male ? badgeStatut(c.male.statut) : ''}
+          ${ligneeMale ? `<span style="${styleMale.badge}">${ligneeMale.nom}</span>` : ''}
+        </div>
       </div>
-      <div style="background:var(--bg); border-radius:10px; padding:16px;
-        border-left:4px solid #E91E8C;">
+      <div style="background:${ligneeFemelle ? ligneeFemelle.couleur_label + '1A' : 'var(--bg)'};
+        border-radius:10px; padding:16px;
+        border-left:4px solid ${ligneeFemelle?.couleur_label || '#E91E8C'};">
         <div style="font-size:11px; color:var(--text-light); margin-bottom:6px;
           text-transform:uppercase; font-weight:600;">♀️ Femelle</div>
         <div style="font-size:18px; font-weight:700; font-family:'Playfair Display',serif;">
@@ -178,7 +201,10 @@ async function openDetailCouple(id) {
         ${c.femelle?.couleur_plumage
           ? `<div style="font-size:13px; color:var(--text-light); margin-top:4px;">
                ${c.femelle.couleur_plumage}</div>` : ''}
-        ${c.femelle ? `<div style="margin-top:8px;">${badgeStatut(c.femelle.statut)}</div>` : ''}
+        <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+          ${c.femelle ? badgeStatut(c.femelle.statut) : ''}
+          ${ligneeFemelle ? `<span style="${styleFemelle.badge}">${ligneeFemelle.nom}</span>` : ''}
+        </div>
       </div>
     </div>
 

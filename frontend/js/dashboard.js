@@ -99,18 +99,20 @@ async function loadDashboard() {
                    </tr>
                  </thead>
                  <tbody>
-                   ${Object.entries(parLignee).map(([nom, count]) => `
+                   ${Object.entries(parLignee).map(([nom, count]) => {
+                     const lig = lignees.find(l => l.nom === nom);
+                     const style = ligneeStyle(lig);
+                     return `
                      <tr>
                        <td>
-                         <span class="lignee-dot" style="background:${
-                           lignees.find(l => l.nom === nom)?.couleur_label || '#95A5A6'
-                         }"></span>
-                         ${nom}
+                         ${lig
+                           ? `<span style="${style.badge}">${nom}</span>`
+                           : `<span style="color:var(--text-light)">${nom}</span>`}
                        </td>
                        <td><strong>${count}</strong></td>
                        <td>${Math.round(count / pigeons.length * 100)}%</td>
-                     </tr>
-                   `).join('')}
+                     </tr>`;
+                   }).join('')}
                  </tbody>
                </table>
              </div>`
@@ -166,15 +168,19 @@ async function loadDashboard() {
                    </tr>
                  </thead>
                  <tbody>
-                   ${pigeons.slice(-5).reverse().map(p => `
-                     <tr style="cursor:pointer;" onclick="navigateTo('pigeons')">
+                   ${pigeons.slice(-5).reverse().map(p => {
+                     const lignee = lignees.find(l => l.id === p.lignee_id);
+                     const style = ligneeStyle(lignee);
+                     return `
+                     <tr style="cursor:pointer; ${style.rowBg} ${style.borderLeft}"
+                       onclick="navigateTo('pigeons')">
                        <td>${pigeonPhoto(p.photo, p.matricule)}</td>
                        <td><strong>${p.matricule}</strong></td>
                        <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
                        <td>${badgeStatut(p.statut)}</td>
                        <td>${p.colombier_case || '—'}</td>
-                     </tr>
-                   `).join('')}
+                     </tr>`;
+                   }).join('')}
                  </tbody>
                </table>
              </div>`

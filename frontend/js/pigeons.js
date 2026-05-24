@@ -177,16 +177,16 @@ function appliquerFiltresEtTri() {
   if (!tbody) return;
   tbody.innerHTML = result.map(p => {
     const lignee = pigeonState.lignees.find(l => l.id === p.lignee_id);
+    const style = ligneeStyle(lignee);
     return `
-      <tr>
+      <tr style="${style.rowBg} ${style.borderLeft}">
         <td>${pigeonPhoto(p.photo, p.matricule)}</td>
         <td><strong>${p.matricule}</strong></td>
         <td>${p.annee_naissance}</td>
         <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
         <td>${lignee
-          ? `<span class="lignee-dot"
-               style="background:${lignee.couleur_label || '#95A5A6'}"></span>${lignee.nom}`
-          : '—'}</td>
+          ? `<span style="${style.badge}">${lignee.nom}</span>`
+          : '<span style="color:var(--text-light)">—</span>'}</td>
         <td>${p.colombier_case || '—'}</td>
         <td>${badgeStatut(p.statut)}</td>
         <td>
@@ -242,11 +242,13 @@ function reinitialiserFiltres() {
 
 // ===== DETAIL PIGEON =====
 async function openDetailPigeon(id) {
-  const [p, perfs, sante] = await Promise.all([
+  const [p, perfs, sante, lignees] = await Promise.all([
     apiFetch(`/pigeons/${id}`),
     apiFetch(`/performances/pigeon/${id}`),
     apiFetch(`/sante/pigeon/${id}`),
+    apiFetch('/lignees/'),
   ]);
+  const lignee = lignees.find(l => l.id === p.lignee_id);
 
   const perfsTriees = [...perfs].sort((a, b) => b.date.localeCompare(a.date));
   const santeTriee  = [...sante].sort((a, b) => b.date.localeCompare(a.date));
@@ -313,10 +315,16 @@ async function openDetailPigeon(id) {
           <div><span style="color:var(--text-light); font-size:11px;
             text-transform:uppercase;">Case</span><br>
             ${p.colombier_case || '—'}</div>
-          <div style="grid-column:span 2;">
-            <span style="color:var(--text-light); font-size:11px;
-              text-transform:uppercase;">Couleur</span><br>
+          <div><span style="color:var(--text-light); font-size:11px;
+            text-transform:uppercase;">Couleur</span><br>
             ${p.couleur_plumage || '—'}</div>
+          <div><span style="color:var(--text-light); font-size:11px;
+            text-transform:uppercase;">Lignée</span><br>
+            ${lignee
+              ? `<span style="background:${lignee.couleur_label}; color:white;
+                   padding:4px 12px; border-radius:12px; font-weight:600;
+                   font-size:12px; display:inline-block;">${lignee.nom}</span>`
+              : '—'}</div>
         </div>
       </div>
     </div>`;
@@ -642,9 +650,10 @@ function fmtDate(iso) {
 
 async function loadPerformances() {
   const content = document.getElementById('content');
-  const [perfs, pigeons] = await Promise.all([
+  const [perfs, pigeons, lignees] = await Promise.all([
     apiFetch('/performances/'),
-    apiFetch('/pigeons/')
+    apiFetch('/pigeons/'),
+    apiFetch('/lignees/')
   ]);
   const byId = Object.fromEntries(pigeons.map(p => [p.id, p]));
   const sorted = [...perfs].sort((a, b) => b.date.localeCompare(a.date));
@@ -678,9 +687,14 @@ async function loadPerformances() {
           <tbody>
             ${sorted.map(p => {
               const pigeon = byId[p.pigeon_id];
+              const lignee = lignees.find(l => l.id === pigeon?.lignee_id);
+              const style = ligneeStyle(lignee);
               return `
-                <tr>
-                  <td><strong>${pigeon ? pigeon.matricule : '—'}</strong></td>
+                <tr style="${style.rowBg} ${style.borderLeft}">
+                  <td>
+                    <div style="font-weight:600">${pigeon ? pigeon.matricule : '—'}</div>
+                    ${lignee ? `<span style="${style.badge}">${lignee.nom}</span>` : ''}
+                  </td>
                   <td>${p.nom_concours}</td>
                   <td>${fmtDate(p.date)}</td>
                   <td>${p.distance_km ? p.distance_km + ' km' : '—'}</td>
@@ -809,9 +823,10 @@ function badgeType(type) {
 
 async function loadSante() {
   const content = document.getElementById('content');
-  const [events, pigeons] = await Promise.all([
+  const [events, pigeons, lignees] = await Promise.all([
     apiFetch('/sante/'),
-    apiFetch('/pigeons/')
+    apiFetch('/pigeons/'),
+    apiFetch('/lignees/')
   ]);
   const byId = Object.fromEntries(pigeons.map(p => [p.id, p]));
   const sorted = [...events].sort((a, b) => b.date.localeCompare(a.date));
@@ -843,9 +858,14 @@ async function loadSante() {
           <tbody>
             ${sorted.map(e => {
               const pigeon = byId[e.pigeon_id];
+              const lignee = lignees.find(l => l.id === pigeon?.lignee_id);
+              const style = ligneeStyle(lignee);
               return `
-                <tr>
-                  <td><strong>${pigeon ? pigeon.matricule : '—'}</strong></td>
+                <tr style="${style.rowBg} ${style.borderLeft}">
+                  <td>
+                    <div style="font-weight:600">${pigeon ? pigeon.matricule : '—'}</div>
+                    ${lignee ? `<span style="${style.badge}">${lignee.nom}</span>` : ''}
+                  </td>
                   <td>${fmtDate(e.date)}</td>
                   <td>${badgeType(e.type)}</td>
                   <td style="max-width:260px; white-space:normal; font-size:13px;">
