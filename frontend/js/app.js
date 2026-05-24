@@ -82,6 +82,11 @@ const pages = {
     title: 'Santé',
     load: () => loadSante(),
     addLabel: '+ Ajouter un événement'
+  },
+  couples: {
+    title: 'Couples & Reproduction',
+    load: () => loadCouples(),
+    addLabel: '+ Nouveau couple'
   }
 };
 
@@ -126,6 +131,7 @@ document.getElementById('btn-add').addEventListener('click', () => {
   if (currentPage === 'pigeons') openAddPigeon();
   if (currentPage === 'performances') openAddPerformance();
   if (currentPage === 'sante') openAddSante();
+  if (currentPage === 'couples') openAddCouple();
 });
 
 // ===== BADGES STATUT =====

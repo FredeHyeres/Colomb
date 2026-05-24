@@ -9,7 +9,8 @@ from routers import (
     lignees_router,
     pigeons_router,
     performances_router,
-    sante_router
+    sante_router,
+    couples_router
 )
 
 # Créer les tables au démarrage
@@ -45,6 +46,7 @@ app.include_router(lignees_router, prefix="/api")
 app.include_router(pigeons_router, prefix="/api")
 app.include_router(performances_router, prefix="/api")
 app.include_router(sante_router, prefix="/api")
+app.include_router(couples_router, prefix="/api")
 
 
 @app.get("/")

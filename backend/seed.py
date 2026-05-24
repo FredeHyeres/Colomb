@@ -8,6 +8,8 @@ from models.pigeon import Pigeon, Sexe, Statut
 from models.lignee import Lignee
 from models.performance import Performance
 from models.sante import Sante, TypeEvenement
+from models.couple import Couple
+from models.nichee import Nichee
 
 
 async def seed():
@@ -209,12 +211,48 @@ async def seed():
             ),
         ]
         session.add_all(sante_events)
+        await session.flush()
+
+        # ── Couples ───────────────────────────────────────────────────────────
+        couple1 = Couple(
+            id=str(uuid.uuid4()),
+            male_id=p_fr20_001.id, femelle_id=p_fr20_002.id,
+            case_numero="A3", annee=2024, actif=True,
+        )
+        couple2 = Couple(
+            id=str(uuid.uuid4()),
+            male_id=p_be20_001.id, femelle_id=p_fr20_002.id,
+            case_numero="C3", annee=2024, actif=True,
+        )
+        couple3 = Couple(
+            id=str(uuid.uuid4()),
+            male_id=p_fr18_001.id, femelle_id=p_fr18_002.id,
+            case_numero="A1", annee=2022, actif=False,
+        )
+        session.add_all([couple1, couple2, couple3])
+        await session.flush()
+
+        # ── Nichées ───────────────────────────────────────────────────────────
+        nichees = [
+            Nichee(id=str(uuid.uuid4()), couple_id=couple1.id,
+                   date_ponte=date(2024, 2, 1), date_eclosion=date(2024, 2, 15), nombre_oeufs=2),
+            Nichee(id=str(uuid.uuid4()), couple_id=couple1.id,
+                   date_ponte=date(2024, 4, 10), date_eclosion=date(2024, 4, 24), nombre_oeufs=2),
+            Nichee(id=str(uuid.uuid4()), couple_id=couple2.id,
+                   date_ponte=date(2024, 3, 5), date_eclosion=date(2024, 3, 19), nombre_oeufs=1),
+            Nichee(id=str(uuid.uuid4()), couple_id=couple3.id,
+                   date_ponte=date(2022, 3, 1), date_eclosion=date(2022, 3, 15), nombre_oeufs=2),
+            Nichee(id=str(uuid.uuid4()), couple_id=couple3.id,
+                   date_ponte=date(2022, 5, 20), date_eclosion=date(2022, 6, 3), nombre_oeufs=2),
+        ]
+        session.add_all(nichees)
 
         await session.commit()
         print(
             f"✅ 4 lignées, 15 pigeons, "
             f"{len(performances)} performances, "
-            f"{len(sante_events)} santé insérés"
+            f"{len(sante_events)} santé, "
+            f"3 couples, {len(nichees)} nichées insérés"
         )
 
 
