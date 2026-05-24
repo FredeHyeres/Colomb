@@ -1,0 +1,4 @@
+from .lignees import router as lignees_router
+from .pigeons import router as pigeons_router
+from .performances import router as performances_router
+from .sante import router as sante_router
