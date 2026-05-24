@@ -79,6 +79,10 @@ function buildPedigreeHTML(pigeon) {
         closeModal();">
         Fermer
       </button>
+      <button class="btn btn-primary" style="background:#27AE60; border-color:#27AE60;"
+        onclick="exportPedigreePDF('${pigeon.id}')">
+        📄 Exporter PDF
+      </button>
     </div>`;
 }
 
