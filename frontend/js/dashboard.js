@@ -1,11 +1,34 @@
 async function loadDashboard() {
   const content = document.getElementById('content');
 
-  // Charger les données
-  const [pigeons, lignees] = await Promise.all([
-    apiFetch('/pigeons/'),
-    apiFetch('/lignees/')
-  ]);
+  // Retry jusqu'à 5 fois avec 1 seconde d'intervalle si l'API n'est pas prête
+  const MAX_RETRIES = 5;
+  let pigeons, lignees;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    content.innerHTML = `<div class="loading">Connexion à l'API... (tentative ${attempt}/${MAX_RETRIES})</div>`;
+    try {
+      [pigeons, lignees] = await Promise.all([
+        apiFetch('/pigeons/'),
+        apiFetch('/lignees/')
+      ]);
+      break;
+    } catch (err) {
+      if (attempt === MAX_RETRIES) {
+        content.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">⚠️</div>
+            <div class="empty-state-text">Impossible de contacter l'API</div>
+            <div class="empty-state-sub">${err.message || 'Erreur réseau — vérifiez que le backend est démarré'}</div>
+            <button class="btn btn-primary" style="margin-top:16px;" onclick="retryLoad()">
+              🔄 Réessayer
+            </button>
+          </div>`;
+        return;
+      }
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
 
   // Calcul des stats
   const actifs = pigeons.filter(p => p.statut === 'actif').length;
@@ -147,7 +170,7 @@ async function loadDashboard() {
                      <tr style="cursor:pointer;" onclick="navigateTo('pigeons')">
                        <td>${pigeonPhoto(p.photo, p.matricule)}</td>
                        <td><strong>${p.matricule}</strong></td>
-                       <td>${p.sexe === 'mâle' ? '♂️' : '♀️'} ${p.sexe}</td>
+                       <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
                        <td>${badgeStatut(p.statut)}</td>
                        <td>${p.colombier_case || '—'}</td>
                      </tr>

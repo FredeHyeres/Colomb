@@ -3,21 +3,26 @@ const API_URL = 'http://localhost:8001/api';
 
 // ===== UTILITAIRES API =====
 async function apiFetch(endpoint, options = {}) {
+  // Les erreurs réseau (API non joignable) sont propagées silencieusement
+  // pour permettre au appelant de gérer le retry.
+  // Seules les erreurs HTTP (4xx/5xx) déclenchent une notification.
+  let response;
   try {
-    const response = await fetch(`${API_URL}${endpoint}`, {
+    response = await fetch(`${API_URL}${endpoint}`, {
       headers: { 'Content-Type': 'application/json', ...options.headers },
       ...options
     });
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Erreur API');
-    }
-    if (response.status === 204) return null;
-    return await response.json();
   } catch (err) {
-    showNotification(err.message, 'danger');
     throw err;
   }
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    const msg = error.detail || 'Erreur API';
+    showNotification(msg, 'danger');
+    throw new Error(msg);
+  }
+  if (response.status === 204) return null;
+  return await response.json();
 }
 
 // ===== NOTIFICATIONS =====
@@ -146,5 +151,11 @@ function pigeonPhoto(photo, nom) {
   return `<div class="pigeon-photo-placeholder">🕊️</div>`;
 }
 
+// ===== RETRY =====
+function retryLoad() {
+  navigateTo(currentPage);
+}
+
 // ===== DÉMARRAGE =====
-navigateTo('dashboard');
+// Délai 500ms pour laisser l'API finir son démarrage avant le premier appel
+setTimeout(() => navigateTo('dashboard'), 500);
