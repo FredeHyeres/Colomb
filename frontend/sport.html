@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colombophilie – Sport & Nutrition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Variables & Reset ─────────────────────────────────────────────── */
+    :root {
+      --sidebar-bg: #2C3E50;
+      --sidebar-text: #ECF0F1;
+      --sidebar-hover: #34495E;
+      --sidebar-active: #2980B9;
+      --accent: #2980B9;
+      --accent-hover: #2471A3;
+      --ocre: #C4963A;
+      --bg: #F4F6F8;
+      --bg-card: #FFFFFF;
+      --text: #1E2A35;
+      --text-light: #7F8C8D;
+      --border: #DDE3EA;
+      --success: #27AE60;
+      --danger: #E74C3C;
+      --warning: #F39C12;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --sidebar-width: 240px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ───────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      padding: 28px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .logo-icon { font-size: 28px; }
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: white;
+    }
+    .sidebar-nav {
+      padding: 20px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      color: var(--sidebar-text);
+      text-decoration: none;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .nav-item:hover { background: var(--sidebar-hover); }
+    .nav-item.active { background: var(--sidebar-active); font-weight: 600; }
+    .nav-icon { font-size: 18px; width: 22px; text-align: center; }
+    .sidebar-footer {
+      padding: 16px 24px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    /* ── Main ──────────────────────────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 32px 36px;
+      min-height: 100vh;
+    }
+
+    /* ── Page header ───────────────────────────────────────────────────── */
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: var(--text);
+    }
+    .page-subtitle { font-size: 13px; color: var(--text-light); margin-top: 4px; }
+
+    /* ── Cards ─────────────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-card .stat-label { font-size: 12px; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 600; color: var(--accent); }
+    .stat-card .stat-desc { font-size: 12px; color: var(--text-light); }
+
+    /* ── Section visibility ────────────────────────────────────────────── */
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* ── Boutons ───────────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-sm { padding: 5px 12px; font-size: 12px; }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover { background: var(--bg); }
+
+    /* ── Tableau ───────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead th {
+      background: var(--bg);
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--text-light);
+      border-bottom: 2px solid var(--border);
+    }
+    tbody tr:hover { background: #f9fbfd; }
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .badge-loft { background: #EAF4FB; color: var(--accent); }
+    .badge-toss { background: #FEF9E7; color: var(--warning); }
+    .badge-race { background: #EAFAF1; color: var(--success); }
+
+    /* ── Tabs ──────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      font-size: 14px;
+      font-weight: 500;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-light);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Modal ─────────────────────────────────────────────────────────── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: white;
+      border-radius: var(--radius);
+      padding: 32px;
+      width: 480px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .modal-title { font-size: 18px; font-weight: 600; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      cursor: pointer;
+      color: var(--text-light);
+      line-height: 1;
+    }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      background: var(--bg);
+      color: var(--text);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ── Section header ────────────────────────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .section-title { font-size: 18px; font-weight: 600; }
+
+    /* ── Select pigeon ─────────────────────────────────────────────────── */
+    .history-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .history-controls select {
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      min-width: 200px;
+    }
+
+    /* ── Empty state ───────────────────────────────────────────────────── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 24px;
+      color: var(--text-light);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state p { font-size: 14px; }
+
+    /* ── Toast ─────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--text);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+    #toast.success { background: var(--success); }
+    #toast.error { background: var(--danger); }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">🕊️</span>
+    <span class="logo-text">Colombophilie</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="index.html" class="nav-item">
+      <span class="nav-icon">🏠</span><span>Tableau de bord</span>
+    </a>
+    <a href="index.html#pigeons" class="nav-item">
+      <span class="nav-icon">🕊️</span><span>Pigeons</span>
+    </a>
+    <a href="index.html#performances" class="nav-item">
+      <span class="nav-icon">🏆</span><span>Performances</span>
+    </a>
+    <a href="index.html#sante" class="nav-item">
+      <span class="nav-icon">🏥</span><span>Santé</span>
+    </a>
+    <a href="sport.html" class="nav-item active">
+      <span class="nav-icon">💪</span><span>Sport & Nutrition</span>
+    </a>
+  </nav>
+  <div class="sidebar-footer">v1.0.0 — Sport</div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Sport & Nutrition</h1>
+      <p class="page-subtitle">Entraînements, suivi des pigeons et plans alimentaires</p>
+    </div>
+  </div>
+
+  <!-- Sous-navigation -->
+  <div class="tabs" id="mainTabs" style="margin-bottom: 28px;">
+    <button class="tab-btn active" onclick="showSection('dashboard')">📊 Tableau de bord</button>
+    <button class="tab-btn" onclick="showSection('seances')">🏃 Séances</button>
+    <button class="tab-btn" onclick="showSection('nutrition')">🌾 Nutrition</button>
+    <button class="tab-btn" onclick="showSection('historique')">📋 Historique pigeon</button>
+  </div>
+
+  <!-- ── Section Dashboard ──────────────────────────────────────────────── -->
+  <div id="section-dashboard" class="section active">
+    <div class="stats-grid" id="dashboardStats">
+      <div class="stat-card">
+        <span class="stat-label">Séances totales</span>
+        <span class="stat-value" id="statSessions">—</span>
+        <span class="stat-desc">entraînements enregistrés</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Pigeons actifs</span>
+        <span class="stat-value" id="statPigeons">—</span>
+        <span class="stat-desc">participants aux séances</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Récupération moy.</span>
+        <span class="stat-value" id="statRecovery">—</span>
+        <span class="stat-desc">score moyen / 10</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Plan actif</span>
+        <span class="stat-value" style="font-size:16px;" id="statPlan">—</span>
+        <span class="stat-desc">plan nutritionnel en cours</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">Dernières séances</span>
+        <button class="btn btn-primary btn-sm" onclick="showSection('seances')">Voir tout</button>
+      </div>
+      <div class="table-wrap">
+        <table id="dashboardSessionsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Distance</th>
+              <th>Météo</th>
+              <th>Temp.</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardSessionsBody">
+            <tr><td colspan="5" style="text-align:center;color:var(--text-light)">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section Séances ────────────────────────────────────────────────── -->
+  <div id="section-seances" class="section">
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">Séances d'entraînement</span>
+        <button class="btn btn-primary" onclick="openCreateSessionModal()">+ Nouvelle séance</button>
+      </div>
+      <div class="table-wrap">
+        <table id="sessionsTable">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Distance</th>
+              <th>Météo</th>
+              <th>Temp.</th>
+              <th>Vent</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="sessionsBody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text-light)">Chargement…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section Nutrition ──────────────────────────────────────────────── -->
+  <div id="section-nutrition" class="section">
+    <div class="tabs" id="nutritionTabs">
+      <button class="tab-btn active" onclick="showNutritionTab('ingredients')">Ingrédients</button>
+      <button class="tab-btn" onclick="showNutritionTab('melanges')">Mélanges</button>
+      <button class="tab-btn" onclick="showNutritionTab('plans')">Plans</button>
+      <button class="tab-btn" onclick="showNutritionTab('supplements')">Suppléments</button>
+    </div>
+
+    <!-- Ingrédients -->
+    <div id="tab-ingredients" class="tab-panel active">
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Ingrédients alimentaires</span>
+          <button class="btn btn-primary" onclick="openCreateIngredientModal()">+ Ajouter</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Protéines %</th>
+                <th>Lipides %</th>
+                <th>Glucides %</th>
+                <th>Indice énergie</th>
+                <th>Digestion</th>
+              </tr>
+            </thead>
+            <tbody id="ingredientsBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-light)">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mélanges -->
+    <div id="tab-melanges" class="tab-panel">
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Mélanges alimentaires</span>
+          <button class="btn btn-primary" onclick="openCreateMixModal()">+ Nouveau mélange</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Description</th>
+                <th>Nb ingrédients</th>
+              </tr>
+            </thead>
+            <tbody id="mixesBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-light)">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Plans -->
+    <div id="tab-plans" class="tab-panel">
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Plans nutritionnels</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Cible</th>
+                <th>Description</th>
+                <th>Nb jours</th>
+              </tr>
+            </thead>
+            <tbody id="plansBody">
+              <tr><td colspan="5" style="text-align:center;color:var(--text-light)">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Suppléments -->
+    <div id="tab-supplements" class="tab-panel">
+      <div class="card">
+        <div class="section-header">
+          <span class="section-title">Suppléments</span>
+          <button class="btn btn-primary" onclick="openCreateSupplementModal()">+ Ajouter</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Catégorie</th>
+                <th>Dosage</th>
+                <th>Utilisation</th>
+              </tr>
+            </thead>
+            <tbody id="supplementsBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text-light)">Chargement…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Section Historique pigeon ──────────────────────────────────────── -->
+  <div id="section-historique" class="section">
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">Historique d'entraînement par pigeon</span>
+      </div>
+      <div class="history-controls">
+        <label for="pigeonSelect" style="font-size:14px;font-weight:500;">Sélectionner un pigeon :</label>
+        <select id="pigeonSelect" onchange="loadPigeonHistory(this.value)">
+          <option value="">-- Choisir --</option>
+        </select>
+      </div>
+      <!-- Indices calculés -->
+      <div id="pigeonIndices" style="display:none; margin-bottom:20px;">
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="stat-card">
+            <span class="stat-label">Récupération</span>
+            <span class="stat-value" id="idxRecovery">—</span>
+            <span class="stat-desc">moy. 5 dernières séances</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Condition</span>
+            <span class="stat-value" id="idxCondition">—</span>
+            <span class="stat-desc">condition + motivation</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-label">Régularité</span>
+            <span class="stat-value" id="idxRegularity">—</span>
+            <span class="stat-desc">séances × 10 / 30 jours</span>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Séance</th>
+              <th>Retour (min)</th>
+              <th>Rang</th>
+              <th>Récupération</th>
+              <th>Motivation</th>
+              <th>Condition</th>
+              <th>Hydratation</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody id="historyBody">
+            <tr><td colspan="8" style="text-align:center;color:var(--text-light)">Sélectionnez un pigeon</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Modal : Créer une séance ──────────────────────────────────────── -->
+<div class="modal-overlay" id="modalSession">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouvelle séance d'entraînement</span>
+      <button class="modal-close" onclick="closeModal('modalSession')">✕</button>
+    </div>
+    <form id="formSession" onsubmit="submitSession(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date *</label>
+          <input type="date" name="date" required>
+        </div>
+        <div class="form-group">
+          <label>Type *</label>
+          <select name="session_type" required>
+            <option value="loft">Loft</option>
+            <option value="toss">Toss (lâcher)</option>
+            <option value="race">Course</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Distance (km)</label>
+          <input type="number" step="0.1" name="distance_km" placeholder="ex. 25.0">
+        </div>
+        <div class="form-group">
+          <label>Température (°C)</label>
+          <input type="number" step="0.1" name="temperature_c" placeholder="ex. 18.5">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Météo</label>
+          <input type="text" name="weather" placeholder="ex. Ensoleillé">
+        </div>
+        <div class="form-group">
+          <label>Vent</label>
+          <input type="text" name="wind" placeholder="ex. Vent SO 15 km/h">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Observations…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalSession')">Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer la séance</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal : Créer un ingrédient ───────────────────────────────────── -->
+<div class="modal-overlay" id="modalIngredient">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouvel ingrédient</span>
+      <button class="modal-close" onclick="closeModal('modalIngredient')">✕</button>
+    </div>
+    <form id="formIngredient" onsubmit="submitIngredient(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" name="name" required placeholder="ex. Maïs">
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <input type="text" name="category" placeholder="ex. céréale">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Protéines (%)</label>
+          <input type="number" step="0.1" name="protein_pct">
+        </div>
+        <div class="form-group">
+          <label>Lipides (%)</label>
+          <input type="number" step="0.1" name="fat_pct">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Glucides (%)</label>
+          <input type="number" step="0.1" name="carbs_pct">
+        </div>
+        <div class="form-group">
+          <label>Indice énergie</label>
+          <input type="number" step="0.01" name="energy_index">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Vitesse de digestion</label>
+        <select name="digestion_speed">
+          <option value="">—</option>
+          <option value="lent">Lent</option>
+          <option value="moyen">Moyen</option>
+          <option value="rapide">Rapide</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Observations…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalIngredient')">Annuler</button>
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal : Créer un mélange ──────────────────────────────────────── -->
+<div class="modal-overlay" id="modalMix">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouveau mélange</span>
+      <button class="modal-close" onclick="closeModal('modalMix')">✕</button>
+    </div>
+    <form id="formMix" onsubmit="submitMix(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" name="name" required placeholder="ex. Mélange entraînement">
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <input type="text" name="category" placeholder="ex. entraînement">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea name="description" placeholder="Description du mélange…"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalMix')">Annuler</button>
+        <button type="submit" class="btn btn-primary">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Modal : Créer un supplément ───────────────────────────────────── -->
+<div class="modal-overlay" id="modalSupplement">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Nouveau supplément</span>
+      <button class="modal-close" onclick="closeModal('modalSupplement')">✕</button>
+    </div>
+    <form id="formSupplement" onsubmit="submitSupplement(event)">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Nom *</label>
+          <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+          <label>Catégorie</label>
+          <input type="text" name="category" placeholder="ex. vitamines">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Dosage</label>
+        <input type="text" name="dosage" placeholder="ex. 5 ml / litre d'eau">
+      </div>
+      <div class="form-group">
+        <label>Notes d'utilisation</label>
+        <textarea name="usage_notes"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modalSupplement')">Annuler</button>
+        <button type="submit" class="btn btn-primary">Ajouter</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8001/api';
+
+  // ── Utilitaires ───────────────────────────────────────────────────────────
+
+  async function apiFetch(path, options = {}) {
+    const res = await fetch(API + path, {
+      headers: { 'Content-Type': 'application/json', ...options.headers },
+      ...options,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `Erreur ${res.status}`);
+    }
+    if (res.status === 204) return null;
+    return res.json();
+  }
+
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => { t.className = ''; }, 3000);
+  }
+
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.getElementById(id).querySelector('form')?.reset();
+  }
+
+  // Fermer modal en cliquant l'overlay
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+
+  function formToObj(form) {
+    const data = {};
+    new FormData(form).forEach((v, k) => {
+      if (v !== '') data[k] = isNaN(v) || v === '' ? v : Number(v);
+    });
+    return data;
+  }
+
+  function badge(type) {
+    return `<span class="badge badge-${type}">${type}</span>`;
+  }
+
+  function scoreCell(v) {
+    if (v == null) return '<td style="color:var(--text-light)">—</td>';
+    const color = v >= 8 ? 'var(--success)' : v >= 6 ? 'var(--warning)' : 'var(--danger)';
+    return `<td style="font-weight:600;color:${color}">${v}/10</td>`;
+  }
+
+  // ── Navigation ────────────────────────────────────────────────────────────
+
+  function showSection(name) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById(`section-${name}`).classList.add('active');
+
+    document.querySelectorAll('#mainTabs .tab-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', btn.textContent.toLowerCase().includes(
+        name === 'dashboard' ? 'tableau' :
+        name === 'seances' ? 'séances' :
+        name === 'nutrition' ? 'nutrition' : 'historique'
+      ));
+    });
+
+    if (name === 'seances') loadSessions();
+    if (name === 'nutrition') loadNutrition();
+    if (name === 'historique') loadPigeonList();
+  }
+
+  function showNutritionTab(name) {
+    document.querySelectorAll('#nutritionTabs .tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`tab-${name}`).classList.add('active');
+    event.target.classList.add('active');
+
+    if (name === 'ingredients') loadIngredients();
+    else if (name === 'melanges') loadMixes();
+    else if (name === 'plans') loadPlans();
+    else if (name === 'supplements') loadSupplements();
+  }
+
+  // ── Dashboard ─────────────────────────────────────────────────────────────
+
+  async function loadDashboard() {
+    try {
+      const data = await apiFetch('/sport/dashboard');
+      document.getElementById('statSessions').textContent = data.total_sessions ?? '0';
+      document.getElementById('statPigeons').textContent = data.active_pigeons ?? '0';
+      document.getElementById('statRecovery').textContent =
+        data.avg_recovery != null ? data.avg_recovery.toFixed(1) : '—';
+      document.getElementById('statPlan').textContent = data.active_plan ?? '—';
+    } catch (e) {
+      console.error('Dashboard:', e);
+    }
+
+    try {
+      const sessions = await apiFetch('/sport/sessions?limit=5');
+      renderSessionsTable('dashboardSessionsBody', sessions, false);
+    } catch (e) { /* silencieux */ }
+  }
+
+  // ── Séances ───────────────────────────────────────────────────────────────
+
+  async function loadSessions() {
+    try {
+      const sessions = await apiFetch('/sport/sessions');
+      renderSessionsTable('sessionsBody', sessions, true);
+    } catch (e) {
+      document.getElementById('sessionsBody').innerHTML =
+        `<tr><td colspan="8" style="text-align:center;color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  function renderSessionsTable(tbodyId, sessions, withActions) {
+    const tbody = document.getElementById(tbodyId);
+    if (!sessions.length) {
+      tbody.innerHTML = `<tr><td colspan="${withActions ? 8 : 5}" class="empty-state"><div>Aucune séance enregistrée</div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = sessions.map(s => `
+      <tr>
+        <td>${s.date}</td>
+        <td>${badge(s.session_type)}</td>
+        <td>${s.distance_km != null ? s.distance_km + ' km' : '—'}</td>
+        <td>${s.weather || '—'}</td>
+        <td>${s.temperature_c != null ? s.temperature_c + ' °C' : '—'}</td>
+        ${withActions ? `<td>${s.wind || '—'}</td><td style="max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.notes || '—'}</td>` : ''}
+        ${withActions ? `<td><button class="btn btn-danger btn-sm" onclick="deleteSession(${s.id})">Supprimer</button></td>` : ''}
+      </tr>
+    `).join('');
+  }
+
+  function openCreateSessionModal() {
+    // Pré-remplir la date du jour
+    const today = new Date().toISOString().split('T')[0];
+    document.querySelector('#formSession [name="date"]').value = today;
+    openModal('modalSession');
+  }
+
+  async function submitSession(e) {
+    e.preventDefault();
+    const data = formToObj(e.target);
+    try {
+      await apiFetch('/sport/sessions', { method: 'POST', body: JSON.stringify(data) });
+      closeModal('modalSession');
+      showToast('Séance créée avec succès');
+      loadSessions();
+      loadDashboard();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  async function deleteSession(id) {
+    if (!confirm('Supprimer cette séance et tous ses résultats ?')) return;
+    try {
+      await apiFetch(`/sport/sessions/${id}`, { method: 'DELETE' });
+      showToast('Séance supprimée');
+      loadSessions();
+      loadDashboard();
+    } catch (err) {
+      showToast(err.message, 'error');
+    }
+  }
+
+  // ── Nutrition ─────────────────────────────────────────────────────────────
+
+  async function loadNutrition() {
+    loadIngredients();
+  }
+
+  async function loadIngredients() {
+    try {
+      const items = await apiFetch('/sport/nutrition/ingredients');
+      const tbody = document.getElementById('ingredientsBody');
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-light)">Aucun ingrédient</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(i => `
+        <tr>
+          <td><strong>${i.name}</strong></td>
+          <td>${i.category || '—'}</td>
+          <td>${i.protein_pct != null ? i.protein_pct + '%' : '—'}</td>
+          <td>${i.fat_pct != null ? i.fat_pct + '%' : '—'}</td>
+          <td>${i.carbs_pct != null ? i.carbs_pct + '%' : '—'}</td>
+          <td>${i.energy_index != null ? i.energy_index : '—'}</td>
+          <td>${i.digestion_speed || '—'}</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('ingredientsBody').innerHTML =
+        `<tr><td colspan="7" style="color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  function openCreateIngredientModal() { openModal('modalIngredient'); }
+
+  async function submitIngredient(e) {
+    e.preventDefault();
+    const data = formToObj(e.target);
+    try {
+      await apiFetch('/sport/nutrition/ingredients', { method: 'POST', body: JSON.stringify(data) });
+      closeModal('modalIngredient');
+      showToast('Ingrédient ajouté');
+      loadIngredients();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function loadMixes() {
+    try {
+      const items = await apiFetch('/sport/nutrition/mixes');
+      const tbody = document.getElementById('mixesBody');
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light)">Aucun mélange</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(m => `
+        <tr>
+          <td><strong>${m.name}</strong></td>
+          <td>${m.category || '—'}</td>
+          <td style="max-width:250px">${m.description || '—'}</td>
+          <td>${m.ingredients ? m.ingredients.length : 0} ingrédient(s)</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('mixesBody').innerHTML =
+        `<tr><td colspan="4" style="color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  function openCreateMixModal() { openModal('modalMix'); }
+
+  async function submitMix(e) {
+    e.preventDefault();
+    const data = formToObj(e.target);
+    try {
+      await apiFetch('/sport/nutrition/mixes', { method: 'POST', body: JSON.stringify(data) });
+      closeModal('modalMix');
+      showToast('Mélange créé');
+      loadMixes();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  async function loadPlans() {
+    try {
+      const items = await apiFetch('/sport/nutrition/plans');
+      const tbody = document.getElementById('plansBody');
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-light)">Aucun plan</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(p => `
+        <tr>
+          <td><strong>${p.name}</strong></td>
+          <td>${p.category || '—'}</td>
+          <td>${p.target_type || '—'}</td>
+          <td>${p.description || '—'}</td>
+          <td>${p.days ? p.days.length : 0} jour(s)</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('plansBody').innerHTML =
+        `<tr><td colspan="5" style="color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  async function loadSupplements() {
+    try {
+      const items = await apiFetch('/sport/supplements');
+      const tbody = document.getElementById('supplementsBody');
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-light)">Aucun supplément</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(s => `
+        <tr>
+          <td><strong>${s.name}</strong></td>
+          <td>${s.category || '—'}</td>
+          <td>${s.dosage || '—'}</td>
+          <td>${s.usage_notes || '—'}</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('supplementsBody').innerHTML =
+        `<tr><td colspan="4" style="color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  function openCreateSupplementModal() { openModal('modalSupplement'); }
+
+  async function submitSupplement(e) {
+    e.preventDefault();
+    const data = formToObj(e.target);
+    try {
+      await apiFetch('/sport/supplements', { method: 'POST', body: JSON.stringify(data) });
+      closeModal('modalSupplement');
+      showToast('Supplément ajouté');
+      loadSupplements();
+    } catch (err) { showToast(err.message, 'error'); }
+  }
+
+  // ── Historique pigeon ─────────────────────────────────────────────────────
+
+  async function loadPigeonList() {
+    try {
+      const pigeons = await apiFetch('/pigeons/');
+      const sel = document.getElementById('pigeonSelect');
+      // Conserver la sélection en cours
+      const current = sel.value;
+      sel.innerHTML = '<option value="">-- Choisir --</option>';
+      pigeons.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.matricule} (${p.annee_naissance})`;
+        sel.appendChild(opt);
+      });
+      if (current) sel.value = current;
+    } catch (e) { console.error('Pigeons:', e); }
+  }
+
+  async function loadPigeonHistory(pigeonId) {
+    if (!pigeonId) {
+      document.getElementById('historyBody').innerHTML =
+        '<tr><td colspan="8" style="text-align:center;color:var(--text-light)">Sélectionnez un pigeon</td></tr>';
+      document.getElementById('pigeonIndices').style.display = 'none';
+      return;
+    }
+    try {
+      const data = await apiFetch(`/sport/pigeons/${pigeonId}/history`);
+      document.getElementById('idxRecovery').textContent = data.recovery_index ?? '—';
+      document.getElementById('idxCondition').textContent = data.condition_index ?? '—';
+      document.getElementById('idxRegularity').textContent = data.regularity_index ?? '—';
+      document.getElementById('pigeonIndices').style.display = 'block';
+
+      const tbody = document.getElementById('historyBody');
+      if (!data.results || !data.results.length) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-light)">Aucun résultat pour ce pigeon</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.results.map(r => `
+        <tr>
+          <td>${r.session_id}</td>
+          <td>${r.return_time_minutes != null ? r.return_time_minutes.toFixed(1) + ' min' : '—'}</td>
+          <td>${r.internal_rank != null ? '#' + r.internal_rank : '—'}</td>
+          ${scoreCell(r.recovery_score)}
+          ${scoreCell(r.motivation_score)}
+          ${scoreCell(r.condition_score)}
+          ${scoreCell(r.hydration_score)}
+          <td>${r.notes || '—'}</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      document.getElementById('historyBody').innerHTML =
+        `<tr><td colspan="8" style="color:var(--danger)">${e.message}</td></tr>`;
+    }
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+
+  document.addEventListener('DOMContentLoaded', () => {
+    loadDashboard();
+  });
+</script>
+</body>
+</html>

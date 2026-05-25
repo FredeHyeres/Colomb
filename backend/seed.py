@@ -10,6 +10,11 @@ from models.performance import Performance
 from models.sante import Sante, TypeEvenement
 from models.couple import Couple
 from models.nichee import Nichee
+from models.sport import (
+    TrainingSession, PigeonTrainingResult, SessionType,
+    FeedIngredient, FeedMix, FeedMixIngredient,
+    NutritionPlan, NutritionPlanDay, Supplement,
+)
 
 
 async def seed():
@@ -256,5 +261,168 @@ async def seed():
         )
 
 
+async def seed_sport():
+    """
+    Insère des données de démonstration pour le domaine SPORT.
+    Idempotent : ignoré si des données sport existent déjà.
+    """
+    async with AsyncSessionLocal() as session:
+        # Idempotence
+        existing = await session.execute(select(FeedIngredient).limit(1))
+        if existing.scalar_one_or_none():
+            print("⚠️  Données sport déjà présentes, seed_sport ignoré.")
+            return
+
+        # ── Ingrédients ───────────────────────────────────────────────────────
+        mais = FeedIngredient(
+            name="Maïs",
+            category="céréale",
+            protein_pct=9.0,
+            fat_pct=4.5,
+            carbs_pct=72.0,
+            energy_index=3.35,
+            digestion_speed="moyen",
+            notes="Bonne source d'énergie, riche en amidon",
+        )
+        ble = FeedIngredient(
+            name="Blé",
+            category="céréale",
+            protein_pct=12.5,
+            fat_pct=2.0,
+            carbs_pct=65.0,
+            energy_index=3.12,
+            digestion_speed="lent",
+            notes="Apport en protéines végétales et fibres",
+        )
+        pois = FeedIngredient(
+            name="Pois",
+            category="légumineuse",
+            protein_pct=22.0,
+            fat_pct=1.5,
+            carbs_pct=55.0,
+            energy_index=3.20,
+            digestion_speed="moyen",
+            notes="Excellente source de protéines pour la récupération musculaire",
+        )
+        session.add_all([mais, ble, pois])
+        await session.flush()
+
+        # ── Mélange ───────────────────────────────────────────────────────────
+        mix = FeedMix(
+            name="Mélange entraînement",
+            category="entraînement",
+            description="Mélange équilibré énergie/protéines pour les jours d'entraînement",
+        )
+        session.add(mix)
+        await session.flush()
+
+        session.add_all([
+            FeedMixIngredient(mix_id=mix.id, ingredient_id=mais.id, percentage=50.0),
+            FeedMixIngredient(mix_id=mix.id, ingredient_id=ble.id, percentage=30.0),
+            FeedMixIngredient(mix_id=mix.id, ingredient_id=pois.id, percentage=20.0),
+        ])
+        await session.flush()
+
+        # ── Suppléments ───────────────────────────────────────────────────────
+        vit_b = Supplement(
+            name="Complexe Vitamines B",
+            category="vitamines",
+            usage_notes="Favorise le métabolisme énergétique et la récupération nerveuse",
+            dosage="5 ml / litre d'eau, 3 fois par semaine",
+        )
+        electro = Supplement(
+            name="Électrolytes Sport",
+            category="minéraux",
+            usage_notes="Réhydratation rapide après effort, maintien de l'équilibre hydrique",
+            dosage="10 g / litre d'eau, jours d'entraînement",
+        )
+        session.add_all([vit_b, electro])
+        await session.flush()
+
+        # ── Séances d'entraînement ─────────────────────────────────────────────
+        seance_loft = TrainingSession(
+            date=date(2026, 5, 10),
+            session_type=SessionType.loft,
+            distance_km=None,
+            weather="Ensoleillé",
+            temperature_c=22.0,
+            wind="Vent faible SO",
+            notes="Vol libre au colombier, observation du comportement",
+        )
+        seance_toss = TrainingSession(
+            date=date(2026, 5, 18),
+            session_type=SessionType.toss,
+            distance_km=25.0,
+            weather="Couvert",
+            temperature_c=18.5,
+            wind="Calme",
+            notes="Premier lâcher de la saison à 25 km",
+        )
+        session.add_all([seance_loft, seance_toss])
+        await session.flush()
+
+        # Récupérer 3 pigeons actifs pour associer des résultats
+        r = await session.execute(
+            select(Pigeon).where(Pigeon.statut == Statut.actif).limit(3)
+        )
+        pigeons_actifs = r.scalars().all()
+
+        results = []
+        for i, pigeon in enumerate(pigeons_actifs):
+            results.append(PigeonTrainingResult(
+                pigeon_id=pigeon.id,
+                session_id=seance_loft.id,
+                return_time_minutes=None,
+                recovery_score=7 + i % 3,
+                motivation_score=8,
+                condition_score=7,
+                hydration_score=8,
+                notes="Comportement normal au loft",
+            ))
+            results.append(PigeonTrainingResult(
+                pigeon_id=pigeon.id,
+                session_id=seance_toss.id,
+                return_time_minutes=38.5 + i * 2.0,
+                internal_rank=i + 1,
+                recovery_score=8 - i % 2,
+                motivation_score=9,
+                condition_score=8,
+                hydration_score=7,
+                notes=f"Retour en {38.5 + i * 2.0:.1f} min",
+            ))
+        session.add_all(results)
+
+        # ── Plan nutritionnel ─────────────────────────────────────────────────
+        plan = NutritionPlan(
+            name="Plan entraînement intensif",
+            category="entraînement",
+            target_type="old",
+            description="7 jours de nutrition optimisée pour la période d'entraînement pré-saison",
+        )
+        session.add(plan)
+        await session.flush()
+
+        # Lundi à dimanche (0-6)
+        quantities = [40.0, 45.0, 45.0, 50.0, 45.0, 40.0, 35.0]
+        for day, qty in enumerate(quantities):
+            session.add(NutritionPlanDay(
+                plan_id=plan.id,
+                day_of_week=day,
+                mix_id=mix.id,
+                quantity_grams=qty,
+                supplements="Vitamines B + Électrolytes" if day in (2, 4) else None,
+            ))
+
+        await session.commit()
+        print(
+            f"✅ Sport : 3 ingrédients, 1 mélange, 2 suppléments, "
+            f"2 séances, {len(results)} résultats, 1 plan nutritionnel insérés"
+        )
+
+
 if __name__ == "__main__":
-    asyncio.run(seed())
+    async def main():
+        await seed()
+        await seed_sport()
+
+    asyncio.run(main())
