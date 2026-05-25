@@ -125,6 +125,8 @@ function navigateTo(page) {
 // Clics sur la nav
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', (e) => {
+    // Laisser passer les vrais liens externes (href != "#")
+    if (item.getAttribute('href') !== '#') return;
     e.preventDefault();
     navigateTo(item.dataset.page);
   });
