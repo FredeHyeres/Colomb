@@ -5,3 +5,4 @@ from .sante import router as sante_router
 from .couples import router as couples_router
 from .eleveur import router as eleveur_router
 from .sport import router as sport_router
+from .ai_router import router as ai_router

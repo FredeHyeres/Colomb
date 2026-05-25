@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Colombophilie – Tableau de bord IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ── Variables & Reset ──────────────────────────────────────────────── */
+    :root {
+      --sidebar-bg: #2C3E50;
+      --sidebar-text: #ECF0F1;
+      --sidebar-hover: #34495E;
+      --sidebar-active: #2980B9;
+      --accent: #2980B9;
+      --accent-hover: #2471A3;
+      --ocre: #C4963A;
+      --bg: #F4F6F8;
+      --bg-card: #FFFFFF;
+      --text: #1E2A35;
+      --text-light: #7F8C8D;
+      --border: #DDE3EA;
+      --success: #27AE60;
+      --danger: #E74C3C;
+      --warning: #F39C12;
+      --info: #2980B9;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+      --sidebar-width: 240px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar ────────────────────────────────────────────────────────── */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+    .sidebar-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      color: var(--ocre);
+      padding: 0 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      line-height: 1.3;
+    }
+    .sidebar-logo span { display: block; font-size: 0.7rem; color: var(--sidebar-text); opacity: 0.6; margin-top: 2px; }
+    .sidebar-nav { margin-top: 1rem; flex: 1; }
+    .sidebar-nav a {
+      display: flex; align-items: center; gap: 0.6rem;
+      padding: 0.65rem 1.25rem;
+      color: var(--sidebar-text); text-decoration: none;
+      font-size: 0.88rem; opacity: 0.8;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .sidebar-nav a:hover { background: var(--sidebar-hover); opacity: 1; }
+    .sidebar-nav a.active { background: var(--sidebar-active); opacity: 1; font-weight: 600; }
+
+    /* ── Contenu principal ──────────────────────────────────────────────── */
+    .main {
+      margin-left: var(--sidebar-width);
+      flex: 1;
+      padding: 2rem 2.5rem;
+    }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .page-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: var(--text);
+    }
+    .page-title small { font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-light); margin-left: 0.5rem; }
+
+    /* ── Sélecteur pigeon ───────────────────────────────────────────────── */
+    .pigeon-select-bar {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.75rem;
+      box-shadow: var(--shadow);
+      flex-wrap: wrap;
+    }
+    .pigeon-select-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text); white-space: nowrap; }
+    .pigeon-select-bar select {
+      flex: 1;
+      min-width: 200px;
+      padding: 0.55rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: var(--bg);
+      color: var(--text);
+      cursor: pointer;
+    }
+    .btn {
+      padding: 0.55rem 1.25rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-ocre { background: var(--ocre); color: #fff; }
+    .btn-ocre:hover:not(:disabled) { background: #b0852e; }
+
+    /* ── Grille 2 colonnes ──────────────────────────────────────────────── */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── Card générique ─────────────────────────────────────────────────── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+    }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .card-title .badge-count {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 12px;
+      padding: 0.1rem 0.5rem;
+    }
+
+    /* ── Cards recommandations ──────────────────────────────────────────── */
+    .rec-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .rec-card {
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      border-left: 4px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .rec-card.info    { background: #EBF5FB; border-color: var(--info); }
+    .rec-card.warning { background: #FEF9E7; border-color: var(--warning); }
+    .rec-card.critical { background: #FDEDEC; border-color: var(--danger); }
+    .rec-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .rec-title { font-weight: 600; font-size: 0.9rem; }
+    .rec-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 0.15rem 0.55rem;
+      border-radius: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .rec-badge.info    { background: var(--info); color: #fff; }
+    .rec-badge.warning { background: var(--warning); color: #fff; }
+    .rec-badge.critical { background: var(--danger); color: #fff; }
+    .rec-message { font-size: 0.84rem; color: var(--text); opacity: 0.85; line-height: 1.5; }
+    .rec-meta { display: flex; align-items: center; justify-content: space-between; margin-top: 0.25rem; }
+    .rec-type { font-size: 0.75rem; color: var(--text-light); font-style: italic; }
+    .btn-resolve {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.65rem;
+      background: transparent;
+      border: 1px solid currentColor;
+      border-radius: 5px;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: background 0.15s;
+    }
+    .btn-resolve:hover { background: rgba(0,0,0,0.05); }
+    .empty-state {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.88rem;
+      padding: 1.5rem 0;
+    }
+
+    /* ── Snapshot / indices ─────────────────────────────────────────────── */
+    .indices-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    @media (max-width: 600px) { .indices-grid { grid-template-columns: 1fr 1fr; } }
+    .index-block {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      text-align: center;
+    }
+    .index-label { font-size: 0.75rem; color: var(--text-light); margin-bottom: 0.4rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .index-value { font-size: 1.6rem; font-weight: 700; line-height: 1; }
+    .index-value.good { color: var(--success); }
+    .index-value.medium { color: var(--warning); }
+    .index-value.poor { color: var(--danger); }
+    .index-bar-wrap { height: 6px; background: var(--border); border-radius: 3px; margin-top: 0.5rem; }
+    .index-bar { height: 6px; border-radius: 3px; transition: width 0.4s ease; }
+
+    .performance-label {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.4rem 1rem;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .performance-label.excellent { background: #D5F5E3; color: #1E8449; }
+    .performance-label.good      { background: #D6EAF8; color: #1A5276; }
+    .performance-label.average   { background: #FEF9E7; color: #9A7D0A; }
+    .performance-label.poor      { background: #FDEDEC; color: #922B21; }
+
+    .snapshot-meta { font-size: 0.8rem; color: var(--text-light); margin-top: 0.5rem; }
+
+    /* ── Loader ─────────────────────────────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 3px solid rgba(0,0,0,0.15);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 0.4rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: var(--text);
+      color: #fff;
+      padding: 0.75rem 1.25rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    Colombophilie
+    <span>Gestion d'élevage</span>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="index.html">Pigeons</a>
+    <a href="sport.html">Sport & Nutrition</a>
+    <a href="ai_widget.html" class="active">Intelligence artificielle</a>
+  </nav>
+</aside>
+
+<!-- ── Contenu principal ───────────────────────────────────────────────────── -->
+<main class="main">
+  <div class="page-header">
+    <h1 class="page-title">Intelligence artificielle <small>Analyse & recommandations</small></h1>
+  </div>
+
+  <!-- Sélecteur de pigeon -->
+  <div class="pigeon-select-bar">
+    <label for="pigeon-select">Pigeon analysé :</label>
+    <select id="pigeon-select">
+      <option value="">-- Chargement des pigeons... --</option>
+    </select>
+    <button class="btn btn-primary" id="btn-analyze" disabled>
+      Analyser
+    </button>
+    <button class="btn btn-ocre" id="btn-snapshot" disabled>
+      Créer snapshot
+    </button>
+  </div>
+
+  <!-- Grille principale -->
+  <div class="grid-2">
+
+    <!-- Recommandations actives -->
+    <div class="card">
+      <div class="card-title">
+        Recommandations actives
+        <span class="badge-count" id="rec-count">0</span>
+      </div>
+      <div class="rec-list" id="rec-list">
+        <p class="empty-state">Sélectionnez un pigeon pour voir les recommandations.</p>
+      </div>
+    </div>
+
+    <!-- Snapshot sportif -->
+    <div class="card">
+      <div class="card-title">Snapshot sportif</div>
+      <div id="snapshot-block">
+        <p class="empty-state">Aucun snapshot disponible.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Configuration ──────────────────────────────────────────────────────────
+  const API = 'http://localhost:8000/api';
+
+  // ── Éléments DOM ──────────────────────────────────────────────────────────
+  const pigeonSelect = document.getElementById('pigeon-select');
+  const btnAnalyze   = document.getElementById('btn-analyze');
+  const btnSnapshot  = document.getElementById('btn-snapshot');
+  const recList      = document.getElementById('rec-list');
+  const recCount     = document.getElementById('rec-count');
+  const snapshotBlock = document.getElementById('snapshot-block');
+  const toastEl      = document.getElementById('toast');
+
+  // ── Toast ──────────────────────────────────────────────────────────────────
+  function showToast(msg, duration = 3000) {
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    setTimeout(() => toastEl.classList.remove('show'), duration);
+  }
+
+  // ── Chargement des pigeons ─────────────────────────────────────────────────
+  async function loadPigeons() {
+    try {
+      const res = await fetch(`${API}/pigeons/`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const pigeons = await res.json();
+
+      pigeonSelect.innerHTML = '<option value="">-- Sélectionner un pigeon --</option>';
+      pigeons.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.id}${p.name ? ' — ' + p.name : ''}`;
+        pigeonSelect.appendChild(opt);
+      });
+    } catch (e) {
+      pigeonSelect.innerHTML = '<option value="">Erreur de chargement</option>';
+      showToast('Impossible de charger les pigeons.');
+    }
+  }
+
+  // ── Changement de pigeon ───────────────────────────────────────────────────
+  pigeonSelect.addEventListener('change', () => {
+    const id = pigeonSelect.value;
+    btnAnalyze.disabled  = !id;
+    btnSnapshot.disabled = !id;
+    if (id) {
+      loadDashboard(id);
+    } else {
+      resetUI();
+    }
+  });
+
+  function resetUI() {
+    recList.innerHTML = '<p class="empty-state">Sélectionnez un pigeon pour voir les recommandations.</p>';
+    recCount.textContent = '0';
+    snapshotBlock.innerHTML = '<p class="empty-state">Aucun snapshot disponible.</p>';
+  }
+
+  // ── Chargement tableau de bord ─────────────────────────────────────────────
+  async function loadDashboard(pigeonId) {
+    recList.innerHTML = '<p class="empty-state"><span class="spinner"></span>Chargement...</p>';
+    snapshotBlock.innerHTML = '<p class="empty-state"><span class="spinner"></span>Chargement...</p>';
+
+    try {
+      const res = await fetch(`${API}/ai/dashboard/${encodeURIComponent(pigeonId)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      renderRecommendations(data.active_recommendations);
+      renderSnapshot(data.latest_snapshot, data.performance_label);
+    } catch (e) {
+      recList.innerHTML = '<p class="empty-state">Erreur lors du chargement du tableau de bord.</p>';
+      snapshotBlock.innerHTML = '<p class="empty-state">Erreur de chargement.</p>';
+    }
+  }
+
+  // ── Rendu recommandations ──────────────────────────────────────────────────
+  function renderRecommendations(recs) {
+    recCount.textContent = recs.length;
+
+    if (recs.length === 0) {
+      recList.innerHTML = '<p class="empty-state">Aucune recommandation active. Tout semble en ordre.</p>';
+      return;
+    }
+
+    // Trier : critical d'abord, puis warning, puis info
+    const ordre = { critical: 0, warning: 1, info: 2 };
+    recs.sort((a, b) => (ordre[a.severity] ?? 3) - (ordre[b.severity] ?? 3));
+
+    recList.innerHTML = '';
+    recs.forEach(rec => {
+      const card = document.createElement('div');
+      card.className = `rec-card ${rec.severity}`;
+      card.innerHTML = `
+        <div class="rec-header">
+          <span class="rec-title">${escHtml(rec.title)}</span>
+          <span class="rec-badge ${rec.severity}">${labelSeverite(rec.severity)}</span>
+        </div>
+        <div class="rec-message">${escHtml(rec.message)}</div>
+        <div class="rec-meta">
+          <span class="rec-type">${escHtml(rec.recommendation_type.replace(/_/g, ' '))}</span>
+          <button class="btn-resolve" data-id="${rec.id}">Marquer résolu</button>
+        </div>
+      `;
+      recList.appendChild(card);
+    });
+
+    // Gestionnaire "résoudre"
+    recList.querySelectorAll('.btn-resolve').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.dataset.id;
+        btn.disabled = true;
+        btn.textContent = 'En cours...';
+        try {
+          const res = await fetch(`${API}/ai/recommendations/${id}/resolve`, { method: 'PUT' });
+          if (res.ok) {
+            showToast('Recommandation marquée comme résolue.');
+            loadDashboard(pigeonSelect.value);
+          } else {
+            showToast('Erreur lors de la résolution.');
+            btn.disabled = false;
+            btn.textContent = 'Marquer résolu';
+          }
+        } catch {
+          showToast('Erreur réseau.');
+          btn.disabled = false;
+          btn.textContent = 'Marquer résolu';
+        }
+      });
+    });
+  }
+
+  // ── Rendu snapshot ─────────────────────────────────────────────────────────
+  function renderSnapshot(snapshot, performanceLabel) {
+    if (!snapshot) {
+      snapshotBlock.innerHTML = `
+        <p class="empty-state">Aucun snapshot disponible.<br>
+        Cliquez sur <strong>Créer snapshot</strong> pour en générer un.</p>`;
+      return;
+    }
+
+    const ri = snapshot.recovery_index;
+    const ci = snapshot.condition_index;
+    const rg = snapshot.regularity_index;
+
+    snapshotBlock.innerHTML = `
+      <div class="indices-grid">
+        ${renderIndex('Récupération', ri)}
+        ${renderIndex('Condition', ci)}
+        ${renderIndex('Régularité', rg)}
+        ${renderIndexSimple('Séances 7j', snapshot.training_load_7d, '')}
+        ${renderIndexSimple('Séances 30j', snapshot.training_load_30d, '')}
+        ${renderIndexSimple('Temp. moy.', snapshot.average_temperature, '°C')}
+      </div>
+      ${performanceLabel ? `<div style="text-align:center">
+        <span class="performance-label ${performanceLabel}">${labelPerf(performanceLabel)}</span>
+      </div>` : ''}
+      <p class="snapshot-meta">Snapshot du ${formatDate(snapshot.snapshot_date)}</p>
+    `;
+  }
+
+  function renderIndex(label, value) {
+    if (value == null) return renderIndexSimple(label, null, '');
+    const pct = Math.round(Math.min(Math.max(value, 0), 100));
+    const cls = pct >= 70 ? 'good' : pct >= 45 ? 'medium' : 'poor';
+    const couleur = pct >= 70 ? '#27AE60' : pct >= 45 ? '#F39C12' : '#E74C3C';
+    return `
+      <div class="index-block">
+        <div class="index-label">${label}</div>
+        <div class="index-value ${cls}">${pct}</div>
+        <div class="index-bar-wrap">
+          <div class="index-bar" style="width:${pct}%;background:${couleur}"></div>
+        </div>
+      </div>`;
+  }
+
+  function renderIndexSimple(label, value, unit) {
+    const display = value != null ? `${parseFloat(value).toFixed(1)}${unit}` : '—';
+    return `
+      <div class="index-block">
+        <div class="index-label">${label}</div>
+        <div class="index-value" style="font-size:1.2rem;color:#2C3E50">${display}</div>
+      </div>`;
+  }
+
+  // ── Analyser (générer recommandations) ────────────────────────────────────
+  btnAnalyze.addEventListener('click', async () => {
+    const id = pigeonSelect.value;
+    if (!id) return;
+    btnAnalyze.disabled = true;
+    btnAnalyze.innerHTML = '<span class="spinner"></span>Analyse...';
+
+    try {
+      // Contexte minimal — les données réelles peuvent être enrichies
+      const ctx = {};
+      const res = await fetch(`${API}/ai/recommendations/${encodeURIComponent(id)}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(ctx),
+      });
+      if (res.ok) {
+        showToast('Analyse terminée, recommandations mises à jour.');
+        loadDashboard(id);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Erreur : ${err.detail || res.status}`);
+      }
+    } catch {
+      showToast('Erreur réseau lors de l\'analyse.');
+    } finally {
+      btnAnalyze.disabled = false;
+      btnAnalyze.textContent = 'Analyser';
+    }
+  });
+
+  // ── Créer snapshot ─────────────────────────────────────────────────────────
+  btnSnapshot.addEventListener('click', async () => {
+    const id = pigeonSelect.value;
+    if (!id) return;
+    btnSnapshot.disabled = true;
+    btnSnapshot.innerHTML = '<span class="spinner"></span>Création...';
+
+    try {
+      const res = await fetch(`${API}/ai/snapshots/${encodeURIComponent(id)}/build`, { method: 'POST' });
+      if (res.ok) {
+        showToast('Snapshot créé avec succès.');
+        loadDashboard(id);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        showToast(`Erreur : ${err.detail || res.status}`);
+      }
+    } catch {
+      showToast('Erreur réseau lors de la création du snapshot.');
+    } finally {
+      btnSnapshot.disabled = false;
+      btnSnapshot.textContent = 'Créer snapshot';
+    }
+  });
+
+  // ── Utilitaires ────────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function labelSeverite(sev) {
+    return { info: 'Info', warning: 'Avertissement', critical: 'Critique' }[sev] || sev;
+  }
+
+  function labelPerf(label) {
+    return { excellent: 'Excellent', good: 'Bon', average: 'Moyen', poor: 'Faible' }[label] || label;
+  }
+
+  function formatDate(isoDate) {
+    if (!isoDate) return '—';
+    const [y, m, d] = isoDate.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  // ── Initialisation ─────────────────────────────────────────────────────────
+  loadPigeons();
+</script>
+</body>
+</html>

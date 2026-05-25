@@ -13,6 +13,7 @@ from routers import (
     couples_router,
     eleveur_router,
     sport_router,
+    ai_router,
 )
 
 # Créer les tables au démarrage
@@ -51,6 +52,7 @@ app.include_router(sante_router, prefix="/api")
 app.include_router(couples_router, prefix="/api")
 app.include_router(eleveur_router, prefix="/api")
 app.include_router(sport_router, prefix="/api", tags=["sport"])
+app.include_router(ai_router, prefix="/api", tags=["ai"])
 
 
 @app.get("/")
