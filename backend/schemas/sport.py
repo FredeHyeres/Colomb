@@ -1,25 +1,50 @@
-"""
-Schémas Pydantic v2 pour le domaine SPORT.
-"""
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from typing import Optional, List
 from datetime import date, datetime
+from enum import Enum
 
-from models.sport import SessionType
+
+class SessionTypeEnum(str, Enum):
+    loft = "loft"
+    toss = "toss"
+    race = "race"
+
+
+class IngredientCategoryEnum(str, Enum):
+    energie = "energie"
+    depuratif = "depuratif"
+    sport = "sport"
+    proteine = "proteine"
+    graisse = "graisse"
+    motivation = "motivation"
+    pre_concours = "pre_concours"
+
+
+class MixUsageEnum(str, Enum):
+    recuperation = "recuperation"
+    entrainement = "entrainement"
+    pre_panier = "pre_panier"
+    enlogement = "enlogement"
+
+
+class SupplementTypeEnum(str, Enum):
+    electrolyte = "electrolyte"
+    vitamine = "vitamine"
+    probiotique = "probiotique"
+    autre = "autre"
 
 
 # ── TrainingSession ───────────────────────────────────────────────────────────
 
 class TrainingSessionBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     date: date
-    session_type: SessionType
+    session_type: SessionTypeEnum
     distance_km: Optional[float] = None
     weather: Optional[str] = None
-    temperature_c: Optional[float] = None
-    wind: Optional[str] = None
+    temperature: Optional[float] = None
+    wind_speed: Optional[float] = None
+    wind_direction: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -29,13 +54,13 @@ class TrainingSessionCreate(TrainingSessionBase):
 
 class TrainingSessionUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     date: Optional[date] = None
-    session_type: Optional[SessionType] = None
+    session_type: Optional[SessionTypeEnum] = None
     distance_km: Optional[float] = None
     weather: Optional[str] = None
-    temperature_c: Optional[float] = None
-    wind: Optional[str] = None
+    temperature: Optional[float] = None
+    wind_speed: Optional[float] = None
+    wind_direction: Optional[str] = None
     notes: Optional[str] = None
 
 
@@ -48,51 +73,40 @@ class TrainingSessionResponse(TrainingSessionBase):
 
 class PigeonTrainingResultBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     pigeon_id: str
-    session_id: int
-    return_time_minutes: Optional[float] = None
+    return_time: Optional[float] = None
     internal_rank: Optional[int] = None
     recovery_score: Optional[int] = None
     motivation_score: Optional[int] = None
     condition_score: Optional[int] = None
     hydration_score: Optional[int] = None
     notes: Optional[str] = None
+
+    @field_validator("recovery_score", "motivation_score", "condition_score", "hydration_score", mode="before")
+    @classmethod
+    def validate_score(cls, v):
+        if v is not None and not (0 <= v <= 10):
+            raise ValueError("Score doit être entre 0 et 10")
+        return v
 
 
 class PigeonTrainingResultCreate(PigeonTrainingResultBase):
     pass
 
 
-class PigeonTrainingResultUpdate(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    return_time_minutes: Optional[float] = None
-    internal_rank: Optional[int] = None
-    recovery_score: Optional[int] = None
-    motivation_score: Optional[int] = None
-    condition_score: Optional[int] = None
-    hydration_score: Optional[int] = None
-    notes: Optional[str] = None
-
-
 class PigeonTrainingResultResponse(PigeonTrainingResultBase):
     id: int
+    session_id: int
+    created_at: datetime
 
 
 # ── FeedIngredient ────────────────────────────────────────────────────────────
 
 class FeedIngredientBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: str
     category: Optional[str] = None
-    protein_pct: Optional[float] = None
-    fat_pct: Optional[float] = None
-    carbs_pct: Optional[float] = None
-    energy_index: Optional[float] = None
-    digestion_speed: Optional[str] = None
-    notes: Optional[str] = None
+    description: Optional[str] = None
 
 
 class FeedIngredientCreate(FeedIngredientBase):
@@ -101,115 +115,85 @@ class FeedIngredientCreate(FeedIngredientBase):
 
 class FeedIngredientUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: Optional[str] = None
     category: Optional[str] = None
-    protein_pct: Optional[float] = None
-    fat_pct: Optional[float] = None
-    carbs_pct: Optional[float] = None
-    energy_index: Optional[float] = None
-    digestion_speed: Optional[str] = None
-    notes: Optional[str] = None
+    description: Optional[str] = None
 
 
 class FeedIngredientResponse(FeedIngredientBase):
     id: int
-
-
-# ── FeedMixIngredient ─────────────────────────────────────────────────────────
-
-class FeedMixIngredientCreate(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    ingredient_id: int
-    percentage: float
-
-
-class FeedMixIngredientResponse(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    ingredient_id: int
-    percentage: float
-    ingredient: Optional[FeedIngredientResponse] = None
+    created_at: datetime
 
 
 # ── FeedMix ───────────────────────────────────────────────────────────────────
 
 class FeedMixBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: str
-    category: Optional[str] = None
+    usage: Optional[str] = None
     description: Optional[str] = None
 
 
 class FeedMixCreate(FeedMixBase):
-    ingredients: Optional[List[FeedMixIngredientCreate]] = None
+    pass
 
 
 class FeedMixUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: Optional[str] = None
-    category: Optional[str] = None
+    usage: Optional[str] = None
     description: Optional[str] = None
 
 
 class FeedMixResponse(FeedMixBase):
     id: int
-    ingredients: List[FeedMixIngredientResponse] = []
+    created_at: datetime
 
 
 # ── NutritionPlan ─────────────────────────────────────────────────────────────
 
-class NutritionPlanDayCreate(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    day_of_week: int  # 0-6
-    mix_id: Optional[int] = None
-    quantity_grams: Optional[float] = None
-    supplements: Optional[str] = None
-
-
-class NutritionPlanDayResponse(NutritionPlanDayCreate):
-    plan_id: int
-
-
 class NutritionPlanBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: str
-    category: Optional[str] = None
-    target_type: Optional[str] = None
     description: Optional[str] = None
+    lundi: Optional[str] = None
+    mardi: Optional[str] = None
+    mercredi: Optional[str] = None
+    jeudi: Optional[str] = None
+    vendredi: Optional[str] = None
+    samedi: Optional[str] = None
+    dimanche: Optional[str] = None
 
 
 class NutritionPlanCreate(NutritionPlanBase):
-    days: Optional[List[NutritionPlanDayCreate]] = None
+    pass
 
 
 class NutritionPlanUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: Optional[str] = None
-    category: Optional[str] = None
-    target_type: Optional[str] = None
     description: Optional[str] = None
+    lundi: Optional[str] = None
+    mardi: Optional[str] = None
+    mercredi: Optional[str] = None
+    jeudi: Optional[str] = None
+    vendredi: Optional[str] = None
+    samedi: Optional[str] = None
+    dimanche: Optional[str] = None
 
 
 class NutritionPlanResponse(NutritionPlanBase):
     id: int
-    days: List[NutritionPlanDayResponse] = []
+    created_at: datetime
 
 
 # ── Supplement ────────────────────────────────────────────────────────────────
 
 class SupplementBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: str
-    category: Optional[str] = None
-    usage_notes: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
     dosage: Optional[str] = None
 
 
@@ -219,39 +203,23 @@ class SupplementCreate(SupplementBase):
 
 class SupplementUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
     name: Optional[str] = None
-    category: Optional[str] = None
-    usage_notes: Optional[str] = None
+    type: Optional[str] = None
+    description: Optional[str] = None
     dosage: Optional[str] = None
 
 
 class SupplementResponse(SupplementBase):
     id: int
+    created_at: datetime
 
 
-# ── Réponses analytiques ──────────────────────────────────────────────────────
+# ── Dashboard ─────────────────────────────────────────────────────────────────
 
 class SportDashboardResponse(BaseModel):
-    """Résumé analytique global du domaine sport."""
     model_config = ConfigDict(from_attributes=True)
-
     total_sessions: int
-    total_results: int
-    active_pigeons: int
-    avg_recovery: Optional[float] = None
-    avg_condition: Optional[float] = None
-    best_recovery_pigeon_id: Optional[str] = None
-    active_plan: Optional[str] = None
-
-
-class PigeonSportHistoryResponse(BaseModel):
-    """Historique sport d'un pigeon avec indices calculés."""
-    model_config = ConfigDict(from_attributes=True)
-
-    pigeon_id: str
-    total_sessions: int
-    recovery_index: float
-    condition_index: float
-    regularity_index: float
-    results: List[PigeonTrainingResultResponse] = []
+    pigeons_en_forme: int
+    alertes_actives: int
+    sessions_recentes: List[TrainingSessionResponse] = []
+    top_pigeons: List[dict] = []

@@ -1,196 +1,220 @@
-"""
-Router FastAPI pour les endpoints IA colombophile.
-Gère les recommandations, snapshots, événements et tableau de bord IA.
-"""
-
-from datetime import date
-
+import json
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from sqlalchemy import select, func
 from database import get_db
-from models.ai_models import AIRecommendation, AITrainingSnapshot, SportEvent
+from models.ai_model import AIRecommendation, AISnapshot, SportEvent
 from schemas.ai_schemas import (
-    AIRecommendationCreate,
-    AIRecommendationRead,
-    AITrainingSnapshotRead,
+    AIRecommendationResponse, AISnapshotResponse,
+    SportEventCreate, SportEventResponse,
     AIDashboardResponse,
-    SportEventCreate,
-    SportEventRead,
 )
-from ai.recommendations.recommendation_engine import (
-    generate_recommendations_for_pigeon,
-    get_active_recommendations,
-    resolve_recommendation,
-)
-from ai.datasets.snapshot_builder import build_snapshot_for_pigeon
+from services.xai_engine import generate_ai_recommendation, build_snapshot
 
-router = APIRouter()
+router = APIRouter(prefix="/ai", tags=["AI"])
+
+
+def _parse_json_field(value):
+    """Parse un champ JSON stocké en Text."""
+    if value is None:
+        return None
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except (json.JSONDecodeError, ValueError):
+            return value
+    return value
+
+
+def _rec_to_response(rec: AIRecommendation) -> dict:
+    """Convertit un AIRecommendation en dict avec JSON parsé."""
+    d = {
+        "id": rec.id,
+        "pigeon_id": rec.pigeon_id,
+        "generated_at": rec.generated_at,
+        "score_forme": rec.score_forme,
+        "score_endurance": rec.score_endurance,
+        "score_vitesse": rec.score_vitesse,
+        "score_global": rec.score_global,
+        "tendance": rec.tendance,
+        "recommendation": rec.recommendation,
+        "confiance": rec.confiance,
+        "facteurs_explicatifs": _parse_json_field(rec.facteurs_explicatifs),
+        "resolved": rec.resolved,
+        "created_at": rec.created_at,
+    }
+    return d
+
+
+def _snap_to_response(snap: AISnapshot) -> dict:
+    """Convertit un AISnapshot en dict avec JSON parsé."""
+    return {
+        "id": snap.id,
+        "pigeon_id": snap.pigeon_id,
+        "snapshot_date": snap.snapshot_date,
+        "snapshot_version": snap.snapshot_version,
+        "feature_set_version": snap.feature_set_version,
+        "features": _parse_json_field(snap.features),
+        "created_at": snap.created_at,
+    }
+
+
+def _event_to_response(event: SportEvent) -> dict:
+    """Convertit un SportEvent en dict avec JSON parsé."""
+    return {
+        "id": event.id,
+        "pigeon_id": event.pigeon_id,
+        "event_type": event.event_type,
+        "event_date": event.event_date,
+        "payload": _parse_json_field(event.payload),
+        "created_at": event.created_at,
+    }
 
 
 # ── Recommandations ───────────────────────────────────────────────────────────
 
-@router.get(
-    "/ai/recommendations/{pigeon_id}",
-    response_model=list[AIRecommendationRead],
-    summary="Recommandations actives d'un pigeon",
-)
-async def get_recommendations(
-    pigeon_id: str,
-    db: AsyncSession = Depends(get_db),
-) -> list[AIRecommendationRead]:
+@router.get("/recommendations/{pigeon_id}", response_model=list[AIRecommendationResponse])
+async def get_recommendations(pigeon_id: str, db: AsyncSession = Depends(get_db)):
     """Retourne toutes les recommandations non résolues pour un pigeon."""
-    recs = await get_active_recommendations(db, pigeon_id)
-    return recs  # type: ignore[return-value]
+    result = await db.execute(
+        select(AIRecommendation)
+        .where(
+            AIRecommendation.pigeon_id == pigeon_id,
+            AIRecommendation.resolved == False,
+        )
+        .order_by(AIRecommendation.generated_at.desc())
+    )
+    recs = result.scalars().all()
+    return [_rec_to_response(r) for r in recs]
 
 
-@router.post(
-    "/ai/recommendations/{pigeon_id}/generate",
-    response_model=list[AIRecommendationRead],
-    summary="Déclencher l'analyse des règles IA pour un pigeon",
-)
-async def generate_recommendations(
-    pigeon_id: str,
-    context_data: dict,
-    db: AsyncSession = Depends(get_db),
-) -> list[AIRecommendationRead]:
-    """
-    Évalue toutes les règles métier pour le pigeon et persiste les nouvelles recommandations.
-    Le corps de la requête doit contenir le contexte des métriques récentes du pigeon.
-    """
-    recs = await generate_recommendations_for_pigeon(db, pigeon_id, context_data)
-    return recs  # type: ignore[return-value]
+@router.post("/recommendations/{pigeon_id}/generate", response_model=AIRecommendationResponse)
+async def generate_recommendation(pigeon_id: str, db: AsyncSession = Depends(get_db)):
+    """Génère une recommandation XAI pour un pigeon et la persiste."""
+    rec = await generate_ai_recommendation(pigeon_id, db)
+    return _rec_to_response(rec)
 
 
-@router.put(
-    "/ai/recommendations/{rec_id}/resolve",
-    summary="Marquer une recommandation comme résolue",
-)
-async def resolve_rec(
-    rec_id: int,
-    db: AsyncSession = Depends(get_db),
-) -> dict:
-    """Marque la recommandation identifiée par rec_id comme résolue."""
-    ok = await resolve_recommendation(db, rec_id)
-    if not ok:
+@router.put("/recommendations/{rec_id}/resolve")
+async def resolve_recommendation(rec_id: int, db: AsyncSession = Depends(get_db)):
+    """Marque une recommandation comme résolue."""
+    result = await db.execute(select(AIRecommendation).where(AIRecommendation.id == rec_id))
+    rec = result.scalar_one_or_none()
+    if not rec:
         raise HTTPException(status_code=404, detail="Recommandation introuvable")
+    rec.resolved = True
+    await db.commit()
     return {"success": True, "rec_id": rec_id}
+
+
+@router.get("/recommendations/{pigeon_id}/all", response_model=list[AIRecommendationResponse])
+async def get_all_recommendations(pigeon_id: str, limit: int = 20, db: AsyncSession = Depends(get_db)):
+    """Retourne toutes les recommandations (résolues et non résolues) pour un pigeon."""
+    result = await db.execute(
+        select(AIRecommendation)
+        .where(AIRecommendation.pigeon_id == pigeon_id)
+        .order_by(AIRecommendation.generated_at.desc())
+        .limit(limit)
+    )
+    recs = result.scalars().all()
+    return [_rec_to_response(r) for r in recs]
 
 
 # ── Snapshots ─────────────────────────────────────────────────────────────────
 
-@router.get(
-    "/ai/snapshots/{pigeon_id}",
-    response_model=list[AITrainingSnapshotRead],
-    summary="Historique des snapshots sportifs d'un pigeon",
-)
-async def get_snapshots(
-    pigeon_id: str,
-    db: AsyncSession = Depends(get_db),
-) -> list[AITrainingSnapshotRead]:
+@router.get("/snapshots/{pigeon_id}", response_model=list[AISnapshotResponse])
+async def get_snapshots(pigeon_id: str, db: AsyncSession = Depends(get_db)):
     """Retourne tous les snapshots sportifs d'un pigeon, du plus récent au plus ancien."""
     result = await db.execute(
-        select(AITrainingSnapshot)
-        .where(AITrainingSnapshot.pigeon_id == pigeon_id)
-        .order_by(AITrainingSnapshot.snapshot_date.desc())
+        select(AISnapshot)
+        .where(AISnapshot.pigeon_id == pigeon_id)
+        .order_by(AISnapshot.snapshot_date.desc())
     )
-    return list(result.scalars().all())  # type: ignore[return-value]
+    snaps = result.scalars().all()
+    return [_snap_to_response(s) for s in snaps]
 
 
-@router.post(
-    "/ai/snapshots/{pigeon_id}/build",
-    response_model=AITrainingSnapshotRead,
-    summary="Créer un snapshot sportif pour aujourd'hui",
-)
-async def build_snapshot(
-    pigeon_id: str,
-    db: AsyncSession = Depends(get_db),
-) -> AITrainingSnapshotRead:
+@router.post("/snapshots/{pigeon_id}/build", response_model=AISnapshotResponse)
+async def build_snapshot_endpoint(pigeon_id: str, db: AsyncSession = Depends(get_db)):
     """Calcule et persiste un snapshot sportif pour le pigeon à la date d'aujourd'hui."""
-    snapshot = await build_snapshot_for_pigeon(db, pigeon_id, date.today())
-    return snapshot  # type: ignore[return-value]
+    snap = await build_snapshot(pigeon_id, db)
+    return _snap_to_response(snap)
 
 
 # ── Événements sportifs ───────────────────────────────────────────────────────
 
-@router.get(
-    "/ai/events/{pigeon_id}",
-    response_model=list[SportEventRead],
-    summary="Journal d'événements sportifs d'un pigeon",
-)
-async def get_events(
-    pigeon_id: str,
-    db: AsyncSession = Depends(get_db),
-) -> list[SportEventRead]:
-    """Retourne tous les événements sportifs d'un pigeon, du plus récent au plus ancien."""
+@router.get("/events/{pigeon_id}", response_model=list[SportEventResponse])
+async def get_events(pigeon_id: str, limit: int = 50, db: AsyncSession = Depends(get_db)):
+    """Retourne le journal des événements sportifs d'un pigeon."""
     result = await db.execute(
         select(SportEvent)
         .where(SportEvent.pigeon_id == pigeon_id)
         .order_by(SportEvent.event_date.desc())
+        .limit(limit)
     )
-    return list(result.scalars().all())  # type: ignore[return-value]
+    events = result.scalars().all()
+    return [_event_to_response(e) for e in events]
 
 
-@router.post(
-    "/ai/events",
-    response_model=SportEventRead,
-    status_code=201,
-    summary="Ajouter un événement sportif",
-)
-async def create_event(
-    event_in: SportEventCreate,
-    db: AsyncSession = Depends(get_db),
-) -> SportEventRead:
-    """Ajoute un nouvel événement dans le journal sportif du pigeon."""
-    event = SportEvent(**event_in.model_dump())
+@router.post("/events", response_model=SportEventResponse, status_code=201)
+async def create_event(data: SportEventCreate, db: AsyncSession = Depends(get_db)):
+    """Ajoute un événement sportif manuellement."""
+    payload_raw = json.dumps(data.payload, ensure_ascii=False) if data.payload is not None else None
+    event = SportEvent(
+        pigeon_id=data.pigeon_id,
+        event_type=data.event_type,
+        event_date=data.event_date,
+        payload=payload_raw,
+    )
     db.add(event)
     await db.commit()
     await db.refresh(event)
-    return event  # type: ignore[return-value]
+    return _event_to_response(event)
 
 
 # ── Tableau de bord IA ────────────────────────────────────────────────────────
 
-@router.get(
-    "/ai/dashboard/{pigeon_id}",
-    response_model=AIDashboardResponse,
-    summary="Résumé IA complet d'un pigeon",
-)
-async def get_dashboard(
-    pigeon_id: str,
-    db: AsyncSession = Depends(get_db),
-) -> AIDashboardResponse:
+@router.get("/dashboard/{pigeon_id}", response_model=AIDashboardResponse)
+async def get_ai_dashboard(pigeon_id: str, db: AsyncSession = Depends(get_db)):
     """
-    Retourne un résumé IA complet :
-      - Recommandations actives (avec comptage par sévérité)
-      - Dernier snapshot sportif
-      - Indices visuels principaux
+    Retourne un résumé IA complet pour un pigeon :
+    - Dernière recommandation non résolue
+    - score_global et tendance
+    - Nombre de snapshots
+    - 5 événements récents
     """
-    # Recommandations actives
-    recs = await get_active_recommendations(db, pigeon_id)
-
-    # Dernier snapshot
-    result = await db.execute(
-        select(AITrainingSnapshot)
-        .where(AITrainingSnapshot.pigeon_id == pigeon_id)
-        .order_by(AITrainingSnapshot.snapshot_date.desc())
+    # Dernière recommandation non résolue
+    rec_result = await db.execute(
+        select(AIRecommendation)
+        .where(
+            AIRecommendation.pigeon_id == pigeon_id,
+            AIRecommendation.resolved == False,
+        )
+        .order_by(AIRecommendation.generated_at.desc())
         .limit(1)
     )
-    latest = result.scalar_one_or_none()
+    last_rec = rec_result.scalar_one_or_none()
 
-    # Comptage par sévérité
-    total_critical = sum(1 for r in recs if r.severity == "critical")
-    total_warnings = sum(1 for r in recs if r.severity == "warning")
+    # Nombre de snapshots
+    snap_count_result = await db.execute(
+        select(func.count(AISnapshot.id)).where(AISnapshot.pigeon_id == pigeon_id)
+    )
+    snapshots_count = snap_count_result.scalar() or 0
+
+    # 5 événements récents
+    events_result = await db.execute(
+        select(SportEvent)
+        .where(SportEvent.pigeon_id == pigeon_id)
+        .order_by(SportEvent.event_date.desc())
+        .limit(5)
+    )
+    events = events_result.scalars().all()
 
     return AIDashboardResponse(
         pigeon_id=pigeon_id,
-        active_recommendations=recs,  # type: ignore[arg-type]
-        latest_snapshot=latest,  # type: ignore[arg-type]
-        recovery_index=latest.recovery_index if latest else None,
-        condition_index=latest.condition_index if latest else None,
-        regularity_index=latest.regularity_index if latest else None,
-        performance_label=latest.performance_label if latest else None,
-        total_active_critical=total_critical,
-        total_active_warnings=total_warnings,
+        last_recommendation=_rec_to_response(last_rec) if last_rec else None,
+        score_global=last_rec.score_global if last_rec else None,
+        tendance=last_rec.tendance if last_rec else None,
+        snapshots_count=snapshots_count,
+        events_recents=[_event_to_response(e) for e in events],
     )

@@ -1,45 +1,30 @@
-"""
-Router FastAPI pour le domaine SPORT :
-  - Séances d'entraînement et résultats
-  - Dashboard analytique
-  - Nutrition : ingrédients, mélanges, plans
-  - Suppléments
-"""
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
-from typing import List
-
 from database import get_db
 from models.sport import (
     TrainingSession, PigeonTrainingResult,
-    FeedIngredient, FeedMix, FeedMixIngredient,
-    NutritionPlan, NutritionPlanDay,
-    Supplement,
+    FeedIngredient, FeedMix, NutritionPlan, Supplement,
 )
 from schemas.sport import (
     TrainingSessionCreate, TrainingSessionUpdate, TrainingSessionResponse,
     PigeonTrainingResultCreate, PigeonTrainingResultResponse,
     FeedIngredientCreate, FeedIngredientUpdate, FeedIngredientResponse,
     FeedMixCreate, FeedMixUpdate, FeedMixResponse,
-    NutritionPlanCreate, NutritionPlanResponse,
+    NutritionPlanCreate, NutritionPlanUpdate, NutritionPlanResponse,
     SupplementCreate, SupplementUpdate, SupplementResponse,
-    SportDashboardResponse, PigeonSportHistoryResponse,
+    SportDashboardResponse,
 )
-from services.training_service import get_pigeon_training_history
-from services.analytics_service import get_sport_dashboard, get_pigeon_sport_summary
+from typing import List
 
-router = APIRouter()
+router = APIRouter(prefix="/sport", tags=["Sport"])
 
 
-# ── Séances d'entraînement ────────────────────────────────────────────────────
+# ── Sessions d'entraînement ───────────────────────────────────────────────────
 
-@router.get("/sport/sessions", response_model=List[TrainingSessionResponse])
-async def list_sessions(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
-):
+@router.get("/sessions", response_model=List[TrainingSessionResponse])
+async def get_sessions(skip: int = 0, limit: int = 50, db: AsyncSession = Depends(get_db)):
     """Liste toutes les séances d'entraînement, du plus récent au plus ancien."""
     result = await db.execute(
         select(TrainingSession)
@@ -50,19 +35,7 @@ async def list_sessions(
     return result.scalars().all()
 
 
-@router.post("/sport/sessions", response_model=TrainingSessionResponse, status_code=201)
-async def create_session(
-    payload: TrainingSessionCreate, db: AsyncSession = Depends(get_db)
-):
-    """Crée une nouvelle séance d'entraînement."""
-    session = TrainingSession(**payload.model_dump())
-    db.add(session)
-    await db.commit()
-    await db.refresh(session)
-    return session
-
-
-@router.get("/sport/sessions/{session_id}", response_model=TrainingSessionResponse)
+@router.get("/sessions/{session_id}", response_model=TrainingSessionResponse)
 async def get_session(session_id: int, db: AsyncSession = Depends(get_db)):
     """Retourne le détail d'une séance avec ses résultats."""
     result = await db.execute(
@@ -76,23 +49,31 @@ async def get_session(session_id: int, db: AsyncSession = Depends(get_db)):
     return session
 
 
-@router.put("/sport/sessions/{session_id}", response_model=TrainingSessionResponse)
-async def update_session(
-    session_id: int, payload: TrainingSessionUpdate, db: AsyncSession = Depends(get_db)
-):
+@router.post("/sessions", response_model=TrainingSessionResponse, status_code=201)
+async def create_session(data: TrainingSessionCreate, db: AsyncSession = Depends(get_db)):
+    """Crée une nouvelle séance d'entraînement."""
+    session = TrainingSession(**data.model_dump())
+    db.add(session)
+    await db.commit()
+    await db.refresh(session)
+    return session
+
+
+@router.put("/sessions/{session_id}", response_model=TrainingSessionResponse)
+async def update_session(session_id: int, data: TrainingSessionUpdate, db: AsyncSession = Depends(get_db)):
     """Met à jour une séance d'entraînement."""
     result = await db.execute(select(TrainingSession).where(TrainingSession.id == session_id))
     session = result.scalar_one_or_none()
     if not session:
         raise HTTPException(status_code=404, detail="Séance non trouvée")
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    for key, value in data.model_dump(exclude_unset=True).items():
         setattr(session, key, value)
     await db.commit()
     await db.refresh(session)
     return session
 
 
-@router.delete("/sport/sessions/{session_id}", status_code=204)
+@router.delete("/sessions/{session_id}", status_code=204)
 async def delete_session(session_id: int, db: AsyncSession = Depends(get_db)):
     """Supprime une séance (et ses résultats par cascade)."""
     result = await db.execute(select(TrainingSession).where(TrainingSession.id == session_id))
@@ -103,106 +84,149 @@ async def delete_session(session_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
 
-@router.post(
-    "/sport/sessions/{session_id}/results",
-    response_model=PigeonTrainingResultResponse,
-    status_code=201,
-)
-async def add_result(
-    session_id: int,
-    payload: PigeonTrainingResultCreate,
-    db: AsyncSession = Depends(get_db),
-):
+@router.post("/sessions/{session_id}/results", response_model=PigeonTrainingResultResponse, status_code=201)
+async def add_result(session_id: int, data: PigeonTrainingResultCreate, db: AsyncSession = Depends(get_db)):
     """Ajoute le résultat d'un pigeon pour une séance."""
-    # Vérifier que la séance existe
     r = await db.execute(select(TrainingSession).where(TrainingSession.id == session_id))
     if not r.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Séance non trouvée")
-
-    data = payload.model_dump()
-    data["session_id"] = session_id  # forcer le bon session_id
-    result_obj = PigeonTrainingResult(**data)
+    result_obj = PigeonTrainingResult(session_id=session_id, **data.model_dump())
     db.add(result_obj)
     await db.commit()
     await db.refresh(result_obj)
     return result_obj
 
 
-# ── Historique pigeon ─────────────────────────────────────────────────────────
-
-@router.get(
-    "/sport/pigeons/{pigeon_id}/history",
-    response_model=PigeonSportHistoryResponse,
-)
-async def pigeon_history(pigeon_id: str, db: AsyncSession = Depends(get_db)):
-    """Retourne l'historique sport complet d'un pigeon avec ses indices calculés."""
-    summary = await get_pigeon_sport_summary(db, pigeon_id)
-    results = await get_pigeon_training_history(db, pigeon_id)
-    return {**summary, "results": results}
+@router.get("/pigeons/{pigeon_id}/history", response_model=List[PigeonTrainingResultResponse])
+async def get_pigeon_history(pigeon_id: str, db: AsyncSession = Depends(get_db)):
+    """Retourne l'historique d'entraînement complet d'un pigeon."""
+    result = await db.execute(
+        select(PigeonTrainingResult)
+        .where(PigeonTrainingResult.pigeon_id == pigeon_id)
+        .order_by(PigeonTrainingResult.id.desc())
+    )
+    return result.scalars().all()
 
 
 # ── Dashboard analytique ──────────────────────────────────────────────────────
 
-@router.get("/sport/dashboard", response_model=SportDashboardResponse)
-async def dashboard(db: AsyncSession = Depends(get_db)):
-    """Retourne les statistiques globales du domaine sport."""
-    return await get_sport_dashboard(db)
+@router.get("/dashboard", response_model=SportDashboardResponse)
+async def get_dashboard(db: AsyncSession = Depends(get_db)):
+    """
+    Retourne les statistiques globales du domaine sport :
+    - total_sessions
+    - pigeons_en_forme (recovery >= 7 sur dernière séance)
+    - alertes_actives (recovery < 4)
+    - sessions_recentes (5 dernières)
+    - top_pigeons
+    """
+    # Total sessions
+    total_result = await db.execute(select(func.count(TrainingSession.id)))
+    total_sessions = total_result.scalar() or 0
+
+    # 5 dernières sessions
+    recent_result = await db.execute(
+        select(TrainingSession)
+        .order_by(TrainingSession.date.desc())
+        .limit(5)
+    )
+    sessions_recentes = recent_result.scalars().all()
+
+    # Pigeons en forme : recovery >= 7 sur leur dernier résultat
+    # Sous-requête : dernier résultat par pigeon
+    subq = (
+        select(
+            PigeonTrainingResult.pigeon_id,
+            func.max(PigeonTrainingResult.id).label("last_id"),
+        )
+        .group_by(PigeonTrainingResult.pigeon_id)
+        .subquery()
+    )
+    forme_result = await db.execute(
+        select(func.count()).select_from(
+            select(PigeonTrainingResult)
+            .join(subq, PigeonTrainingResult.id == subq.c.last_id)
+            .where(PigeonTrainingResult.recovery_score >= 7)
+            .subquery()
+        )
+    )
+    pigeons_en_forme = forme_result.scalar() or 0
+
+    # Alertes actives : recovery < 4 sur le dernier résultat
+    alerte_result = await db.execute(
+        select(func.count()).select_from(
+            select(PigeonTrainingResult)
+            .join(subq, PigeonTrainingResult.id == subq.c.last_id)
+            .where(PigeonTrainingResult.recovery_score < 4)
+            .subquery()
+        )
+    )
+    alertes_actives = alerte_result.scalar() or 0
+
+    # Top pigeons : meilleur score de récupération moyen
+    top_result = await db.execute(
+        select(
+            PigeonTrainingResult.pigeon_id,
+            func.avg(PigeonTrainingResult.recovery_score).label("avg_recovery"),
+            func.count(PigeonTrainingResult.id).label("nb_sessions"),
+        )
+        .group_by(PigeonTrainingResult.pigeon_id)
+        .order_by(func.avg(PigeonTrainingResult.recovery_score).desc())
+        .limit(5)
+    )
+    top_pigeons = [
+        {
+            "pigeon_id": row.pigeon_id,
+            "avg_recovery": round(float(row.avg_recovery), 1) if row.avg_recovery else None,
+            "nb_sessions": row.nb_sessions,
+        }
+        for row in top_result.all()
+    ]
+
+    return SportDashboardResponse(
+        total_sessions=total_sessions,
+        pigeons_en_forme=pigeons_en_forme,
+        alertes_actives=alertes_actives,
+        sessions_recentes=sessions_recentes,
+        top_pigeons=top_pigeons,
+    )
 
 
 # ── Nutrition — Ingrédients ───────────────────────────────────────────────────
 
-@router.get("/sport/nutrition/ingredients", response_model=List[FeedIngredientResponse])
-async def list_ingredients(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
-):
+@router.get("/nutrition/ingredients", response_model=List[FeedIngredientResponse])
+async def list_ingredients(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(FeedIngredient).order_by(FeedIngredient.name).offset(skip).limit(limit)
     )
     return result.scalars().all()
 
 
-@router.post(
-    "/sport/nutrition/ingredients",
-    response_model=FeedIngredientResponse,
-    status_code=201,
-)
-async def create_ingredient(
-    payload: FeedIngredientCreate, db: AsyncSession = Depends(get_db)
-):
-    obj = FeedIngredient(**payload.model_dump())
+@router.post("/nutrition/ingredients", response_model=FeedIngredientResponse, status_code=201)
+async def create_ingredient(data: FeedIngredientCreate, db: AsyncSession = Depends(get_db)):
+    obj = FeedIngredient(**data.model_dump())
     db.add(obj)
     await db.commit()
     await db.refresh(obj)
     return obj
 
 
-@router.put(
-    "/sport/nutrition/ingredients/{ingredient_id}",
-    response_model=FeedIngredientResponse,
-)
-async def update_ingredient(
-    ingredient_id: int,
-    payload: FeedIngredientUpdate,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(FeedIngredient).where(FeedIngredient.id == ingredient_id)
-    )
+@router.put("/nutrition/ingredients/{ingredient_id}", response_model=FeedIngredientResponse)
+async def update_ingredient(ingredient_id: int, data: FeedIngredientUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(FeedIngredient).where(FeedIngredient.id == ingredient_id))
     obj = result.scalar_one_or_none()
     if not obj:
         raise HTTPException(status_code=404, detail="Ingrédient non trouvé")
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    for key, value in data.model_dump(exclude_unset=True).items():
         setattr(obj, key, value)
     await db.commit()
     await db.refresh(obj)
     return obj
 
 
-@router.delete("/sport/nutrition/ingredients/{ingredient_id}", status_code=204)
+@router.delete("/nutrition/ingredients/{ingredient_id}", status_code=204)
 async def delete_ingredient(ingredient_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(FeedIngredient).where(FeedIngredient.id == ingredient_id)
-    )
+    result = await db.execute(select(FeedIngredient).where(FeedIngredient.id == ingredient_id))
     obj = result.scalar_one_or_none()
     if not obj:
         raise HTTPException(status_code=404, detail="Ingrédient non trouvé")
@@ -212,127 +236,152 @@ async def delete_ingredient(ingredient_id: int, db: AsyncSession = Depends(get_d
 
 # ── Nutrition — Mélanges ──────────────────────────────────────────────────────
 
-@router.get("/sport/nutrition/mixes", response_model=List[FeedMixResponse])
-async def list_mixes(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
-):
+@router.get("/nutrition/mixes", response_model=List[FeedMixResponse])
+async def list_mixes(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(FeedMix)
-        .options(selectinload(FeedMix.ingredients).selectinload(FeedMixIngredient.ingredient))
-        .order_by(FeedMix.name)
-        .offset(skip)
-        .limit(limit)
+        select(FeedMix).order_by(FeedMix.name).offset(skip).limit(limit)
     )
     return result.scalars().all()
 
 
-@router.post("/sport/nutrition/mixes", response_model=FeedMixResponse, status_code=201)
-async def create_mix(payload: FeedMixCreate, db: AsyncSession = Depends(get_db)):
-    """Crée un mélange avec ses ingrédients."""
-    data = payload.model_dump(exclude={"ingredients"})
-    mix = FeedMix(**data)
-    db.add(mix)
-    await db.flush()
-
-    if payload.ingredients:
-        for ing_data in payload.ingredients:
-            fmi = FeedMixIngredient(
-                mix_id=mix.id,
-                ingredient_id=ing_data.ingredient_id,
-                percentage=ing_data.percentage,
-            )
-            db.add(fmi)
-
+@router.post("/nutrition/mixes", response_model=FeedMixResponse, status_code=201)
+async def create_mix(data: FeedMixCreate, db: AsyncSession = Depends(get_db)):
+    obj = FeedMix(**data.model_dump())
+    db.add(obj)
     await db.commit()
-    # Recharger avec les relations
-    result = await db.execute(
-        select(FeedMix)
-        .options(selectinload(FeedMix.ingredients).selectinload(FeedMixIngredient.ingredient))
-        .where(FeedMix.id == mix.id)
-    )
-    return result.scalar_one()
+    await db.refresh(obj)
+    return obj
 
 
-@router.get("/sport/nutrition/mixes/{mix_id}", response_model=FeedMixResponse)
+@router.get("/nutrition/mixes/{mix_id}", response_model=FeedMixResponse)
 async def get_mix(mix_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(FeedMix)
-        .options(selectinload(FeedMix.ingredients).selectinload(FeedMixIngredient.ingredient))
-        .where(FeedMix.id == mix_id)
-    )
-    mix = result.scalar_one_or_none()
-    if not mix:
+    result = await db.execute(select(FeedMix).where(FeedMix.id == mix_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
         raise HTTPException(status_code=404, detail="Mélange non trouvé")
-    return mix
+    return obj
+
+
+@router.put("/nutrition/mixes/{mix_id}", response_model=FeedMixResponse)
+async def update_mix(mix_id: int, data: FeedMixUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(FeedMix).where(FeedMix.id == mix_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Mélange non trouvé")
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    await db.commit()
+    await db.refresh(obj)
+    return obj
+
+
+@router.delete("/nutrition/mixes/{mix_id}", status_code=204)
+async def delete_mix(mix_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(FeedMix).where(FeedMix.id == mix_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Mélange non trouvé")
+    await db.delete(obj)
+    await db.commit()
 
 
 # ── Nutrition — Plans ─────────────────────────────────────────────────────────
 
-@router.get("/sport/nutrition/plans", response_model=List[NutritionPlanResponse])
-async def list_plans(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
-):
+@router.get("/nutrition/plans", response_model=List[NutritionPlanResponse])
+async def list_plans(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
-        select(NutritionPlan)
-        .options(selectinload(NutritionPlan.days))
-        .order_by(NutritionPlan.name)
-        .offset(skip)
-        .limit(limit)
+        select(NutritionPlan).order_by(NutritionPlan.name).offset(skip).limit(limit)
     )
     return result.scalars().all()
 
 
-@router.post("/sport/nutrition/plans", response_model=NutritionPlanResponse, status_code=201)
-async def create_plan(payload: NutritionPlanCreate, db: AsyncSession = Depends(get_db)):
-    """Crée un plan nutritionnel avec ses jours."""
-    data = payload.model_dump(exclude={"days"})
-    plan = NutritionPlan(**data)
-    db.add(plan)
-    await db.flush()
-
-    if payload.days:
-        for day_data in payload.days:
-            day = NutritionPlanDay(plan_id=plan.id, **day_data.model_dump())
-            db.add(day)
-
+@router.post("/nutrition/plans", response_model=NutritionPlanResponse, status_code=201)
+async def create_plan(data: NutritionPlanCreate, db: AsyncSession = Depends(get_db)):
+    obj = NutritionPlan(**data.model_dump())
+    db.add(obj)
     await db.commit()
-    result = await db.execute(
-        select(NutritionPlan)
-        .options(selectinload(NutritionPlan.days))
-        .where(NutritionPlan.id == plan.id)
-    )
-    return result.scalar_one()
+    await db.refresh(obj)
+    return obj
 
 
-@router.get("/sport/nutrition/plans/{plan_id}", response_model=NutritionPlanResponse)
+@router.get("/nutrition/plans/{plan_id}", response_model=NutritionPlanResponse)
 async def get_plan(plan_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(NutritionPlan)
-        .options(selectinload(NutritionPlan.days))
-        .where(NutritionPlan.id == plan_id)
-    )
-    plan = result.scalar_one_or_none()
-    if not plan:
+    result = await db.execute(select(NutritionPlan).where(NutritionPlan.id == plan_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
         raise HTTPException(status_code=404, detail="Plan non trouvé")
-    return plan
+    return obj
+
+
+@router.put("/nutrition/plans/{plan_id}", response_model=NutritionPlanResponse)
+async def update_plan(plan_id: int, data: NutritionPlanUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(NutritionPlan).where(NutritionPlan.id == plan_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Plan non trouvé")
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    await db.commit()
+    await db.refresh(obj)
+    return obj
+
+
+@router.delete("/nutrition/plans/{plan_id}", status_code=204)
+async def delete_plan(plan_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(NutritionPlan).where(NutritionPlan.id == plan_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Plan non trouvé")
+    await db.delete(obj)
+    await db.commit()
 
 
 # ── Suppléments ───────────────────────────────────────────────────────────────
 
-@router.get("/sport/supplements", response_model=List[SupplementResponse])
-async def list_supplements(
-    skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)
-):
+@router.get("/supplements", response_model=List[SupplementResponse])
+async def list_supplements(skip: int = 0, limit: int = 100, db: AsyncSession = Depends(get_db)):
     result = await db.execute(
         select(Supplement).order_by(Supplement.name).offset(skip).limit(limit)
     )
     return result.scalars().all()
 
 
-@router.post("/sport/supplements", response_model=SupplementResponse, status_code=201)
-async def create_supplement(payload: SupplementCreate, db: AsyncSession = Depends(get_db)):
-    obj = Supplement(**payload.model_dump())
+@router.post("/supplements", response_model=SupplementResponse, status_code=201)
+async def create_supplement(data: SupplementCreate, db: AsyncSession = Depends(get_db)):
+    obj = Supplement(**data.model_dump())
     db.add(obj)
     await db.commit()
     await db.refresh(obj)
     return obj
+
+
+@router.get("/supplements/{supplement_id}", response_model=SupplementResponse)
+async def get_supplement(supplement_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Supplement).where(Supplement.id == supplement_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Supplément non trouvé")
+    return obj
+
+
+@router.put("/supplements/{supplement_id}", response_model=SupplementResponse)
+async def update_supplement(supplement_id: int, data: SupplementUpdate, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Supplement).where(Supplement.id == supplement_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Supplément non trouvé")
+    for key, value in data.model_dump(exclude_unset=True).items():
+        setattr(obj, key, value)
+    await db.commit()
+    await db.refresh(obj)
+    return obj
+
+
+@router.delete("/supplements/{supplement_id}", status_code=204)
+async def delete_supplement(supplement_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(Supplement).where(Supplement.id == supplement_id))
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Supplément non trouvé")
+    await db.delete(obj)
+    await db.commit()

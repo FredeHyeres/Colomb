@@ -1,101 +1,64 @@
-"""
-Schémas Pydantic v2 pour le domaine IA.
-"""
-
+from pydantic import BaseModel, ConfigDict, field_validator
+from typing import Optional, List, Any
 from datetime import date, datetime
-from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
-
-
-# ── AIRecommendation ──────────────────────────────────────────────────────────
 
 class AIRecommendationBase(BaseModel):
-    """Champs communs pour une recommandation IA."""
+    model_config = ConfigDict(from_attributes=True)
     pigeon_id: str
-    recommendation_type: str
-    severity: str
-    title: str
-    message: str
-    source: str = "expert_rules"
+    score_forme: Optional[float] = None
+    score_endurance: Optional[float] = None
+    score_vitesse: Optional[float] = None
+    score_global: Optional[float] = None
+    tendance: Optional[str] = None
+    recommendation: Optional[str] = None
+    confiance: Optional[float] = None
+    facteurs_explicatifs: Optional[Any] = None  # JSON parsé en lecture
 
 
-class AIRecommendationCreate(AIRecommendationBase):
-    """Schéma de création d'une recommandation IA."""
-    pass
-
-
-class AIRecommendationRead(AIRecommendationBase):
-    """Schéma de lecture d'une recommandation IA."""
-    model_config = ConfigDict(from_attributes=True)
-
+class AIRecommendationResponse(AIRecommendationBase):
     id: int
-    created_at: datetime
+    generated_at: datetime
     resolved: bool
+    created_at: datetime
 
 
-# ── AITrainingSnapshot ────────────────────────────────────────────────────────
-
-class AITrainingSnapshotRead(BaseModel):
-    """Schéma de lecture d'un snapshot sportif."""
+class AISnapshotBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-
-    id: int
     pigeon_id: str
     snapshot_date: date
-    age_days: Optional[int] = None
-    training_load_7d: Optional[float] = None
-    training_load_30d: Optional[float] = None
-    recovery_avg_7d: Optional[float] = None
-    condition_avg_7d: Optional[float] = None
-    hydration_avg_7d: Optional[float] = None
-    nutrition_energy_avg: Optional[float] = None
-    nutrition_protein_avg: Optional[float] = None
-    nutrition_fat_avg: Optional[float] = None
-    average_temperature: Optional[float] = None
-    average_humidity: Optional[float] = None
-    wind_exposure_index: Optional[float] = None
-    upcoming_race_distance: Optional[float] = None
-    regularity_index: Optional[float] = None
-    recovery_index: Optional[float] = None
-    condition_index: Optional[float] = None
-    performance_label: Optional[str] = None
+    snapshot_version: str = "v1"
+    feature_set_version: str = "core_v1"
+    features: Optional[Any] = None  # JSON parsé en lecture
 
 
-# ── SportEvent ────────────────────────────────────────────────────────────────
+class AISnapshotResponse(AISnapshotBase):
+    id: int
+    created_at: datetime
+
 
 class SportEventBase(BaseModel):
-    """Champs communs pour un événement sportif."""
+    model_config = ConfigDict(from_attributes=True)
     pigeon_id: str
     event_type: str
     event_date: date
-    payload_json: Optional[str] = None
+    payload: Optional[Any] = None  # JSON parsé en lecture
 
 
 class SportEventCreate(SportEventBase):
-    """Schéma de création d'un événement sportif."""
     pass
 
 
-class SportEventRead(SportEventBase):
-    """Schéma de lecture d'un événement sportif."""
-    model_config = ConfigDict(from_attributes=True)
-
+class SportEventResponse(SportEventBase):
     id: int
     created_at: datetime
 
 
-# ── AIDashboardResponse ───────────────────────────────────────────────────────
-
 class AIDashboardResponse(BaseModel):
-    """Résumé IA complet pour un pigeon (tableau de bord)."""
+    model_config = ConfigDict(from_attributes=True)
     pigeon_id: str
-    active_recommendations: list[AIRecommendationRead]
-    latest_snapshot: Optional[AITrainingSnapshotRead] = None
-    # Indices calculés du dernier snapshot pour affichage rapide
-    recovery_index: Optional[float] = None
-    condition_index: Optional[float] = None
-    regularity_index: Optional[float] = None
-    performance_label: Optional[str] = None
-    total_active_critical: int = 0
-    total_active_warnings: int = 0
+    last_recommendation: Optional[AIRecommendationResponse] = None
+    score_global: Optional[float] = None
+    tendance: Optional[str] = None
+    snapshots_count: int = 0
+    events_recents: List[SportEventResponse] = []
