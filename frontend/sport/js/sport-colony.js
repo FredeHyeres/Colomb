@@ -214,7 +214,7 @@ function renderPigeonMiniCard(d) {
   return `
     <div class="pigeon-mini-card" data-pigeon-id="${pigeon.id}" title="Cliquer pour analyser la condition">
       <div class="pigeon-mini-icon">🕊️</div>
-      <div class="pigeon-mini-bague">${pigeon.bague || '—'}</div>
+      <div class="pigeon-mini-bague">${pigeon.matricule || '—'}</div>
       ${pigeon.nom ? `<div class="pigeon-mini-name">${pigeon.nom}</div>` : '<div class="pigeon-mini-name" style="height:16px;"></div>'}
       <div style="margin-bottom:6px;"><span class="badge ${statusColor}" style="font-size:0.7rem;">${statusBadge}</span></div>
       ${recovery != null || condition != null ? `
@@ -262,7 +262,7 @@ function renderColonyAlerts(categories) {
       <div class="alert-card ${isProbleme ? 'critical' : 'warning'}" style="margin-bottom:8px;">
         <span class="alert-icon">${isProbleme ? '⚠️' : '💡'}</span>
         <div class="alert-content">
-          <div class="alert-title">${pigeon.bague}${pigeon.nom ? ' — ' + pigeon.nom : ''}</div>
+          <div class="alert-title">${pigeon.matricule || '—'}${pigeon.nom ? ' — ' + pigeon.nom : ''}</div>
           <div class="alert-text">${reason}</div>
         </div>
       </div>`;

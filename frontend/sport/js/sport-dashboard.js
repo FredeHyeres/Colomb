@@ -159,7 +159,7 @@ async function loadAIAlertWidget(pigeons) {
 
     el.innerHTML = actives.slice(0, 5).map(r => {
       const s = severityMap[r.severity] || { cls: 'info', icon: 'ℹ️' };
-      const bague = r._pigeon ? r._pigeon.bague : '';
+      const bague = r._pigeon ? r._pigeon.matricule : '';
       return `
         <div class="alert-card ${s.cls}">
           <span class="alert-icon">${s.icon}</span>
@@ -209,14 +209,14 @@ async function loadHealthWidget(pigeons) {
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
             <span>${isBad ? '🔴' : '🟢'}</span>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:0.82rem;font-weight:600;color:var(--text);">${e._pigeon.bague} — ${e.type || e.evenement || 'Événement'}</div>
+              <div style="font-size:0.82rem;font-weight:600;color:var(--text);">${e._pigeon.matricule || '—'} — ${e.type || e.evenement || 'Événement'}</div>
               <div style="font-size:0.75rem;color:var(--text-light);">${formatDate(e.date || e.created_at)}</div>
             </div>
           </div>`;
       }).join('');
     }
 
-    el.innerHTML += `<div style="margin-top:12px;"><a href="../index.html" style="font-size:0.8rem;color:var(--accent);">→ Ouvrir module santé</a></div>`;
+    el.innerHTML += `<div style="margin-top:12px;"><a href="http://localhost:8080/#sante" target="_blank" style="font-size:0.8rem;color:var(--accent);">→ Ouvrir module santé</a></div>`;
 
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);font-size:0.82rem;">Erreur chargement santé.</p>`;

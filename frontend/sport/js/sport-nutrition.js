@@ -470,45 +470,132 @@ async function loadNutritionPlans() {
 /* ——— Calendrier semaine ——— */
 function renderWeeklyCalendar(plans, mixes) {
   const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-  const today = new Date().getDay(); // 0=dim
+  const dayKeys = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+  const today = new Date().getDay();
   const todayIdx = today === 0 ? 6 : today - 1;
 
+  const planOptions = plans.map(p => `<option value="${p.id}">${p.name || p.nom || '—'}</option>`).join('');
+
+  return `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;align-items:flex-end;">
+      <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+        <label class="form-label" style="font-size:0.8rem;">Cible</label>
+        <select id="cal-target-type" class="form-control form-control-sm" onchange="refreshCalendarTarget()">
+          <option value="all">Tous les pigeons actifs</option>
+          <option value="group-actif">Groupe : Actif</option>
+          <option value="group-concours">Groupe : Concours</option>
+          <option value="group-reproducteur">Groupe : Reproducteur</option>
+          <option value="pigeon">Pigeon spécifique…</option>
+        </select>
+      </div>
+      <div class="form-group" id="cal-pigeon-wrap" style="margin:0;flex:1;min-width:180px;display:none;">
+        <label class="form-label" style="font-size:0.8rem;">Pigeon</label>
+        <select id="cal-pigeon-select" class="form-control form-control-sm" onchange="refreshCalendarTarget()">
+          <option value="">Choisir…</option>
+        </select>
+      </div>
+    </div>
+    <div id="weekly-calendar-grid">
+      ${renderCalendarGrid(days, dayKeys, todayIdx, plans, null)}
+    </div>`;
+}
+
+function renderCalendarGrid(days, dayKeys, todayIdx, plans, selectedPlan) {
   return `
     <div class="week-grid">
       ${days.map((day, idx) => {
         const isToday = idx === todayIdx;
-        // Trouver plan actif si disponible
-        const plan = plans[0]; // simplification : afficher plan courant
+        let planForDay = null;
+        if (selectedPlan) {
+          planForDay = selectedPlan;
+        } else if (plans.length > 0) {
+          // Afficher le plan dont le champ du jour est renseigné, sinon le premier
+          planForDay = plans.find(p => p[dayKeys[idx]]) || null;
+        }
+        const dayContent = planForDay ? (planForDay[dayKeys[idx]] || planForDay.name || planForDay.nom || 'Plan actif') : null;
         return `
           <div class="day-card ${isToday ? 'today' : ''}">
             <div class="day-card-header">${day}${isToday ? ' ★' : ''}</div>
-            ${plan ? `
-              <div style="font-size:0.75rem;font-weight:600;color:var(--accent);margin-bottom:4px;">${plan.name || 'Plan actif'}</div>
-              <div style="font-size:0.72rem;color:var(--text-light);">
-                ${plan.goal || ''}
-              </div>
-            ` : `<div style="font-size:0.75rem;color:var(--text-light);">Aucun plan</div>`}
+            ${dayContent
+              ? `<div style="font-size:0.75rem;font-weight:600;color:var(--accent);margin-bottom:4px;">${planForDay.name || ''}</div>
+                 <div style="font-size:0.72rem;color:var(--text-light);">${dayContent}</div>`
+              : `<div style="font-size:0.75rem;color:var(--text-light);">Aucun plan</div>`}
           </div>`;
       }).join('')}
     </div>`;
+}
+
+async function refreshCalendarTarget() {
+  const targetType = document.getElementById('cal-target-type')?.value;
+  const pigeonWrap = document.getElementById('cal-pigeon-wrap');
+  const pigeonSelect = document.getElementById('cal-pigeon-select');
+
+  // Afficher/masquer le sélecteur pigeon
+  if (targetType === 'pigeon') {
+    pigeonWrap.style.display = '';
+    if (pigeonSelect.options.length <= 1) {
+      const pigeons = await getPigeonsCache();
+      pigeons.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.matricule}${p.nom ? ' — ' + p.nom : ''}`;
+        pigeonSelect.appendChild(opt);
+      });
+    }
+  } else {
+    pigeonWrap.style.display = 'none';
+  }
+
+  // Re-rendre le calendrier
+  const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const dayKeys = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
+  const today = new Date().getDay();
+  const todayIdx = today === 0 ? 6 : today - 1;
+
+  try {
+    const plans = await SportAPI.getPlans().catch(() => []);
+    const list = Array.isArray(plans) ? plans : (plans.items || []);
+    const grid = document.getElementById('weekly-calendar-grid');
+    if (!grid) return;
+    grid.innerHTML = renderCalendarGrid(days, dayKeys, todayIdx, list, null);
+  } catch (e) { /* silencieux */ }
 }
 
 /* ——— Modal nouveau plan ——— */
 async function openPlanModal() {
   const overlay = document.getElementById('modal-overlay');
   document.getElementById('modal-title').textContent = '+ Nouveau plan alimentaire';
-  document.getElementById('modal').className = 'modal';
+  document.getElementById('modal').className = 'modal modal-wide';
+
+  // Charger ingrédients, mélanges, suppléments en parallèle
+  const [ingredients, mixes, supplements] = await Promise.all([
+    SportAPI.getIngredients().catch(() => []),
+    SportAPI.getMixes().catch(() => []),
+    SportAPI.getSupplements().catch(() => [])
+  ]);
+  const ingList = Array.isArray(ingredients) ? ingredients : [];
+  const mixList = Array.isArray(mixes) ? mixes : [];
+  const supList = Array.isArray(supplements) ? supplements : [];
 
   const today = new Date().toISOString().split('T')[0];
   const nextWeek = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
 
+  const checkboxGroup = (items, nameField = 'name') => items.length === 0
+    ? '<span style="color:var(--text-light);font-size:0.8rem;">Aucun élément disponible.</span>'
+    : items.map(it => `
+        <label style="display:flex;align-items:center;gap:8px;padding:4px 0;cursor:pointer;font-size:0.85rem;">
+          <input type="checkbox" name="composition_ids" value="${it.id}">
+          ${it[nameField] || it.name || it.nom || '—'}
+          ${it.category ? `<span class="badge badge-info" style="font-size:0.7rem;">${it.category}</span>` : ''}
+        </label>`).join('');
+
   document.getElementById('modal-body').innerHTML = `
     <form id="form-plan">
-      <div class="form-group">
-        <label class="form-label">Nom du plan *</label>
-        <input type="text" class="form-control" name="name" required placeholder="ex: Plan pré-saison 2025">
-      </div>
       <div class="form-row">
+        <div class="form-group" style="flex:2;">
+          <label class="form-label">Nom du plan *</label>
+          <input type="text" class="form-control" name="name" required placeholder="ex: Plan pré-saison 2025">
+        </div>
         <div class="form-group">
           <label class="form-label">Objectif</label>
           <select class="form-control" name="goal">
@@ -520,25 +607,57 @@ async function openPlanModal() {
             <option value="hiver">Hiver</option>
           </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Quantité quotidienne (g)</label>
-          <input type="number" class="form-control" name="daily_quantity_g" step="5" placeholder="ex: 40">
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Date de début</label>
-          <input type="date" class="form-control" name="start_date" value="${today}">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Date de fin</label>
-          <input type="date" class="form-control" name="end_date" value="${nextWeek}">
-        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Description / instructions</label>
-        <textarea class="form-control" name="description" rows="3" placeholder="Instructions, adaptations..."></textarea>
+        <textarea class="form-control" name="description" rows="2" placeholder="Instructions, adaptations..."></textarea>
       </div>
+
+      <div style="margin:16px 0 8px;font-weight:600;font-size:0.9rem;">🌾 Composition du plan</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px;">
+          <div style="font-size:0.8rem;font-weight:600;margin-bottom:6px;color:var(--accent);">Ingrédients</div>
+          <div id="plan-ing-list">${checkboxGroup(ingList)}</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px;">
+          <div style="font-size:0.8rem;font-weight:600;margin-bottom:6px;color:var(--accent);">Mélanges</div>
+          <div id="plan-mix-list">${checkboxGroup(mixList)}</div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px;">
+          <div style="font-size:0.8rem;font-weight:600;margin-bottom:6px;color:var(--accent);">Suppléments</div>
+          <div id="plan-sup-list">${checkboxGroup(supList)}</div>
+        </div>
+      </div>
+
+      <div style="margin:0 0 8px;font-weight:600;font-size:0.9rem;">📅 Assignation journalière</div>
+      <div class="form-group">
+        <label class="form-label">Cible par défaut</label>
+        <select class="form-control" name="target_group" id="plan-target-group">
+          <option value="all">Tous les pigeons actifs</option>
+          <option value="actif">Groupe : Actif</option>
+          <option value="concours">Groupe : Concours</option>
+          <option value="reproducteur">Groupe : Reproducteur</option>
+          <option value="pigeon">Pigeon spécifique…</option>
+        </select>
+      </div>
+      <div class="form-group" id="plan-pigeon-wrap" style="display:none;">
+        <label class="form-label">Pigeon</label>
+        <select class="form-control" id="plan-pigeon-select" name="target_pigeon_id">
+          <option value="">Choisir…</option>
+        </select>
+      </div>
+
+      <div style="margin:0 0 8px;font-weight:600;font-size:0.9rem;">🗓️ Planning de la semaine</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;">
+        ${['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map((d,i) => {
+          const key = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'][i];
+          return `<div>
+            <label class="form-label" style="font-size:0.75rem;text-align:center;display:block;">${d}</label>
+            <input type="text" class="form-control" name="${key}" style="font-size:0.75rem;padding:4px 6px;" placeholder="—">
+          </div>`;
+        }).join('')}
+      </div>
+
       <div class="modal-footer" style="padding:0;margin-top:16px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary">Créer le plan</button>
@@ -549,9 +668,31 @@ async function openPlanModal() {
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
+  // Afficher/masquer sélecteur pigeon
+  document.getElementById('plan-target-group').addEventListener('change', async (e) => {
+    const wrap = document.getElementById('plan-pigeon-wrap');
+    if (e.target.value === 'pigeon') {
+      wrap.style.display = '';
+      const sel = document.getElementById('plan-pigeon-select');
+      if (sel.options.length <= 1) {
+        const pigeons = await getPigeonsCache();
+        pigeons.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = `${p.matricule}${p.nom ? ' — ' + p.nom : ''}`;
+          sel.appendChild(opt);
+        });
+      }
+    } else {
+      wrap.style.display = 'none';
+    }
+  });
+
   document.getElementById('form-plan').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = parseFormData(e.target, ['daily_quantity_g'], ['name']);
+    const data = parseFormData(e.target, [], ['name']);
+    // Retirer target_pigeon_id si pas pertinent
+    if (data.target_group !== 'pigeon') delete data.target_pigeon_id;
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true;
     btn.innerHTML = '<span class="loader-inline"></span>';
@@ -566,6 +707,36 @@ async function openPlanModal() {
       btn.textContent = 'Créer le plan';
     }
   });
+}
+
+/* ——— Détail d'un plan (lecture) ——— */
+function openPlanDetail(planId, plan) {
+  document.getElementById('modal-title').textContent = plan.name || plan.nom || 'Plan';
+  document.getElementById('modal').className = 'modal';
+
+  const days = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const dayKeys = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+
+  document.getElementById('modal-body').innerHTML = `
+    ${plan.description ? `<p style="color:var(--text-light);margin-bottom:12px;">${plan.description}</p>` : ''}
+    ${plan.goal ? `<p><strong>Objectif :</strong> ${plan.goal}</p>` : ''}
+    <div style="margin-top:12px;font-weight:600;margin-bottom:8px;">Planning semaine</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
+      ${days.map((d, i) => {
+        const val = plan[dayKeys[i]] || '—';
+        return `<div style="text-align:center;border:1px solid var(--border);border-radius:6px;padding:8px 4px;">
+          <div style="font-size:0.75rem;font-weight:600;margin-bottom:4px;">${d}</div>
+          <div style="font-size:0.72rem;color:var(--text-light);">${val}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="modal-footer" style="padding:0;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+    </div>`;
+
+  document.getElementById('modal-overlay').style.display = 'flex';
+  document.getElementById('modal-close').onclick = closeModal;
+  document.getElementById('modal-overlay').onclick = (e) => { if (e.target.id === 'modal-overlay') closeModal(); };
 }
 
 /* ——— Utilitaire : parser FormData avec conversion types ——— */

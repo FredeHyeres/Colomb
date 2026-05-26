@@ -405,7 +405,7 @@ function renderRegularityChart(regularityData, pigeons) {
   const datasets = regularityData
     .filter(d => d.scores.length > 0)
     .map((d, idx) => ({
-      label: d.pigeon.bague || `Pigeon ${idx + 1}`,
+      label: d.pigeon.matricule || `Pigeon ${idx + 1}`,
       data: d.scores,
       borderColor: colors[idx % colors.length],
       backgroundColor: 'transparent',

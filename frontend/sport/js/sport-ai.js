@@ -34,7 +34,7 @@ async function loadAIRecommendations() {
   pigeons.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id;
-    opt.textContent = `${p.bague}${p.nom ? ' — ' + p.nom : ''}`;
+    opt.textContent = `${p.matricule}${p.nom ? ' — ' + p.nom : ''}`;
     select.appendChild(opt);
   });
 

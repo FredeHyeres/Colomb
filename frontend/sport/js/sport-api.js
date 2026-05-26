@@ -231,6 +231,7 @@ let _pigeonsCache = null;
 async function getPigeonsCache() {
   if (!_pigeonsCache) {
     _pigeonsCache = await ElevageAPI.getPigeons().catch(() => []);
+    _pigeonsCache = (_pigeonsCache || []).filter(p => !['decede', 'perdu'].includes(p.statut));
   }
   return _pigeonsCache || [];
 }
@@ -244,7 +245,7 @@ async function buildPigeonSelect(selectEl, emptyLabel = 'Choisir un pigeon...') 
   const pigeons = await getPigeonsCache();
   selectEl.innerHTML = `<option value="">${emptyLabel}</option>` +
     pigeons.map(p =>
-      `<option value="${p.id}">${p.bague}${p.nom ? ' — ' + p.nom : ''}</option>`
+      `<option value="${p.id}">${p.matricule}${p.nom ? ' — ' + p.nom : ''}</option>`
     ).join('');
   return pigeons;
 }

@@ -35,7 +35,7 @@ async function loadHistory() {
   pigeons.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id;
-    opt.textContent = `${p.bague}${p.nom ? ' — ' + p.nom : ''}`;
+    opt.textContent = `${p.matricule}${p.nom ? ' — ' + p.nom : ''}`;
     select.appendChild(opt);
   });
 
@@ -149,7 +149,7 @@ async function loadPigeonHistory(pigeonId, pigeon) {
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
           <div style="font-size:3rem;">🕊️</div>
           <div>
-            <div style="font-size:1.2rem;font-weight:700;">${pigeon?.bague || '—'}</div>
+            <div style="font-size:1.2rem;font-weight:700;">${pigeon?.matricule || '—'}</div>
             ${pigeon?.nom ? `<div style="color:var(--text-light);">${pigeon.nom}</div>` : ''}
             ${pigeon?.lignee ? `<div><span class="badge badge-info">${pigeon.lignee}</span></div>` : ''}
           </div>

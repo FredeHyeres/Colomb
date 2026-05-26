@@ -375,7 +375,7 @@ async function openSessionDetail(sessionId) {
                 return `
                   <tr>
                     <td>
-                      <div style="font-weight:600;">${pigeon.bague || r.pigeon_id}</div>
+                      <div style="font-weight:600;">${pigeon.matricule || r.pigeon_id}</div>
                       ${pigeon.nom ? `<div style="font-size:0.75rem;color:var(--text-light);">${pigeon.nom}</div>` : ''}
                     </td>
                     <td>${r.return_time_minutes != null ? r.return_time_minutes + ' min' : '—'}</td>
@@ -410,7 +410,7 @@ function openAddResultModal(sessionId, pigeons) {
   title.textContent = '+ Ajouter un résultat pigeon';
 
   const pigeonOptions = pigeons.map(p =>
-    `<option value="${p.id}">${p.bague}${p.nom ? ' — ' + p.nom : ''}</option>`
+    `<option value="${p.id}">${p.matricule}${p.nom ? ' — ' + p.nom : ''}</option>`
   ).join('');
 
   body.innerHTML = `
