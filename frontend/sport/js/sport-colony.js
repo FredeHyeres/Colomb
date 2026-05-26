@@ -18,14 +18,13 @@ async function loadColony() {
   try {
     const pigeons = await getPigeonsCache();
 
-    // Charger snapshots pour tous les pigeons en parallèle (limité à 10 pour éviter surcharge)
-    const topPigeons = pigeons.slice(0, 20);
+    // Charger snapshots pour tous les pigeons en parallèle
     const snapshotsAll = await Promise.all(
-      topPigeons.map(p => AIAPI.getSnapshots(p.id).catch(() => []))
+      pigeons.map(p => AIAPI.getSnapshots(p.id).catch(() => []))
     );
 
     // Associer dernier snapshot à chaque pigeon
-    const pigeonData = topPigeons.map((p, idx) => {
+    const pigeonData = pigeons.map((p, idx) => {
       const snapList = Array.isArray(snapshotsAll[idx]) ? snapshotsAll[idx] : [];
       const lastSnap = snapList.length > 0
         ? snapList.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
