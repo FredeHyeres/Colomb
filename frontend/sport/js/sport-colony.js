@@ -18,13 +18,16 @@ async function loadColony() {
   try {
     const pigeons = await getPigeonsCache();
 
+    // Exclure les pigeons décédés
+    const activePigeons = pigeons.filter(p => p.statut?.toLowerCase() !== 'decede');
+
     // Charger snapshots pour tous les pigeons en parallèle
     const snapshotsAll = await Promise.all(
-      pigeons.map(p => AIAPI.getSnapshots(p.id).catch(() => []))
+      activePigeons.map(p => AIAPI.getSnapshots(p.id).catch(() => []))
     );
 
     // Associer dernier snapshot à chaque pigeon
-    const pigeonData = pigeons.map((p, idx) => {
+    const pigeonData = activePigeons.map((p, idx) => {
       const snapList = Array.isArray(snapshotsAll[idx]) ? snapshotsAll[idx] : [];
       const lastSnap = snapList.length > 0
         ? snapList.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
@@ -36,7 +39,7 @@ async function loadColony() {
     const categories = categorizePigeons(pigeonData);
 
     // Stat totaux
-    const total = pigeons.length;
+    const total = activePigeons.length;
     const active = pigeonData.filter(d => d.pigeon.statut !== 'repos').length;
     const repos = pigeonData.filter(d => d.pigeon.statut === 'repos').length;
     const surveillance = categories.probleme.length + categories.surveillance.length;
