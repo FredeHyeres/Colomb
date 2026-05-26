@@ -470,8 +470,12 @@ function openAddResultModal(sessionId, pigeons) {
 
     // pigeon_id est un UUID (string) — ne pas parser en int
     if (!data.pigeon_id) { showToast('Veuillez sélectionner un pigeon.', 'error'); return; }
-    ['return_time', 'internal_rank', 'recovery_score', 'hydration_score', 'condition_score', 'motivation_score'].forEach(k => {
+    ['return_time', 'internal_rank'].forEach(k => {
       if (data[k] !== '') data[k] = parseFloat(data[k]);
+      else delete data[k];
+    });
+    ['recovery_score', 'hydration_score', 'condition_score', 'motivation_score'].forEach(k => {
+      if (data[k] !== '') data[k] = Math.round(Number(data[k]));
       else delete data[k];
     });
     if (!data.notes) delete data.notes;

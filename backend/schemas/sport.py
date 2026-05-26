@@ -85,8 +85,10 @@ class PigeonTrainingResultBase(BaseModel):
     @field_validator("recovery_score", "motivation_score", "condition_score", "hydration_score", mode="before")
     @classmethod
     def validate_score(cls, v):
-        if v is not None and not (0 <= v <= 10):
-            raise ValueError("Score doit être entre 0 et 10")
+        if v is not None:
+            v = int(round(float(v)))
+            if not (0 <= v <= 10):
+                raise ValueError("Score doit être entre 0 et 10")
         return v
 
 
@@ -155,7 +157,9 @@ class FeedMixResponse(FeedMixBase):
 class NutritionPlanBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: str
+    goal: Optional[str] = None
     description: Optional[str] = None
+    composition: Optional[str] = None  # JSON string
     lundi: Optional[str] = None
     mardi: Optional[str] = None
     mercredi: Optional[str] = None
@@ -172,7 +176,9 @@ class NutritionPlanCreate(NutritionPlanBase):
 class NutritionPlanUpdate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     name: Optional[str] = None
+    goal: Optional[str] = None
     description: Optional[str] = None
+    composition: Optional[str] = None
     lundi: Optional[str] = None
     mardi: Optional[str] = None
     mercredi: Optional[str] = None
@@ -212,6 +218,41 @@ class SupplementUpdate(BaseModel):
 class SupplementResponse(SupplementBase):
     id: int
     created_at: datetime
+
+
+# ── NutritionAssignment ───────────────────────────────────────────────────────
+
+class NutritionAssignmentBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    plan_id: int
+    pigeon_id: Optional[str] = None
+    group_name: Optional[str] = None
+    day_of_week: int  # 0=lundi, 6=dimanche
+    week_start: date
+
+
+class NutritionAssignmentCreate(NutritionAssignmentBase):
+    pass
+
+
+class NutritionAssignmentResponse(NutritionAssignmentBase):
+    id: int
+    created_at: datetime
+    plan: Optional[NutritionPlanResponse] = None
+
+
+# ── NutritionResolved ─────────────────────────────────────────────────────────
+
+class NutritionResolvedDay(BaseModel):
+    day_of_week: int
+    plan: Optional[NutritionPlanResponse] = None
+    source: Optional[str] = None  # "individual" | "group"
+
+
+class NutritionResolvedResponse(BaseModel):
+    pigeon_id: str
+    week_start: date
+    days: List[NutritionResolvedDay]
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
