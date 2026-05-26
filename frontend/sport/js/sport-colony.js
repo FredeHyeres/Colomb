@@ -157,9 +157,11 @@ function categorizePigeons(pigeonData) {
       return;
     }
 
-    const fatigue = snap.fatigue_risk ?? 0;
-    const condition = snap.condition_index ?? 50;
-    const recovery = snap.recovery_index ?? 50;
+    const f = (snap.features && typeof snap.features === 'object') ? snap.features : {};
+    const fatigueMap = { eleve: 80, moyen: 50, faible: 20 };
+    const fatigue = typeof f.fatigue_risk === 'string' ? (fatigueMap[f.fatigue_risk] ?? 0) : 0;
+    const condition = f.condition_avg_7d != null ? f.condition_avg_7d * 10 : 50;
+    const recovery = f.recovery_avg_7d != null ? f.recovery_avg_7d * 10 : 50;
 
     if (fatigue > 70 || condition < 30 || recovery < 30) {
       categories.probleme.push(d);
@@ -187,12 +189,14 @@ function renderPigeonMiniCard(d) {
     statusBadge = '❓ Non évalué';
     statusColor = 'badge-secondary';
   } else {
-    const fatigue = snap.fatigue_risk ?? 0;
-    const condition = snap.condition_index ?? 50;
-    if (fatigue > 70 || condition < 30) {
+    const sf = (snap.features && typeof snap.features === 'object') ? snap.features : {};
+    const fatigueMap = { eleve: 80, moyen: 50, faible: 20 };
+    const fatigue = typeof sf.fatigue_risk === 'string' ? (fatigueMap[sf.fatigue_risk] ?? 0) : 0;
+    const cond100 = sf.condition_avg_7d != null ? sf.condition_avg_7d * 10 : 50;
+    if (fatigue > 70 || cond100 < 30) {
       statusBadge = '🔴 Alerte';
       statusColor = 'badge-danger';
-    } else if (fatigue > 50 || condition < 50) {
+    } else if (fatigue > 50 || cond100 < 50) {
       statusBadge = '🟡 Moyen';
       statusColor = 'badge-warning';
     } else {
@@ -201,8 +205,9 @@ function renderPigeonMiniCard(d) {
     }
   }
 
-  const recovery = snap?.recovery_index ?? null;
-  const condition = snap?.condition_index ?? null;
+  const sf2 = snap?.features && typeof snap.features === 'object' ? snap.features : {};
+  const recovery = sf2.recovery_avg_7d != null ? sf2.recovery_avg_7d / 10 : null;
+  const condition = sf2.condition_avg_7d != null ? sf2.condition_avg_7d / 10 : null;
 
   return `
     <div class="pigeon-mini-card" data-pigeon-id="${pigeon.id}" title="Cliquer pour analyser la condition">
@@ -242,13 +247,16 @@ function renderColonyAlerts(categories) {
   return alerts.map(d => {
     const { pigeon, snap } = d;
     const isProbleme = categories.probleme.includes(d);
-    const fatigue = snap?.fatigue_risk;
-    const condition = snap?.condition_index;
+    const af = (snap?.features && typeof snap.features === 'object') ? snap.features : {};
+    const fatigueLabel = af.fatigue_risk || null;
+    const fatigueMap2 = { eleve: 80, moyen: 50, faible: 20 };
+    const fatigue = typeof fatigueLabel === 'string' ? (fatigueMap2[fatigueLabel] ?? 0) : 0;
+    const condition = af.condition_avg_7d != null ? af.condition_avg_7d * 10 : null;
 
     let reason = '';
     if (!snap) reason = 'Aucun snapshot disponible — condition inconnue';
-    else if (fatigue > 70) reason = `Risque fatigue élevé (${fatigue}%)`;
-    else if (condition < 30) reason = `Condition très faible (${condition}/100)`;
+    else if (fatigue > 70) reason = `Risque fatigue élevé (${fatigueLabel})`;
+    else if (condition != null && condition < 30) reason = `Condition très faible (${condition.toFixed(0)}/100)`;
     else reason = `Surveillance recommandée`;
 
     return `

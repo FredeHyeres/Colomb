@@ -231,30 +231,34 @@ function renderRecommendations(recs, pigeonId, resolved) {
 
 /* ——— Rendu snapshot ——— */
 function renderSnapshot(snap) {
+  const f = (typeof snap.features === 'object' && snap.features) ? snap.features : {};
+
+  const fatigueMap = { eleve: 80, moyen: 50, faible: 20 };
+  const fatigueVal = typeof f.fatigue_risk === 'string'
+    ? (fatigueMap[f.fatigue_risk] ?? null)
+    : null;
+
   const indices = [
-    { key: 'recovery_index', label: 'Récupération', color: '#2980B9', max: 100 },
-    { key: 'condition_index', label: 'Condition', color: '#27AE60', max: 100 },
-    { key: 'regularity_index', label: 'Régularité', color: '#8E44AD', max: 100 },
-    { key: 'fatigue_risk', label: 'Risque fatigue', color: '#E74C3C', max: 100 },
-    { key: 'training_load', label: 'Charge', color: '#E67E22', max: 100 },
-    { key: 'performance_score', label: 'Performance', color: '#C4963A', max: 100 }
+    { label: 'Récupération (7j)', color: '#2980B9', max: 10, val: f.recovery_avg_7d },
+    { label: 'Condition (7j)',    color: '#27AE60', max: 10, val: f.condition_avg_7d },
+    { label: 'Régularité',        color: '#8E44AD', max: 10, val: f.regularity_index },
+    { label: 'Risque fatigue',    color: '#E74C3C', max: 100, val: fatigueVal },
+    { label: 'Charge (30j)',      color: '#E67E22', max: 30,  val: f.training_load_30d },
   ];
 
-  const availableIndices = indices.filter(i => snap[i.key] != null);
+  const available = indices.filter(i => i.val != null);
 
-  if (availableIndices.length === 0) {
+  if (available.length === 0) {
     return '<p style="color:var(--text-light);font-size:0.85rem;">Données de snapshot non disponibles.</p>';
   }
 
   return `
     <div class="gauge-grid">
-      ${availableIndices.map(i =>
-        renderProgressRing(snap[i.key], i.max, i.label, i.color)
-      ).join('')}
+      ${available.map(i => renderProgressRing(i.val, i.max, i.label, i.color)).join('')}
     </div>
-    ${snap.notes || snap.summary ? `
+    ${f.data_quality ? `
       <div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;font-size:0.82rem;color:var(--text-light);">
-        ${snap.notes || snap.summary}
+        Qualité des données : <strong>${f.data_quality}</strong> · ${f.training_load_30d ?? 0} séances (30j) · Tendance récupération : ${f.recovery_trend ?? '—'} · Risque fatigue : ${f.fatigue_risk ?? '—'}
       </div>` : ''}
   `;
 }

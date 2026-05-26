@@ -82,14 +82,16 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
     const healthList = Array.isArray(health) ? health : [];
     const sessions = history?.sessions || (Array.isArray(history) ? history : []);
 
-    // Indices principaux — depuis snapshot ou dashboard
+    // Indices principaux — depuis snap.features (JSON stocké en DB)
+    const f = (lastSnap?.features && typeof lastSnap.features === 'object') ? lastSnap.features : {};
+    const fatigueMap = { eleve: 80, moyen: 50, faible: 20 };
     const indices = {
-      recovery: lastSnap?.recovery_index ?? dashData?.recovery_index ?? null,
-      condition: lastSnap?.condition_index ?? dashData?.condition_index ?? null,
-      regularity: lastSnap?.regularity_index ?? dashData?.regularity_index ?? null,
-      fatigue: lastSnap?.fatigue_risk ?? dashData?.fatigue_risk ?? null,
-      training_load: lastSnap?.training_load ?? dashData?.training_load ?? null,
-      performance: lastSnap?.performance_score ?? dashData?.performance_score ?? null
+      recovery: f.recovery_avg_7d ?? null,
+      condition: f.condition_avg_7d ?? null,
+      regularity: f.regularity_index ?? null,
+      fatigue: typeof f.fatigue_risk === 'string' ? (fatigueMap[f.fatigue_risk] ?? null) : null,
+      training_load: f.training_load_30d ?? null,
+      performance: null
     };
 
     // Tendances : comparer snapshot actuel vs 7j avant
@@ -130,12 +132,11 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
 
         ${Object.values(indices).some(v => v != null) ? `
           <div class="gauge-grid">
-            ${indices.recovery != null ? renderProgressRing(indices.recovery, 100, 'Récupération', '#2980B9') : ''}
-            ${indices.condition != null ? renderProgressRing(indices.condition, 100, 'Condition', '#27AE60') : ''}
-            ${indices.regularity != null ? renderProgressRing(indices.regularity, 100, 'Régularité', '#8E44AD') : ''}
+            ${indices.recovery != null ? renderProgressRing(indices.recovery, 10, 'Récupération (7j)', '#2980B9') : ''}
+            ${indices.condition != null ? renderProgressRing(indices.condition, 10, 'Condition (7j)', '#27AE60') : ''}
+            ${indices.regularity != null ? renderProgressRing(indices.regularity, 10, 'Régularité', '#8E44AD') : ''}
             ${indices.fatigue != null ? renderProgressRing(indices.fatigue, 100, 'Risque fatigue', indices.fatigue > 70 ? '#E74C3C' : '#E67E22') : ''}
-            ${indices.training_load != null ? renderProgressRing(indices.training_load, 100, 'Charge', '#E67E22') : ''}
-            ${indices.performance != null ? renderProgressRing(indices.performance, 100, 'Performance', '#C4963A') : ''}
+            ${indices.training_load != null ? renderProgressRing(indices.training_load, 30, 'Charge (30j)', '#E67E22') : ''}
           </div>` : `
           <div class="empty-state" style="padding:24px;">
             <p>Aucun indice disponible. Créez un snapshot pour obtenir les données de condition.</p>
@@ -204,22 +205,22 @@ function renderTendances(sessions, pigeonId) {
 
   const getScore = (session) => session.recovery_score ?? null;
 
-  // Moyenne 30 dernières vs 30 précédentes (sur 90j)
-  const recent30 = sorted.slice(-30).map(getScore).filter(x => x != null);
-  const prev30 = sorted.slice(-60, -30).map(getScore).filter(x => x != null);
-
-  const avg30 = recent30.length > 0 ? recent30.reduce((a, b) => a + b, 0) / recent30.length : null;
-  const avgPrev = prev30.length > 0 ? prev30.reduce((a, b) => a + b, 0) / prev30.length : null;
-
   const inWindow = (s, fromDays, toDays) => {
     const ms = Date.now() - new Date(s.session_date || s.date);
     return ms >= fromDays * 86400000 && ms < toDays * 86400000;
   };
 
+  // Moyenne 90 derniers jours vs 90 précédents
+  const recent30 = sorted.filter(s => inWindow(s, 0, 90)).map(getScore).filter(x => x != null);
+  const prev30 = sorted.filter(s => inWindow(s, 90, 180)).map(getScore).filter(x => x != null);
+
+  const avg30 = recent30.length > 0 ? recent30.reduce((a, b) => a + b, 0) / recent30.length : null;
+  const avgPrev = prev30.length > 0 ? prev30.reduce((a, b) => a + b, 0) / prev30.length : null;
+
   const metrics = [
-    { label: 'Récupération moy. (30j)', val: avg30, prev: avgPrev, unit: '/10' },
-    { label: 'Nb séances (30j)', val: sorted.filter(s => inWindow(s, 0, 30)).length, prev: sorted.filter(s => inWindow(s, 30, 60)).length, unit: '' },
-    { label: 'Nb séances (90j)', val: sorted.filter(s => inWindow(s, 0, 90)).length, prev: null, unit: '' }
+    { label: 'Récupération moy. (90j)', val: avg30, prev: avgPrev, unit: '/10', dec: 1 },
+    { label: 'Nb séances (30j)', val: sorted.filter(s => inWindow(s, 0, 30)).length, prev: sorted.filter(s => inWindow(s, 30, 60)).length, unit: '', dec: 0 },
+    { label: 'Nb séances (90j)', val: sorted.filter(s => inWindow(s, 0, 90)).length, prev: null, unit: '', dec: 0 }
   ];
 
   return metrics.map(m => {
@@ -229,13 +230,13 @@ function renderTendances(sessions, pigeonId) {
     if (delta != null) {
       if (delta > 0.2) { arrow = '↑'; arrowClass = 'up'; }
       else if (delta < -0.2) { arrow = '↓'; arrowClass = 'down'; }
-      deltaStr = `${delta > 0 ? '+' : ''}${delta.toFixed(1)}`;
+      deltaStr = `${delta > 0 ? '+' : ''}${delta.toFixed(m.dec)}`;
     }
     return `
       <div class="tendance-item">
         <div>
           <div style="font-size:0.85rem;font-weight:600;">${m.label}</div>
-          <div style="font-size:1.1rem;font-weight:700;color:var(--text);">${m.val.toFixed ? m.val.toFixed(1) : m.val}${m.unit}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--text);">${m.val.toFixed(m.dec)}${m.unit}</div>
         </div>
         <div style="text-align:right;">
           <div class="tendance-arrow ${arrowClass}">${arrow}</div>
