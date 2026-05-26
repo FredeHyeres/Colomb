@@ -1,6 +1,6 @@
 # 🕊️ Colomb — Gestion d'élevage colombophile
 
-> Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé, sport et intelligence artificielle. Déploiement via **Docker Desktop**.
+> Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé et statistiques. Déploiement via **Docker Desktop**.
 
 ![Python](https://img.shields.io/badge/Python-FastAPI-blue?logo=python)
 ![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
@@ -15,17 +15,14 @@
 > | Version | Statut | Description |
 > |---|---|---|
 > | **V1 — Élevage** | ✅ **Stable — prête à l'utilisation** | Pigeons, pedigrees, couples, santé, performances, éleveur |
-> | **V2 — Sport** | 🚧 En développement | Entraînements, monitoring colonie, analytics, condition sportive |
-> | **V3 — IA** | 🧪 Expérimental | Recommandations XAI, snapshots sportifs, moteur expert |
+> | **V2 — Sport** | 🚧 En développement | Disponible sur la branche `v2` |
+> | **V3 — IA** | 🧪 Expérimental | Disponible sur la branche `main` |
 >
-> **Seule la V1 (module Élevage) est recommandée pour une utilisation en production.**
-> Les modules Sport et IA sont fonctionnels mais peuvent contenir des bugs ou évoluer significativement.
+> **Cette branche (v1) contient uniquement le module Élevage, stable et prêt à l'utilisation.**
 
 ---
 
-## 🔧 Fonctionnalités
-
-### ✅ V1 — Élevage (stable)
+## 🔧 Fonctionnalités — V1 Élevage
 
 | Module | Description |
 |---|---|
@@ -38,25 +35,6 @@
 | 💊 **Santé** | Suivi des vaccins, traitements et visites vétérinaires |
 | 🤝 **Éleveur** | Profil et coordonnées intégrés dans les exports PDF |
 | 📊 **Dashboard** | Vue synthétique des statistiques de l'élevage |
-
-### 🚧 V2 — Sport (en développement)
-
-| Module | Description |
-|---|---|
-| 🏃 **Séances d'entraînement** | Saisie des entraînements loft / lancer / concours avec scores |
-| 📅 **Historique pigeon** | Timeline des séances avec récupération, condition, motivation |
-| 🌍 **Monitoring colonie** | Vue d'ensemble de tous les pigeons actifs avec état de forme |
-| 📈 **Analytics** | 4 graphiques : évolution récupération, charge hebdo, température vs récup, régularité |
-| 💪 **Condition sportive** | Indices de condition, tendances 90j, impact santé, performances récentes |
-| 🥗 **Plans alimentaires** | Calendrier des plans de nutrition selon la période sportive |
-
-### 🧪 V3 — Intelligence Artificielle (expérimental)
-
-| Module | Description |
-|---|---|
-| 🤖 **Recommandations XAI** | Moteur expert explicable : concours / repos / entraînement léger / réforme |
-| 📊 **Snapshots sportifs** | Indices calculés : récupération, condition, régularité, risque fatigue, charge |
-| 📋 **Event store** | Journal chronologique des événements sportifs par pigeon |
 
 ---
 
@@ -79,8 +57,8 @@
 ### Installation
 
 ```bash
-# Cloner le dépôt
-git clone https://github.com/FredeHyeres/Colomb.git
+# Cloner le dépôt (branche v1)
+git clone -b v1 https://github.com/FredeHyeres/Colomb.git
 cd Colomb
 
 # Lancer l'application
