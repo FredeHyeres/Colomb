@@ -211,7 +211,7 @@ function _ingRenderList() {
     <div class="mix-ing-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
       <span style="flex:1;font-size:0.88rem;min-width:100px;">🌾 ${item.name}</span>
       <input type="range" min="0" max="100" step="0.01" value="${item.pct}"
-        class="mix-ing-slider" data-idx="${idx}" style="flex:2;min-width:100px;accent-color:var(--primary);">
+        class="mix-ing-slider" data-idx="${idx}" style="flex:2;min-width:100px;accent-color:var(--accent);">
       <input type="number" min="0" max="100" step="0.01" value="${item.pct}"
         class="form-control mix-ing-input" style="width:80px;" data-idx="${idx}">
       <span style="font-size:0.8rem;color:var(--text-light);width:14px;">%</span>
@@ -874,7 +874,7 @@ function _planRenderDayTags(dayIdx) {
     return;
   }
   container.innerHTML = _planDays[dayIdx].map((m, i) =>
-    `<span style="background:var(--primary);color:#fff;border-radius:12px;padding:2px 8px;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
+    `<span style="background:var(--accent);color:#fff;border-radius:12px;padding:2px 8px;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
       🔀 ${m.name}
       <button type="button" onclick="_planRemoveDayMix(${dayIdx},${i})"
         style="background:none;border:none;color:#fff;cursor:pointer;padding:0;font-size:0.75rem;line-height:1;">✕</button>
@@ -1418,7 +1418,7 @@ function _cal2RenderTable(rows) {
                 const mixes = row[day] || [];
                 return `<td style="font-size:0.78rem;text-align:center;vertical-align:top;padding:6px 4px;">
                   ${mixes.length
-                    ? mixes.map(m => `<div style="background:var(--primary);color:#fff;border-radius:4px;padding:2px 5px;margin-bottom:2px;white-space:nowrap;font-size:0.72rem;">${m}</div>`).join('')
+                    ? mixes.map(m => `<div style="background:var(--accent);color:#fff;border-radius:4px;padding:2px 5px;margin-bottom:2px;white-space:nowrap;font-size:0.72rem;">${m}</div>`).join('')
                     : '<span style="color:var(--text-light);">—</span>'}
                 </td>`;
               }).join('')}
