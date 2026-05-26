@@ -93,6 +93,7 @@ class FeedMix(Base):
     name = Column(String(100), nullable=False, unique=True)
     usage = Column(SAEnum(MixUsage), nullable=True)
     description = Column(Text, nullable=True)
+    composition = Column(Text, nullable=True)  # JSON: [{"id":"ing_1","type":"ingredient","name":"Blé","pct":60.0}, ...]
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     ingredients = relationship("FeedIngredient", secondary=feed_mix_ingredients)
 

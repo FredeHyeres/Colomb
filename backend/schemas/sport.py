@@ -139,6 +139,7 @@ class FeedMixBase(BaseModel):
     name: str
     usage: Optional[str] = None
     description: Optional[str] = None
+    composition: Optional[str] = None  # JSON string
 
 
 class FeedMixCreate(FeedMixBase):
@@ -150,6 +151,7 @@ class FeedMixUpdate(BaseModel):
     name: Optional[str] = None
     usage: Optional[str] = None
     description: Optional[str] = None
+    composition: Optional[str] = None
 
 
 class FeedMixResponse(FeedMixBase):

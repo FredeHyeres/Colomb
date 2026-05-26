@@ -242,6 +242,86 @@ async function deleteMixItem(mixId) {
   }
 }
 
+/* ——— État composition mélange ——— */
+let _mixState = { items: [] };
+// item : { id: "ing_1"|"sup_1", type: "ingredient"|"supplement", name: "...", pct: 0 }
+
+function _mixAddItem(itemId, type, name) {
+  if (_mixState.items.find(i => i.id === itemId)) {
+    showToast('Cet élément est déjà dans la composition', 'warning');
+    return;
+  }
+  _mixState.items.push({ id: itemId, type, name, pct: 0 });
+  _mixRebalanceEqual();
+  _mixRenderComposition();
+}
+
+function _mixRemoveItem(idx) {
+  _mixState.items.splice(idx, 1);
+  _mixRebalanceEqual();
+  _mixRenderComposition();
+}
+
+function _mixRebalanceEqual() {
+  const n = _mixState.items.length;
+  if (n === 0) return;
+  const share = parseFloat((100 / n).toFixed(1));
+  const lastShare = parseFloat((100 - share * (n - 1)).toFixed(1));
+  _mixState.items.forEach((item, i) => {
+    item.pct = i === n - 1 ? lastShare : share;
+  });
+}
+
+function _mixOnPctChange(idx, val) {
+  const newPct = Math.min(100, Math.max(0, parseFloat(val) || 0));
+  _mixState.items[idx].pct = newPct;
+  const others = _mixState.items.filter((_, i) => i !== idx);
+  if (others.length > 0) {
+    const remaining = 100 - newPct;
+    const share = parseFloat((remaining / others.length).toFixed(1));
+    const lastShare = parseFloat((remaining - share * (others.length - 1)).toFixed(1));
+    others.forEach((o, i) => {
+      o.pct = i === others.length - 1 ? lastShare : share;
+    });
+  }
+  _mixRenderComposition();
+}
+
+function _mixRenderComposition() {
+  const el = document.getElementById('mix-comp-list');
+  const totalEl = document.getElementById('mix-comp-total');
+  if (!el) return;
+
+  if (_mixState.items.length === 0) {
+    el.innerHTML = '<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">Aucun ingrédient sélectionné</div>';
+    if (totalEl) { totalEl.textContent = 'Total : 0%'; totalEl.style.color = 'var(--text)'; }
+    return;
+  }
+
+  el.innerHTML = _mixState.items.map((item, idx) => `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+      <span style="flex:1;font-size:0.88rem;">${item.type === 'supplement' ? '💊' : '🌾'} ${item.name}</span>
+      <input type="number" min="0" max="100" step="0.1" value="${item.pct}"
+        class="form-control mix-pct-input" style="width:75px;"
+        data-idx="${idx}">
+      <span style="font-size:0.8rem;color:var(--text-light);">%</span>
+      <button type="button" class="btn btn-sm btn-icon mix-remove-btn" data-idx="${idx}">🗑️</button>
+    </div>`).join('');
+
+  const total = _mixState.items.reduce((s, i) => s + i.pct, 0);
+  if (totalEl) {
+    totalEl.textContent = `Total : ${total.toFixed(1)}%`;
+    totalEl.style.color = Math.abs(total - 100) < 0.1 ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--text)');
+  }
+
+  el.querySelectorAll('.mix-pct-input').forEach(input => {
+    input.addEventListener('change', (e) => _mixOnPctChange(parseInt(e.target.dataset.idx), e.target.value));
+  });
+  el.querySelectorAll('.mix-remove-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => _mixRemoveItem(parseInt(e.target.dataset.idx)));
+  });
+}
+
 /* ——— Modal mélange (création et modification) ——— */
 async function openMixModal(mixId = null) {
   const overlay = document.getElementById('modal-overlay');
@@ -252,16 +332,37 @@ async function openMixModal(mixId = null) {
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-  let mix = null;
-  if (mixId) {
-    try {
-      mix = await SportAPI.getMix(mixId);
-    } catch (err) {
-      showToast(err.message, 'error');
-      closeModal();
-      return;
-    }
+  // Charger mix existant + listes ingrédients/suppléments en parallèle
+  let mix = null, ingredients = [], supplements = [];
+  try {
+    [mix, ingredients, supplements] = await Promise.all([
+      mixId ? SportAPI.getMix(mixId) : Promise.resolve(null),
+      SportAPI.getIngredients().catch(() => []),
+      SportAPI.getSupplements().catch(() => []),
+    ]);
+    ingredients = Array.isArray(ingredients) ? ingredients : [];
+    supplements = Array.isArray(supplements) ? supplements : [];
+  } catch (err) {
+    showToast(err.message, 'error');
+    closeModal();
+    return;
   }
+
+  // Initialiser l'état composition
+  _mixState = { items: [] };
+  if (mix?.composition) {
+    try {
+      const parsed = JSON.parse(mix.composition);
+      if (Array.isArray(parsed)) _mixState.items = parsed.map(c => ({ ...c }));
+    } catch { /* composition corrompue, on repart de zéro */ }
+  }
+
+  const ingOptgroup = ingredients.length
+    ? `<optgroup label="🌾 Ingrédients">${ingredients.map(i => `<option value="ing_${i.id}" data-type="ingredient" data-name="${i.name}">${i.name}</option>`).join('')}</optgroup>`
+    : '';
+  const supOptgroup = supplements.length
+    ? `<optgroup label="💊 Suppléments">${supplements.map(s => `<option value="sup_${s.id}" data-type="supplement" data-name="${s.name}">${s.name}</option>`).join('')}</optgroup>`
+    : '';
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-mix">
@@ -286,15 +387,53 @@ async function openMixModal(mixId = null) {
         <textarea class="form-control" name="description" rows="2"
           placeholder="Composition, usage recommandé...">${mix?.description || ''}</textarea>
       </div>
+
+      <div style="margin:16px 0 6px;font-weight:600;font-size:0.9rem;">🌾 Composition (%)</div>
+      <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:8px;">Sélectionnez les ingrédients et leur pourcentage. Le total doit être 100%.</p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="mix-item-sel" class="form-control form-control-sm" style="flex:1;">
+          <option value="">-- Choisir un ingrédient ou supplément --</option>
+          ${ingOptgroup}${supOptgroup}
+        </select>
+        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-item-btn">+ Ajouter</button>
+      </div>
+      <div id="mix-comp-list"></div>
+      <div id="mix-comp-total" style="font-size:0.85rem;font-weight:600;margin-top:6px;color:var(--text);">Total : 0%</div>
+
       <div class="modal-footer" style="padding:0;margin-top:16px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary">${mixId ? 'Enregistrer' : 'Créer le mélange'}</button>
       </div>
     </form>`;
 
+  // Render composition initiale
+  _mixRenderComposition();
+
+  // Bouton ajouter
+  document.getElementById('mix-add-item-btn').addEventListener('click', () => {
+    const sel = document.getElementById('mix-item-sel');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt.value) return;
+    _mixAddItem(opt.value, opt.dataset.type, opt.dataset.name);
+    sel.value = '';
+  });
+
   document.getElementById('form-mix').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = parseFormData(e.target, [], ['name']);
+
+    // Valider et sérialiser la composition
+    if (_mixState.items.length > 0) {
+      const total = _mixState.items.reduce((s, i) => s + i.pct, 0);
+      if (Math.abs(total - 100) > 0.1) {
+        showToast(`Total des % doit être 100% (actuellement ${total.toFixed(1)}%)`, 'warning');
+        return;
+      }
+      data.composition = JSON.stringify(_mixState.items);
+    } else {
+      data.composition = null;
+    }
+
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true;
     btn.innerHTML = '<span class="loader-inline"></span>';
