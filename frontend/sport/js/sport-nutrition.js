@@ -1,194 +1,56 @@
 /* ============================================================
-   SPORT-NUTRITION.JS — Nutrition : ingrédients, mélanges, suppléments, plans
+   SPORT-NUTRITION.JS — Nutrition : mélanges, ingrédients, suppléments, plans
    ============================================================ */
 
-/* ——— Page principale : 3 onglets ——— */
+/* ——— Page principale : 5 onglets ——— */
 async function loadNutrition() {
   const content = document.getElementById('content');
   const btn = document.getElementById('btn-add');
-  if (btn) btn.style.display = 'none';
+  if (btn) { btn.style.display = 'none'; btn.onclick = null; }
 
   content.innerHTML = `
     <div class="card">
-      <!-- Tabs -->
       <div class="tabs-header">
-        <button class="tab-btn active" data-tab="ingredients">🌾 Ingrédients</button>
-        <button class="tab-btn" data-tab="mixes">🔀 Mélanges</button>
+        <button class="tab-btn active" data-tab="mixes">🔀 Mélanges</button>
+        <button class="tab-btn" data-tab="ingredients">🌾 Ingrédients</button>
         <button class="tab-btn" data-tab="supplements">💊 Suppléments</button>
+        <button class="tab-btn" data-tab="plans">📋 Plan alimentaire</button>
+        <button class="tab-btn" data-tab="calendar">📅 Calendrier</button>
       </div>
+      <div id="tab-mixes"       class="tab-panel active"><div class="loader-spinner"></div></div>
+      <div id="tab-ingredients" class="tab-panel"><div class="loader-spinner"></div></div>
+      <div id="tab-supplements" class="tab-panel"><div class="loader-spinner"></div></div>
+      <div id="tab-plans"       class="tab-panel"><div class="loader-spinner"></div></div>
+      <div id="tab-calendar"    class="tab-panel"><div class="loader-spinner"></div></div>
+    </div>`;
 
-      <div id="tab-ingredients" class="tab-panel active">
-        <div class="loader-spinner"></div>
-      </div>
-      <div id="tab-mixes" class="tab-panel">
-        <div class="loader-spinner"></div>
-      </div>
-      <div id="tab-supplements" class="tab-panel">
-        <div class="loader-spinner"></div>
-      </div>
-    </div>
-  `;
-
-  // Gestion des onglets
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(tabBtn => {
+    tabBtn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      tabBtn.classList.add('active');
+      document.getElementById(`tab-${tabBtn.dataset.tab}`)?.classList.add('active');
     });
   });
 
-  // Charger tous les onglets en parallèle
-  loadIngredientsTab();
   loadMixesTab();
+  loadIngredientsTab();
   loadSupplementsTab();
+  _loadPlansTab();
+  _loadCalendarTab();
 }
 
-/* ——— Onglet Ingrédients ——— */
-async function loadIngredientsTab() {
-  const el = document.getElementById('tab-ingredients');
+/* ============================================================
+   ONGLET MÉLANGES
+   ============================================================ */
 
-  try {
-    const ingredients = await SportAPI.getIngredients();
-    const list = Array.isArray(ingredients) ? ingredients : (ingredients.items || []);
-
-    el.innerHTML = `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-        <button class="btn btn-primary btn-sm" onclick="openIngredientModal()">+ Ajouter un ingrédient</button>
-      </div>
-      ${list.length === 0
-        ? `<div class="empty-state"><div class="empty-icon">🌾</div><h3>Aucun ingrédient</h3><p>Ajoutez vos premiers ingrédients nutritionnels.</p></div>`
-        : `<table class="table-modern">
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Catégorie</th>
-                <th>Protéines</th>
-                <th>Lipides</th>
-                <th>Glucides</th>
-                <th>Énergie (kcal)</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${list.map(ing => `
-                <tr>
-                  <td><strong>${ing.name || ing.nom || '—'}</strong></td>
-                  <td>${ing.category ? `<span class="badge badge-info">${ing.category}</span>` : '—'}</td>
-                  <td>${renderMiniBar(ing.protein_pct, '#2980B9')} ${ing.protein_pct != null ? ing.protein_pct + '%' : '—'}</td>
-                  <td>${renderMiniBar(ing.fat_pct, '#E67E22')} ${ing.fat_pct != null ? ing.fat_pct + '%' : '—'}</td>
-                  <td>${renderMiniBar(ing.carb_pct, '#27AE60')} ${ing.carb_pct != null ? ing.carb_pct + '%' : '—'}</td>
-                  <td>${ing.energy_kcal != null ? ing.energy_kcal + ' kcal' : '—'}</td>
-                  <td style="font-size:0.78rem;color:var(--text-light);">${ing.notes || ''}</td>
-                </tr>`).join('')}
-            </tbody>
-          </table>`}
-    `;
-  } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
-    showToast(err.message, 'error');
-  }
-}
-
-/* ——— Mini barre inline ——— */
-function renderMiniBar(value, color) {
-  if (value == null) return '';
-  const pct = Math.min(100, Math.max(0, value));
-  return `<span style="display:inline-block;width:${Math.round(pct * 0.5)}px;height:6px;background:${color};border-radius:3px;vertical-align:middle;margin-right:4px;"></span>`;
-}
-
-/* ——— Modal ajout ingrédient ——— */
-function openIngredientModal() {
-  const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = '+ Nouvel ingrédient';
-  document.getElementById('modal').className = 'modal';
-
-  document.getElementById('modal-body').innerHTML = `
-    <form id="form-ingredient">
-      <div class="form-group">
-        <label class="form-label">Nom *</label>
-        <input type="text" class="form-control" name="name" required placeholder="ex: Blé, Maïs, Avoine...">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Catégorie</label>
-          <select class="form-control" name="category">
-            <option value="">—</option>
-            <option value="céréale">Céréale</option>
-            <option value="légumineuse">Légumineuse</option>
-            <option value="graine">Graine</option>
-            <option value="minéral">Minéral</option>
-            <option value="vitamine">Vitamine</option>
-            <option value="autre">Autre</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Énergie (kcal/100g)</label>
-          <input type="number" class="form-control" name="energy_kcal" step="1" min="0" placeholder="ex: 350">
-        </div>
-      </div>
-      <div class="form-row-3">
-        <div class="form-group">
-          <label class="form-label">Protéines (%)</label>
-          <input type="number" class="form-control" name="protein_pct" step="0.1" min="0" max="100" placeholder="ex: 12">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Lipides (%)</label>
-          <input type="number" class="form-control" name="fat_pct" step="0.1" min="0" max="100" placeholder="ex: 3">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Glucides (%)</label>
-          <input type="number" class="form-control" name="carb_pct" step="0.1" min="0" max="100" placeholder="ex: 70">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea class="form-control" name="notes" rows="2" placeholder="Observations, source..."></textarea>
-      </div>
-      <div class="modal-footer" style="padding:0;margin-top:16px;">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
-      </div>
-    </form>`;
-
-  overlay.style.display = 'flex';
-  document.getElementById('modal-close').onclick = closeModal;
-  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
-
-  document.getElementById('form-ingredient').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = parseFormData(e.target, ['energy_kcal', 'protein_pct', 'fat_pct', 'carb_pct'], ['name']);
-    const btn = e.target.querySelector('[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loader-inline"></span>';
-    try {
-      await SportAPI.createIngredient(data);
-      showToast('Ingrédient ajouté !', 'success');
-      closeModal();
-      loadIngredientsTab();
-    } catch (err) {
-      showToast(err.message, 'error');
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer';
-    }
-  });
-}
-
-/* ——— Onglet Mélanges ——— */
 async function loadMixesTab() {
   const el = document.getElementById('tab-mixes');
-
+  if (!el) return;
   try {
     const mixes = await SportAPI.getMixes();
     const list = Array.isArray(mixes) ? mixes : (mixes.items || []);
-
-    const usageLabels = {
-      recuperation: 'Récupération',
-      entrainement: 'Entraînement',
-      pre_panier: 'Pré-panier',
-      enlogement: 'Enlogement',
-    };
+    const usageLabels = { recuperation:'Récupération', entrainement:'Entraînement', pre_panier:'Pré-panier', enlogement:'Enlogement' };
 
     el.innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
@@ -212,8 +74,7 @@ async function loadMixesTab() {
                 ${m.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:8px;">${m.description}</p>` : ''}
                 ${_renderMixCompositionPreview(m.composition)}
               </div>`).join('')}
-          </div>`}
-    `;
+          </div>`}`;
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
     showToast(err.message, 'error');
@@ -225,9 +86,17 @@ function _renderMixCompositionPreview(compositionJson) {
   try {
     const comp = JSON.parse(compositionJson);
     if (!Array.isArray(comp) || comp.length === 0) return '';
-    return `<div style="font-size:0.75rem;color:var(--text-light);margin-top:6px;">
-      ${comp.map(c => `<span style="background:var(--bg-secondary);border-radius:4px;padding:2px 6px;margin-right:4px;">${c.type === 'supplement' ? '💊' : '🌾'} ${c.name} ${c.pct}%</span>`).join('')}
-    </div>`;
+    const ings = comp.filter(c => c.type !== 'supplement');
+    const sups = comp.filter(c => c.type === 'supplement');
+    const ingHtml = ings.map(c =>
+      `<span style="background:var(--bg-secondary);border-radius:4px;padding:2px 6px;margin-right:3px;margin-bottom:3px;display:inline-block;">🌾 ${c.name} ${parseFloat(c.pct).toFixed(1)}%</span>`
+    ).join('');
+    const supHtml = sups.length
+      ? '<br>' + sups.map(c =>
+          `<span style="background:#f0f8ff;border-radius:4px;padding:2px 6px;margin-right:3px;margin-bottom:3px;display:inline-block;">💊 ${c.name}${c.quantity ? ' ' + c.quantity + (c.unit ? ' ' + c.unit : '') : ''}</span>`
+        ).join('')
+      : '';
+    return `<div style="font-size:0.75rem;color:var(--text-light);margin-top:6px;">${ingHtml}${supHtml}</div>`;
   } catch { return ''; }
 }
 
@@ -237,92 +106,192 @@ async function deleteMixItem(mixId) {
     await SportAPI.deleteMix(mixId);
     showToast('Mélange supprimé.', 'success');
     loadMixesTab();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
-/* ——— État composition mélange ——— */
-let _mixState = { items: [] };
-// item : { id: "ing_1"|"sup_1", type: "ingredient"|"supplement", name: "...", pct: 0 }
+/* ============================================================
+   ÉTAT COMPOSITION MÉLANGE — ingrédients séparés des suppléments
+   ============================================================ */
 
-function _mixAddItem(itemId, type, name) {
-  if (_mixState.items.find(i => i.id === itemId)) {
-    showToast('Cet élément est déjà dans la composition', 'warning');
-    return;
-  }
-  _mixState.items.push({ id: itemId, type, name, pct: 0 });
-  _mixRebalanceEqual();
-  _mixRenderComposition();
+let _ingState = { items: [] };
+// item: { id:"ing_X", name:"...", pct:50.00 }
+
+let _supState = { items: [] };
+// item: { id:"sup_X", name:"...", quantity:"", unit:"g/kg" }
+
+/* ——— Ingrédients ——— */
+function _ingAddItem(id, name) {
+  if (_ingState.items.find(i => i.id === id)) { showToast('Déjà dans la composition', 'warning'); return; }
+  _ingState.items.push({ id, name, pct: 0 });
+  _ingRebalanceEqual();
+  _ingRenderList();
 }
 
-function _mixRemoveItem(idx) {
-  _mixState.items.splice(idx, 1);
-  _mixRebalanceEqual();
-  _mixRenderComposition();
+function _ingRemoveItem(idx) {
+  _ingState.items.splice(idx, 1);
+  if (_ingState.items.length > 0) _ingRebalanceEqual();
+  _ingRenderList();
 }
 
-function _mixRebalanceEqual() {
-  const n = _mixState.items.length;
+function _ingRebalanceEqual() {
+  const n = _ingState.items.length;
   if (n === 0) return;
-  const share = parseFloat((100 / n).toFixed(1));
-  const lastShare = parseFloat((100 - share * (n - 1)).toFixed(1));
-  _mixState.items.forEach((item, i) => {
-    item.pct = i === n - 1 ? lastShare : share;
-  });
+  const share = parseFloat((100 / n).toFixed(2));
+  const last  = parseFloat((100 - share * (n - 1)).toFixed(2));
+  _ingState.items.forEach((item, i) => { item.pct = i === n - 1 ? last : share; });
 }
 
-function _mixOnPctChange(idx, val) {
-  const newPct = Math.min(100, Math.max(0, parseFloat(val) || 0));
-  _mixState.items[idx].pct = newPct;
-  const others = _mixState.items.filter((_, i) => i !== idx);
-  if (others.length > 0) {
-    const remaining = 100 - newPct;
-    const share = parseFloat((remaining / others.length).toFixed(1));
-    const lastShare = parseFloat((remaining - share * (others.length - 1)).toFixed(1));
-    others.forEach((o, i) => {
-      o.pct = i === others.length - 1 ? lastShare : share;
+/* ——— Algorithme proportionnel ——— */
+function _ingApplyChange(idx, rawVal) {
+  const newPct = Math.min(100, Math.max(0, parseFloat(rawVal) || 0));
+  const oldPct = _ingState.items[idx].pct;
+  const activeOthers = _ingState.items.filter((item, i) => i !== idx && item.pct > 0);
+
+  _ingState.items[idx].pct = newPct;
+
+  if (activeOthers.length === 0) return; // aucun autre actif, pas de redistribution
+
+  if (Math.abs(oldPct - 100) < 0.001) {
+    // CAS 1 : était à 100% → redistribution égale
+    const share = (100 - newPct) / activeOthers.length;
+    activeOthers.forEach(o => { o.pct = Math.max(0, share); });
+  } else {
+    // Recalcul proportionnel
+    const oldOthersSum = 100 - oldPct;
+    const newOthersSum = 100 - newPct;
+    activeOthers.forEach(o => {
+      o.pct = Math.max(0, (o.pct * newOthersSum) / oldOthersSum);
     });
   }
-  _mixRenderComposition();
+
+  // CAS 3 : borner entre 0 et 100
+  _ingState.items.forEach(item => { item.pct = Math.min(100, Math.max(0, item.pct)); });
+
+  // CAS 4 : corriger les arrondis pour total = 100.00% exact
+  _ingState.items.forEach(item => { item.pct = parseFloat(item.pct.toFixed(2)); });
+  const sum = _ingState.items.reduce((s, i) => s + i.pct, 0);
+  const residual = parseFloat((100 - sum).toFixed(2));
+  if (Math.abs(residual) >= 0.01) {
+    _ingState.items[idx].pct = parseFloat((_ingState.items[idx].pct + residual).toFixed(2));
+  }
 }
 
-function _mixRenderComposition() {
-  const el = document.getElementById('mix-comp-list');
-  const totalEl = document.getElementById('mix-comp-total');
+function _ingUpdateDOM() {
+  _ingState.items.forEach((item, idx) => {
+    const slider = document.querySelector(`.mix-ing-slider[data-idx="${idx}"]`);
+    const input  = document.querySelector(`.mix-ing-input[data-idx="${idx}"]`);
+    if (slider) slider.value = item.pct;
+    if (input)  input.value  = item.pct;
+  });
+  const totalEl = document.getElementById('mix-ing-total');
+  if (totalEl) {
+    const total = _ingState.items.reduce((s, i) => s + i.pct, 0);
+    const ok = Math.abs(total - 100) < 0.05;
+    totalEl.textContent  = `Total ingrédients : ${total.toFixed(2)}%`;
+    totalEl.style.color  = ok ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--warning)');
+    totalEl.style.fontWeight = '600';
+  }
+}
+
+function _ingRenderList() {
+  const el      = document.getElementById('mix-ing-list');
+  const totalEl = document.getElementById('mix-ing-total');
   if (!el) return;
 
-  if (_mixState.items.length === 0) {
+  if (_ingState.items.length === 0) {
     el.innerHTML = '<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">Aucun ingrédient sélectionné</div>';
-    if (totalEl) { totalEl.textContent = 'Total : 0%'; totalEl.style.color = 'var(--text)'; }
+    if (totalEl) { totalEl.textContent = 'Total ingrédients : 0%'; totalEl.style.color = 'var(--text)'; }
     return;
   }
 
-  el.innerHTML = _mixState.items.map((item, idx) => `
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
-      <span style="flex:1;font-size:0.88rem;">${item.type === 'supplement' ? '💊' : '🌾'} ${item.name}</span>
-      <input type="number" min="0" max="100" step="0.1" value="${item.pct}"
-        class="form-control mix-pct-input" style="width:75px;"
-        data-idx="${idx}">
-      <span style="font-size:0.8rem;color:var(--text-light);">%</span>
-      <button type="button" class="btn btn-sm btn-icon mix-remove-btn" data-idx="${idx}">🗑️</button>
+  el.innerHTML = _ingState.items.map((item, idx) => `
+    <div class="mix-ing-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
+      <span style="flex:1;font-size:0.88rem;min-width:100px;">🌾 ${item.name}</span>
+      <input type="range" min="0" max="100" step="0.01" value="${item.pct}"
+        class="mix-ing-slider" data-idx="${idx}" style="flex:2;min-width:100px;accent-color:var(--primary);">
+      <input type="number" min="0" max="100" step="0.01" value="${item.pct}"
+        class="form-control mix-ing-input" style="width:80px;" data-idx="${idx}">
+      <span style="font-size:0.8rem;color:var(--text-light);width:14px;">%</span>
+      <button type="button" class="btn btn-sm btn-icon mix-ing-remove" data-idx="${idx}">🗑️</button>
     </div>`).join('');
 
-  const total = _mixState.items.reduce((s, i) => s + i.pct, 0);
-  if (totalEl) {
-    totalEl.textContent = `Total : ${total.toFixed(1)}%`;
-    totalEl.style.color = Math.abs(total - 100) < 0.1 ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--text)');
-  }
+  _ingUpdateDOM();
 
-  el.querySelectorAll('.mix-pct-input').forEach(input => {
-    input.addEventListener('change', (e) => _mixOnPctChange(parseInt(e.target.dataset.idx), e.target.value));
+  el.querySelectorAll('.mix-ing-slider').forEach(slider => {
+    slider.addEventListener('input', (e) => {
+      _ingApplyChange(parseInt(e.target.dataset.idx), e.target.value);
+      _ingUpdateDOM();
+    });
+    slider.addEventListener('change', () => _ingRenderList());
   });
-  el.querySelectorAll('.mix-remove-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => _mixRemoveItem(parseInt(e.target.dataset.idx)));
+  el.querySelectorAll('.mix-ing-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      _ingApplyChange(parseInt(e.target.dataset.idx), e.target.value);
+      _ingRenderList();
+    });
+  });
+  el.querySelectorAll('.mix-ing-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => _ingRemoveItem(parseInt(e.target.dataset.idx)));
   });
 }
 
-/* ——— Modal mélange (création et modification) ——— */
+/* ——— Suppléments (hors %) ——— */
+function _supAddItem(id, name) {
+  if (_supState.items.find(s => s.id === id)) { showToast('Déjà dans le mélange', 'warning'); return; }
+  _supState.items.push({ id, name, quantity: '', unit: 'g/kg' });
+  _supRenderList();
+}
+
+function _supRemoveItem(idx) {
+  _supState.items.splice(idx, 1);
+  _supRenderList();
+}
+
+function _supRenderList() {
+  const el = document.getElementById('mix-sup-list');
+  if (!el) return;
+
+  if (_supState.items.length === 0) {
+    el.innerHTML = '<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">Aucun supplément ajouté</div>';
+    return;
+  }
+
+  const unitOpts = ['g/kg','ml/kg','ml/L','gouttes/L','mg/kg','ml/pigeon','dosette']
+    .map(u => `<option value="${u}">${u}</option>`).join('');
+
+  el.innerHTML = _supState.items.map((item, idx) => `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
+      <span style="flex:1;font-size:0.88rem;min-width:100px;">💊 ${item.name}</span>
+      <input type="number" min="0" step="0.01" value="${item.quantity}"
+        class="form-control mix-sup-qty" style="width:75px;" data-idx="${idx}" placeholder="Qté">
+      <select class="form-control form-control-sm mix-sup-unit" data-idx="${idx}" style="width:110px;">
+        ${unitOpts}
+      </select>
+      <button type="button" class="btn btn-sm btn-icon mix-sup-remove" data-idx="${idx}">🗑️</button>
+    </div>`).join('');
+
+  // Restaurer les unités sélectionnées
+  _supState.items.forEach((item, idx) => {
+    const sel = el.querySelector(`.mix-sup-unit[data-idx="${idx}"]`);
+    if (sel) sel.value = item.unit || 'g/kg';
+  });
+
+  el.querySelectorAll('.mix-sup-qty').forEach(input => {
+    input.addEventListener('change', (e) => {
+      _supState.items[parseInt(e.target.dataset.idx)].quantity = e.target.value;
+    });
+  });
+  el.querySelectorAll('.mix-sup-unit').forEach(sel => {
+    sel.addEventListener('change', (e) => {
+      _supState.items[parseInt(e.target.dataset.idx)].unit = e.target.value;
+    });
+  });
+  el.querySelectorAll('.mix-sup-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => _supRemoveItem(parseInt(e.target.dataset.idx)));
+  });
+}
+
+/* ——— Modal mélange (création + modification) ——— */
 async function openMixModal(mixId = null) {
   const overlay = document.getElementById('modal-overlay');
   document.getElementById('modal-title').textContent = mixId ? '✏️ Modifier le mélange' : '+ Nouveau mélange';
@@ -332,7 +301,6 @@ async function openMixModal(mixId = null) {
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-  // Charger mix existant + listes ingrédients/suppléments en parallèle
   let mix = null, ingredients = [], supplements = [];
   try {
     [mix, ingredients, supplements] = await Promise.all([
@@ -342,27 +310,30 @@ async function openMixModal(mixId = null) {
     ]);
     ingredients = Array.isArray(ingredients) ? ingredients : [];
     supplements = Array.isArray(supplements) ? supplements : [];
-  } catch (err) {
-    showToast(err.message, 'error');
-    closeModal();
-    return;
-  }
+  } catch (err) { showToast(err.message, 'error'); closeModal(); return; }
 
-  // Initialiser l'état composition
-  _mixState = { items: [] };
+  // Initialiser les états séparés
+  _ingState = { items: [] };
+  _supState = { items: [] };
   if (mix?.composition) {
     try {
       const parsed = JSON.parse(mix.composition);
-      if (Array.isArray(parsed)) _mixState.items = parsed.map(c => ({ ...c }));
-    } catch { /* composition corrompue, on repart de zéro */ }
+      if (Array.isArray(parsed)) {
+        parsed.forEach(c => {
+          if (c.type === 'supplement') {
+            _supState.items.push({ id: c.id, name: c.name, quantity: c.quantity || '', unit: c.unit || 'g/kg' });
+          } else {
+            _ingState.items.push({ id: c.id, name: c.name, pct: parseFloat(c.pct) || 0 });
+          }
+        });
+      }
+    } catch { /* composition corrompue */ }
   }
 
-  const ingOptgroup = ingredients.length
-    ? `<optgroup label="🌾 Ingrédients">${ingredients.map(i => `<option value="ing_${i.id}" data-type="ingredient" data-name="${i.name}">${i.name}</option>`).join('')}</optgroup>`
-    : '';
-  const supOptgroup = supplements.length
-    ? `<optgroup label="💊 Suppléments">${supplements.map(s => `<option value="sup_${s.id}" data-type="supplement" data-name="${s.name}">${s.name}</option>`).join('')}</optgroup>`
-    : '';
+  const ingOpts = ingredients.map(i =>
+    `<option value="ing_${i.id}" data-name="${i.name}">${i.name}</option>`).join('');
+  const supOpts = supplements.map(s =>
+    `<option value="sup_${s.id}" data-name="${s.name}">${s.name}</option>`).join('');
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-mix">
@@ -372,49 +343,77 @@ async function openMixModal(mixId = null) {
           placeholder="ex: Mélange course longue distance"
           value="${mix ? (mix.name || '') : ''}">
       </div>
-      <div class="form-group">
-        <label class="form-label">Usage</label>
-        <select class="form-control" name="usage">
-          <option value="">—</option>
-          <option value="recuperation"${mix?.usage === 'recuperation' ? ' selected' : ''}>Récupération</option>
-          <option value="entrainement"${mix?.usage === 'entrainement' ? ' selected' : ''}>Entraînement</option>
-          <option value="pre_panier"${mix?.usage === 'pre_panier' ? ' selected' : ''}>Pré-panier</option>
-          <option value="enlogement"${mix?.usage === 'enlogement' ? ' selected' : ''}>Enlogement</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Description</label>
-        <textarea class="form-control" name="description" rows="2"
-          placeholder="Composition, usage recommandé...">${mix?.description || ''}</textarea>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Usage</label>
+          <select class="form-control" name="usage">
+            <option value="">—</option>
+            <option value="recuperation"${mix?.usage==='recuperation'?' selected':''}>Récupération</option>
+            <option value="entrainement"${mix?.usage==='entrainement'?' selected':''}>Entraînement</option>
+            <option value="pre_panier"${mix?.usage==='pre_panier'?' selected':''}>Pré-panier</option>
+            <option value="enlogement"${mix?.usage==='enlogement'?' selected':''}>Enlogement</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:2;">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-control" name="description"
+            placeholder="Usage recommandé..." value="${mix?.description || ''}">
+        </div>
       </div>
 
-      <div style="margin:16px 0 6px;font-weight:600;font-size:0.9rem;">🌾 Composition (%)</div>
-      <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:8px;">Sélectionnez les ingrédients et leur pourcentage. Le total doit être 100%.</p>
+      <div style="margin:18px 0 6px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
+        🌾 Ingrédients — total 100%
+      </div>
+      <p style="font-size:0.77rem;color:var(--text-light);margin-bottom:8px;">
+        Les pourcentages se recalculent proportionnellement. Les ingrédients à 0% sont exclus du recalcul automatique.
+      </p>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
-        <select id="mix-item-sel" class="form-control form-control-sm" style="flex:1;">
-          <option value="">-- Choisir un ingrédient ou supplément --</option>
-          ${ingOptgroup}${supOptgroup}
+        <select id="mix-ing-sel" class="form-control form-control-sm" style="flex:1;">
+          <option value="">— Choisir un ingrédient —</option>
+          ${ingOpts || '<option disabled>Aucun ingrédient disponible</option>'}
         </select>
-        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-item-btn">+ Ajouter</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-ing-btn">+ Ajouter</button>
       </div>
-      <div id="mix-comp-list"></div>
-      <div id="mix-comp-total" style="font-size:0.85rem;font-weight:600;margin-top:6px;color:var(--text);">Total : 0%</div>
+      <div id="mix-ing-list"></div>
+      <div id="mix-ing-total" style="font-size:0.84rem;margin-top:4px;">Total ingrédients : 0%</div>
 
-      <div class="modal-footer" style="padding:0;margin-top:16px;">
+      <div style="margin:18px 0 6px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
+        💊 Suppléments — hors calcul %
+      </div>
+      <p style="font-size:0.77rem;color:var(--text-light);margin-bottom:8px;">
+        Les suppléments n'entrent pas dans le calcul des pourcentages d'ingrédients.
+      </p>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <select id="mix-sup-sel" class="form-control form-control-sm" style="flex:1;">
+          <option value="">— Choisir un supplément —</option>
+          ${supOpts || '<option disabled>Aucun supplément disponible</option>'}
+        </select>
+        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-sup-btn">+ Ajouter</button>
+      </div>
+      <div id="mix-sup-list"></div>
+
+      <div class="modal-footer" style="padding:0;margin-top:18px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary">${mixId ? 'Enregistrer' : 'Créer le mélange'}</button>
       </div>
     </form>`;
 
-  // Render composition initiale
-  _mixRenderComposition();
+  _ingRenderList();
+  _supRenderList();
 
-  // Bouton ajouter
-  document.getElementById('mix-add-item-btn').addEventListener('click', () => {
-    const sel = document.getElementById('mix-item-sel');
+  document.getElementById('mix-add-ing-btn').addEventListener('click', () => {
+    const sel = document.getElementById('mix-ing-sel');
     const opt = sel.options[sel.selectedIndex];
     if (!opt.value) return;
-    _mixAddItem(opt.value, opt.dataset.type, opt.dataset.name);
+    _ingAddItem(opt.value, opt.dataset.name);
+    sel.value = '';
+  });
+
+  document.getElementById('mix-add-sup-btn').addEventListener('click', () => {
+    const sel = document.getElementById('mix-sup-sel');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt.value) return;
+    _supAddItem(opt.value, opt.dataset.name);
     sel.value = '';
   });
 
@@ -422,29 +421,26 @@ async function openMixModal(mixId = null) {
     e.preventDefault();
     const data = parseFormData(e.target, [], ['name']);
 
-    // Valider et sérialiser la composition
-    if (_mixState.items.length > 0) {
-      const total = _mixState.items.reduce((s, i) => s + i.pct, 0);
-      if (Math.abs(total - 100) > 0.1) {
-        showToast(`Total des % doit être 100% (actuellement ${total.toFixed(1)}%)`, 'warning');
+    if (_ingState.items.length > 0) {
+      const total = _ingState.items.reduce((s, i) => s + i.pct, 0);
+      if (Math.abs(total - 100) > 0.5) {
+        showToast(`Total ingrédients doit être 100% (actuellement ${total.toFixed(2)}%)`, 'warning');
         return;
       }
-      data.composition = JSON.stringify(_mixState.items);
-    } else {
-      data.composition = null;
     }
+
+    const comp = [
+      ..._ingState.items.map(i => ({ id: i.id, type: 'ingredient', name: i.name, pct: i.pct })),
+      ..._supState.items.map(s => ({ id: s.id, type: 'supplement', name: s.name, quantity: s.quantity, unit: s.unit }))
+    ];
+    data.composition = comp.length > 0 ? JSON.stringify(comp) : null;
 
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true;
     btn.innerHTML = '<span class="loader-inline"></span>';
     try {
-      if (mixId) {
-        await SportAPI.updateMix(mixId, data);
-        showToast('Mélange modifié !', 'success');
-      } else {
-        await SportAPI.createMix(data);
-        showToast('Mélange créé !', 'success');
-      }
+      if (mixId) { await SportAPI.updateMix(mixId, data); showToast('Mélange modifié !', 'success'); }
+      else        { await SportAPI.createMix(data);        showToast('Mélange créé !',    'success'); }
       closeModal();
       loadMixesTab();
     } catch (err) {
@@ -455,10 +451,117 @@ async function openMixModal(mixId = null) {
   });
 }
 
-/* ——— Onglet Suppléments ——— */
+/* ============================================================
+   ONGLET INGRÉDIENTS
+   ============================================================ */
+
+async function loadIngredientsTab() {
+  const el = document.getElementById('tab-ingredients');
+  if (!el) return;
+  try {
+    const ingredients = await SportAPI.getIngredients();
+    const list = Array.isArray(ingredients) ? ingredients : (ingredients.items || []);
+
+    el.innerHTML = `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-primary btn-sm" onclick="openIngredientModal()">+ Ajouter un ingrédient</button>
+      </div>
+      ${list.length === 0
+        ? `<div class="empty-state"><div class="empty-icon">🌾</div><h3>Aucun ingrédient</h3><p>Ajoutez vos premiers ingrédients nutritionnels.</p></div>`
+        : `<table class="table-modern">
+            <thead><tr><th>Nom</th><th>Catégorie</th><th>Protéines</th><th>Lipides</th><th>Glucides</th><th>Énergie (kcal)</th><th>Notes</th></tr></thead>
+            <tbody>
+              ${list.map(ing => `
+                <tr>
+                  <td><strong>${ing.name || '—'}</strong></td>
+                  <td>${ing.category ? `<span class="badge badge-info">${ing.category}</span>` : '—'}</td>
+                  <td>${renderMiniBar(ing.protein_pct,'#2980B9')} ${ing.protein_pct!=null?ing.protein_pct+'%':'—'}</td>
+                  <td>${renderMiniBar(ing.fat_pct,'#E67E22')} ${ing.fat_pct!=null?ing.fat_pct+'%':'—'}</td>
+                  <td>${renderMiniBar(ing.carb_pct,'#27AE60')} ${ing.carb_pct!=null?ing.carb_pct+'%':'—'}</td>
+                  <td>${ing.energy_kcal!=null?ing.energy_kcal+' kcal':'—'}</td>
+                  <td style="font-size:0.78rem;color:var(--text-light);">${ing.notes||''}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`}`;
+  } catch (err) {
+    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    showToast(err.message, 'error');
+  }
+}
+
+function renderMiniBar(value, color) {
+  if (value == null) return '';
+  const pct = Math.min(100, Math.max(0, value));
+  return `<span style="display:inline-block;width:${Math.round(pct*0.5)}px;height:6px;background:${color};border-radius:3px;vertical-align:middle;margin-right:4px;"></span>`;
+}
+
+function openIngredientModal() {
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = '+ Nouvel ingrédient';
+  document.getElementById('modal').className = 'modal';
+  document.getElementById('modal-body').innerHTML = `
+    <form id="form-ingredient">
+      <div class="form-group">
+        <label class="form-label">Nom *</label>
+        <input type="text" class="form-control" name="name" required placeholder="ex: Blé, Maïs, Avoine...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Catégorie</label>
+          <select class="form-control" name="category">
+            <option value="">—</option>
+            <option value="energie">Énergie</option>
+            <option value="depuratif">Dépuratif</option>
+            <option value="sport">Sport</option>
+            <option value="proteine">Protéine</option>
+            <option value="graisse">Graisse</option>
+            <option value="motivation">Motivation</option>
+            <option value="pre_concours">Pré-concours</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Énergie (kcal/100g)</label>
+          <input type="number" class="form-control" name="energy_kcal" step="1" min="0" placeholder="ex: 350">
+        </div>
+      </div>
+      <div class="form-row-3">
+        <div class="form-group"><label class="form-label">Protéines (%)</label><input type="number" class="form-control" name="protein_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Lipides (%)</label><input type="number" class="form-control" name="fat_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Glucides (%)</label><input type="number" class="form-control" name="carb_pct" step="0.1" min="0" max="100"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" name="notes" rows="2" placeholder="Observations, source..."></textarea>
+      </div>
+      <div class="modal-footer" style="padding:0;margin-top:16px;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </form>`;
+  overlay.style.display = 'flex';
+  document.getElementById('modal-close').onclick = closeModal;
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+  document.getElementById('form-ingredient').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = parseFormData(e.target, ['energy_kcal','protein_pct','fat_pct','carb_pct'], ['name']);
+    const btn = e.target.querySelector('[type=submit]');
+    btn.disabled = true; btn.innerHTML = '<span class="loader-inline"></span>';
+    try {
+      await SportAPI.createIngredient(data);
+      showToast('Ingrédient ajouté !', 'success');
+      closeModal(); loadIngredientsTab();
+    } catch (err) { showToast(err.message,'error'); btn.disabled=false; btn.textContent='Enregistrer'; }
+  });
+}
+
+/* ============================================================
+   ONGLET SUPPLÉMENTS
+   ============================================================ */
+
 async function loadSupplementsTab() {
   const el = document.getElementById('tab-supplements');
-
+  if (!el) return;
   try {
     const supplements = await SportAPI.getSupplements();
     const list = Array.isArray(supplements) ? supplements : (supplements.items || []);
@@ -470,39 +573,27 @@ async function loadSupplementsTab() {
       ${list.length === 0
         ? `<div class="empty-state"><div class="empty-icon">💊</div><h3>Aucun supplément</h3><p>Gérez vos vitamines et suppléments.</p></div>`
         : `<table class="table-modern">
-            <thead>
-              <tr>
-                <th>Nom</th>
-                <th>Catégorie</th>
-                <th>Dosage</th>
-                <th>Fréquence</th>
-                <th>Notes</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Nom</th><th>Type</th><th>Dosage</th><th>Description</th></tr></thead>
             <tbody>
               ${list.map(s => `
                 <tr>
-                  <td><strong>${s.name || s.nom || '—'}</strong></td>
-                  <td>${s.category ? `<span class="badge badge-purple">${s.category}</span>` : '—'}</td>
-                  <td>${s.dosage || '—'}</td>
-                  <td>${s.frequency || '—'}</td>
-                  <td style="font-size:0.78rem;color:var(--text-light);">${s.notes || ''}</td>
+                  <td><strong>${s.name||'—'}</strong></td>
+                  <td>${s.type?`<span class="badge badge-purple">${s.type}</span>`:'—'}</td>
+                  <td>${s.dosage||'—'}</td>
+                  <td style="font-size:0.78rem;color:var(--text-light);">${s.description||''}</td>
                 </tr>`).join('')}
             </tbody>
-          </table>`}
-    `;
+          </table>`}`;
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
     showToast(err.message, 'error');
   }
 }
 
-/* ——— Modal supplément ——— */
 function openSupplementModal() {
   const overlay = document.getElementById('modal-overlay');
   document.getElementById('modal-title').textContent = '+ Nouveau supplément';
   document.getElementById('modal').className = 'modal';
-
   document.getElementById('modal-body').innerHTML = `
     <form id="form-supplement">
       <div class="form-group">
@@ -511,44 +602,29 @@ function openSupplementModal() {
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Catégorie</label>
-          <select class="form-control" name="category">
+          <label class="form-label">Type</label>
+          <select class="form-control" name="type">
             <option value="">—</option>
+            <option value="electrolyte">Électrolyte</option>
             <option value="vitamine">Vitamine</option>
-            <option value="minéral">Minéral</option>
-            <option value="électrolyte">Électrolyte</option>
-            <option value="prébiotique">Prébiotique</option>
-            <option value="acide aminé">Acide aminé</option>
+            <option value="probiotique">Probiotique</option>
             <option value="autre">Autre</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Dosage</label>
-          <input type="text" class="form-control" name="dosage" placeholder="ex: 2ml/L eau">
+          <label class="form-label">Dosage recommandé</label>
+          <input type="text" class="form-control" name="dosage" placeholder="ex: 2g/kg">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Fréquence d'administration</label>
-        <select class="form-control" name="frequency">
-          <option value="">—</option>
-          <option value="quotidien">Quotidien</option>
-          <option value="3x/semaine">3x par semaine</option>
-          <option value="hebdomadaire">Hebdomadaire</option>
-          <option value="avant course">Avant course</option>
-          <option value="après course">Après course</option>
-          <option value="cure 1 semaine/mois">Cure 1 semaine/mois</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Notes / précautions</label>
-        <textarea class="form-control" name="notes" rows="2" placeholder="Contre-indications, conditions..."></textarea>
+        <label class="form-label">Description / précautions</label>
+        <textarea class="form-control" name="description" rows="2" placeholder="Contre-indications, conditions..."></textarea>
       </div>
       <div class="modal-footer" style="padding:0;margin-top:16px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary">Enregistrer</button>
       </div>
     </form>`;
-
   overlay.style.display = 'flex';
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
@@ -557,111 +633,77 @@ function openSupplementModal() {
     e.preventDefault();
     const data = parseFormData(e.target, [], ['name']);
     const btn = e.target.querySelector('[type=submit]');
-    btn.disabled = true;
-    btn.innerHTML = '<span class="loader-inline"></span>';
+    btn.disabled = true; btn.innerHTML = '<span class="loader-inline"></span>';
     try {
       await SportAPI.createSupplement(data);
       showToast('Supplément ajouté !', 'success');
-      closeModal();
-      loadSupplementsTab();
-    } catch (err) {
-      showToast(err.message, 'error');
-      btn.disabled = false;
-      btn.textContent = 'Enregistrer';
-    }
+      closeModal(); loadSupplementsTab();
+    } catch (err) { showToast(err.message,'error'); btn.disabled=false; btn.textContent='Enregistrer'; }
   });
 }
 
 /* ============================================================
-   PLANS ALIMENTAIRES — Page séparée (tabs Plans + Calendrier)
+   ONGLET PLAN ALIMENTAIRE — planning hebdomadaire
    ============================================================ */
 
-async function loadNutritionPlans() {
-  const content = document.getElementById('content');
-  const btn = document.getElementById('btn-add');
-  if (btn) {
-    btn.style.display = '';
-    btn.textContent = '+ Nouveau plan';
-    btn.onclick = openPlanModal;
-  }
+const _DAY_NAMES  = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+const _DAY_LABELS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+let _planDays = [[], [], [], [], [], [], []];
+// _planDays[i] = [{id:int, name:str}]
 
-  content.innerHTML = `
-    <div class="card">
-      <div class="tabs-header">
-        <button class="tab-btn active" data-tab="plans">📋 Plans alimentaires</button>
-        <button class="tab-btn" data-tab="calendar">📅 Calendrier</button>
-      </div>
-      <div id="tab-plans" class="tab-panel active">
-        <div class="loader-spinner"></div>
-      </div>
-      <div id="tab-calendar" class="tab-panel">
-        <div class="loader-spinner"></div>
-      </div>
-    </div>`;
-
-  document.querySelectorAll('.tab-btn[data-tab]').forEach(tabBtn => {
-    tabBtn.addEventListener('click', () => {
-      document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-      tabBtn.classList.add('active');
-      document.getElementById(`tab-${tabBtn.dataset.tab}`)?.classList.add('active');
-    });
-  });
-
-  _loadPlansTab();
-  _loadCalendarTab();
-}
-
-/* ——— Onglet Plans ——— */
 async function _loadPlansTab() {
   const el = document.getElementById('tab-plans');
   if (!el) return;
-
   try {
     const [plans, mixes] = await Promise.all([
       SportAPI.getPlans(),
       SportAPI.getMixes().catch(() => []),
     ]);
-    const list = Array.isArray(plans) ? plans : (plans.items || []);
-    const mixMap = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m]));
+    const list    = Array.isArray(plans) ? plans : (plans.items || []);
+    const mixMap  = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m]));
 
     const month = new Date().getMonth() + 1;
     const summerAlert = (month >= 6 && month <= 8)
-      ? `<div class="alert-card warning" style="margin-bottom:14px;">
-          <span class="alert-icon">☀️</span>
-          <div class="alert-content">
-            <div class="alert-title">Période estivale</div>
-            <div class="alert-text">Augmentez l'apport en électrolytes et l'hydratation.</div>
-          </div>
-        </div>` : '';
+      ? `<div class="alert-card warning" style="margin-bottom:14px;"><span class="alert-icon">☀️</span><div class="alert-content"><div class="alert-title">Période estivale</div><div class="alert-text">Augmentez l'apport en électrolytes et l'hydratation.</div></div></div>`
+      : '';
 
-    el.innerHTML = summerAlert + (list.length === 0
-      ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun plan</h3><p>Créez votre premier plan alimentaire via le bouton "+ Nouveau plan".</p></div>`
-      : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-          ${list.map(p => {
-            const mix = p.mix_id ? mixMap[p.mix_id] : null;
-            return `
-            <div class="card" style="padding:16px;">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                <div>
-                  <div style="font-weight:600;">${p.name || '—'}</div>
-                  ${p.goal ? `<span class="badge badge-success" style="margin-top:4px;font-size:0.72rem;">${p.goal}</span>` : ''}
+    el.innerHTML = summerAlert + `
+      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+        <button class="btn btn-primary btn-sm" onclick="openPlanModal()">+ Nouveau plan</button>
+      </div>` +
+      (list.length === 0
+        ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun plan</h3><p>Créez votre premier plan alimentaire hebdomadaire.</p></div>`
+        : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
+            ${list.map(p => {
+              const weekRows = _DAY_NAMES.map((day, i) => {
+                let mixIds = [];
+                try { if (p[day]) mixIds = JSON.parse(p[day]); } catch {}
+                const names = mixIds.map(id => mixMap[id]?.name || `Mél.#${id}`);
+                return names.length
+                  ? `<tr><td style="font-size:0.78rem;font-weight:600;padding:2px 6px;white-space:nowrap;">${_DAY_LABELS[i]}</td><td style="font-size:0.77rem;padding:2px 6px;">${names.join(', ')}</td></tr>`
+                  : '';
+              }).filter(Boolean).join('');
+              return `
+              <div class="card" style="padding:16px;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                  <div>
+                    <div style="font-weight:600;">${p.name||'—'}</div>
+                    ${p.goal ? `<span class="badge badge-success" style="margin-top:4px;font-size:0.72rem;">${p.goal}</span>` : ''}
+                  </div>
+                  <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
                 </div>
-                <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
-              </div>
-              ${p.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:6px;">${p.description}</p>` : ''}
-              ${mix
-                ? `<div style="font-size:0.78rem;margin-top:4px;">🔀 <strong>${mix.name}</strong>${mix.usage ? ` <span class="badge badge-info" style="font-size:0.68rem;">${mix.usage}</span>` : ''}</div>`
-                : '<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Aucun mélange associé</div>'}
-            </div>`;
-          }).join('')}
-        </div>`);
+                ${p.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:6px;">${p.description}</p>` : ''}
+                ${weekRows
+                  ? `<table style="width:100%;border-collapse:collapse;margin-top:6px;">${weekRows}</table>`
+                  : '<div style="font-size:0.75rem;color:var(--text-light);">Aucun mélange planifié</div>'}
+              </div>`;
+            }).join('')}
+          </div>`);
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
     showToast(err.message, 'error');
   }
 }
-
 
 async function deletePlan(planId) {
   if (!confirm('Supprimer ce plan alimentaire ? Cette action est irréversible.')) return;
@@ -669,12 +711,9 @@ async function deletePlan(planId) {
     await SportAPI.deletePlan(planId);
     showToast('Plan supprimé.', 'success');
     _loadPlansTab();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
-/* ——— Modal nouveau plan ——— */
 async function openPlanModal() {
   const overlay = document.getElementById('modal-overlay');
   document.getElementById('modal-title').textContent = '+ Nouveau plan alimentaire';
@@ -684,9 +723,14 @@ async function openPlanModal() {
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-  const mixes = await SportAPI.getMixes().catch(() => []);
+  const mixes   = await SportAPI.getMixes().catch(() => []);
   const mixList = Array.isArray(mixes) ? mixes : [];
-  const mixOpts = mixList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+
+  _planDays = [[], [], [], [], [], [], []];
+
+  const mixOpts = mixList.length
+    ? mixList.map(m => `<option value="${m.id}" data-name="${m.name}">${m.name}</option>`).join('')
+    : '<option value="" disabled>Aucun mélange disponible</option>';
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-plan">
@@ -711,44 +755,126 @@ async function openPlanModal() {
         <label class="form-label">Description</label>
         <textarea class="form-control" name="description" rows="2" placeholder="Instructions générales..."></textarea>
       </div>
-      <div class="form-group">
-        <label class="form-label">🔀 Mélange associé</label>
-        <select class="form-control" name="mix_id">
-          <option value="">— Aucun mélange —</option>
-          ${mixOpts}
-        </select>
-        ${mixList.length === 0
-          ? `<p style="font-size:0.78rem;color:var(--text-light);margin-top:4px;">Aucun mélange disponible. <a href="#" onclick="closeModal();window.location.hash='nutrition'">Créez d'abord un mélange</a>.</p>`
-          : ''}
+
+      <div style="margin:16px 0 8px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
+        📅 Mélanges par jour de la semaine
       </div>
-      <div class="modal-footer" style="padding:0;margin-top:16px;">
+      <p style="font-size:0.77rem;color:var(--text-light);margin-bottom:12px;">
+        Pour chaque jour, ajoutez un ou plusieurs mélanges à distribuer. Aucun mélange = jeûne / eau seule.
+      </p>
+
+      <div id="plan-days-form">
+        ${_DAY_LABELS.map((label, idx) => `
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px;background:var(--bg-secondary);border-radius:8px;">
+            <div style="min-width:78px;font-weight:600;font-size:0.88rem;padding-top:6px;">${label}</div>
+            <div style="flex:1;">
+              <div id="plan-day-tags-${idx}" style="display:flex;flex-wrap:wrap;gap:4px;min-height:26px;margin-bottom:5px;"></div>
+              <div style="display:flex;gap:6px;">
+                <select class="form-control form-control-sm plan-day-sel" data-day="${idx}" style="flex:1;">
+                  <option value="">— Ajouter un mélange —</option>
+                  ${mixOpts}
+                </select>
+                <button type="button" class="btn btn-secondary btn-sm plan-day-add" data-day="${idx}">+</button>
+              </div>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <div id="plan-week-summary" style="margin-top:10px;"></div>
+
+      <div class="modal-footer" style="padding:0;margin-top:18px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary">Créer le plan</button>
       </div>
     </form>`;
 
+  _DAY_LABELS.forEach((_, idx) => _planRenderDayTags(idx));
+
+  document.querySelectorAll('.plan-day-add').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const day = parseInt(btn.dataset.day);
+      const sel = document.querySelector(`.plan-day-sel[data-day="${day}"]`);
+      const opt = sel.options[sel.selectedIndex];
+      if (!opt.value) return;
+      const id = parseInt(opt.value), name = opt.dataset.name;
+      if (!_planDays[day].find(m => m.id === id)) {
+        _planDays[day].push({ id, name });
+        _planRenderDayTags(day);
+        _planRenderSummary();
+      }
+      sel.value = '';
+    });
+  });
+
   document.getElementById('form-plan').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = parseFormData(e.target, ['mix_id'], ['name']);
-
+    const data = parseFormData(e.target, [], ['name']);
+    _DAY_NAMES.forEach((day, i) => {
+      const ids = _planDays[i].map(m => m.id);
+      data[day] = ids.length > 0 ? JSON.stringify(ids) : null;
+    });
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="loader-inline"></span>';
     try {
       await SportAPI.createPlan(data);
       showToast('Plan alimentaire créé !', 'success');
-      closeModal();
-      _loadPlansTab();
+      closeModal(); _loadPlansTab();
     } catch (err) {
       showToast(err.message, 'error');
-      submitBtn.disabled = false;
-      submitBtn.textContent = 'Créer le plan';
+      submitBtn.disabled = false; submitBtn.textContent = 'Créer le plan';
     }
   });
 }
 
+function _planRenderDayTags(dayIdx) {
+  const container = document.getElementById(`plan-day-tags-${dayIdx}`);
+  if (!container) return;
+  if (_planDays[dayIdx].length === 0) {
+    container.innerHTML = '<span style="font-size:0.77rem;color:var(--text-light);font-style:italic;">Aucun mélange — jeûne / eau</span>';
+    return;
+  }
+  container.innerHTML = _planDays[dayIdx].map((m, i) =>
+    `<span style="background:var(--primary);color:#fff;border-radius:12px;padding:2px 8px;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
+      🔀 ${m.name}
+      <button type="button" onclick="_planRemoveDayMix(${dayIdx},${i})"
+        style="background:none;border:none;color:#fff;cursor:pointer;padding:0;font-size:0.75rem;line-height:1;">✕</button>
+    </span>`
+  ).join('');
+}
+
+function _planRemoveDayMix(dayIdx, mixIdx) {
+  _planDays[dayIdx].splice(mixIdx, 1);
+  _planRenderDayTags(dayIdx);
+  _planRenderSummary();
+}
+
+function _planRenderSummary() {
+  const el = document.getElementById('plan-week-summary');
+  if (!el) return;
+  if (!_planDays.some(d => d.length > 0)) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">📊 Résumé hebdomadaire :</div>
+    <table style="width:100%;font-size:0.78rem;border-collapse:collapse;">
+      <tbody>
+        ${_DAY_LABELS.map((label, i) => `
+          <tr>
+            <td style="font-weight:600;padding:3px 8px;white-space:nowrap;">${label}</td>
+            <td style="padding:3px 8px;">${_planDays[i].length
+              ? _planDays[i].map(m => `<span class="badge badge-info" style="font-size:0.72rem;">${m.name}</span>`).join(' ')
+              : '<span style="color:var(--text-light);font-style:italic;">—</span>'}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+/* ——— Stub : l'ancien nav "Plans alimentaires" redirige vers Nutrition ——— */
+function loadNutritionPlans() {
+  if (typeof showPage === 'function') showPage('nutrition');
+}
+
 /* ============================================================
-   CALENDRIER HEBDOMADAIRE
+   CALENDRIER HEBDOMADAIRE — NE PAS MODIFIER
    ============================================================ */
 
 let _calWeekStart = _getWeekMonday(0);
@@ -789,14 +915,12 @@ async function _loadCalendarTab() {
     const planOpts = planList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
 
     el.innerHTML = `
-      <!-- Navigation semaine -->
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
         <button class="btn btn-secondary btn-sm" id="cal-prev-week">← Préc.</button>
         <span id="cal-week-label" style="font-weight:600;font-size:0.88rem;flex:1;"></span>
         <button class="btn btn-secondary btn-sm" id="cal-next-week">Suiv. →</button>
       </div>
 
-      <!-- Sélection cible -->
       <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
         <div class="form-group" style="margin:0;">
           <label class="form-label" style="font-size:0.8rem;">Appliquer à</label>
@@ -817,7 +941,6 @@ async function _loadCalendarTab() {
         <button class="btn btn-secondary btn-sm" id="cal-load-btn">Charger</button>
       </div>
 
-      <!-- Grille 7 jours -->
       <div id="cal-grid">
         ${_renderCalGrid([], planOpts)}
       </div>
@@ -826,7 +949,6 @@ async function _loadCalendarTab() {
         <button class="btn btn-primary" id="cal-save-btn">💾 Enregistrer le planning</button>
       </div>
 
-      <!-- Vue résolue par pigeon -->
       <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
         <div style="font-weight:600;margin-bottom:10px;font-size:0.9rem;">🔍 Planning résolu pour un pigeon</div>
         <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:10px;">Affiche le planning effectif du pigeon en appliquant la règle de priorité : plan individuel &gt; plan de groupe.</p>
@@ -845,7 +967,6 @@ async function _loadCalendarTab() {
 
     document.getElementById('cal-week-label').textContent = _weekLabel(_calWeekStart);
 
-    // Prev / next semaine
     document.getElementById('cal-prev-week').addEventListener('click', async () => {
       _calWeekStart = _shiftWeek(_calWeekStart, -1);
       document.getElementById('cal-week-label').textContent = _weekLabel(_calWeekStart);
@@ -857,7 +978,6 @@ async function _loadCalendarTab() {
       await _calLoad(planOpts);
     });
 
-    // Target type → afficher/masquer pigeon select
     document.getElementById('cal-target-type').addEventListener('change', async (e) => {
       const wrap = document.getElementById('cal-pigeon-wrap');
       if (e.target.value === 'pigeon') {
@@ -880,7 +1000,6 @@ async function _loadCalendarTab() {
     document.getElementById('cal-load-btn').addEventListener('click', () => _calLoad(planOpts));
     document.getElementById('cal-save-btn').addEventListener('click', _calSave);
 
-    // Pré-remplir le sélecteur pigeon vue résolue
     const pigeons = await getPigeonsCache();
     const resolvedSel = document.getElementById('cal-resolved-pigeon');
     pigeons.forEach(p => {
@@ -895,12 +1014,9 @@ async function _loadCalendarTab() {
       try {
         const resolved = await SportAPI.getResolvedCalendar(_calWeekStart, pid);
         document.getElementById('cal-resolved-result').innerHTML = _renderResolvedCalendar(resolved);
-      } catch (err) {
-        showToast(err.message, 'error');
-      }
+      } catch (err) { showToast(err.message, 'error'); }
     });
 
-    // Charger la semaine courante
     await _calLoad(planOpts);
 
   } catch (err) {
@@ -910,7 +1026,7 @@ async function _loadCalendarTab() {
 }
 
 function _renderCalGrid(assignments, planOpts) {
-  const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+  const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
   return `
     <table class="table-modern" style="width:100%;">
       <thead><tr><th style="width:100px;">Jour</th><th>Plan alimentaire</th><th style="width:120px;">Source</th></tr></thead>
@@ -937,7 +1053,6 @@ function _renderCalGrid(assignments, planOpts) {
 async function _calLoad(planOpts) {
   const targetType = document.getElementById('cal-target-type')?.value;
   let pigeonId = null, groupName = null;
-
   if (targetType === 'pigeon') {
     pigeonId = document.getElementById('cal-pigeon-select')?.value;
     if (!pigeonId) return;
@@ -949,29 +1064,21 @@ async function _calLoad(planOpts) {
     _calAssignments = await SportAPI.getCalendar(_calWeekStart, pigeonId, groupName);
     if (!Array.isArray(_calAssignments)) _calAssignments = [];
 
-    // Reconstruire les options plans (fraîches)
     const plans = await SportAPI.getPlans().catch(() => []);
     const planList = Array.isArray(plans) ? plans : [];
     const opts = planList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     document.getElementById('cal-grid').innerHTML = _renderCalGrid(_calAssignments, opts);
 
-    // Sélectionner les plans existants dans les dropdowns
     _calAssignments.forEach(a => {
       const sel = document.querySelector(`.cal-day-plan[data-day="${a.day_of_week}"]`);
-      if (sel) {
-        sel.value = a.plan_id;
-        sel.dataset.existingId = a.id;
-      }
+      if (sel) { sel.value = a.plan_id; sel.dataset.existingId = a.id; }
     });
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function _calSave() {
   const targetType = document.getElementById('cal-target-type')?.value;
   let pigeonId = null, groupName = null;
-
   if (targetType === 'pigeon') {
     pigeonId = document.getElementById('cal-pigeon-select')?.value;
     if (!pigeonId) { showToast('Sélectionnez un pigeon', 'warning'); return; }
@@ -986,24 +1093,20 @@ async function _calSave() {
   try {
     const selects = document.querySelectorAll('.cal-day-plan');
     const ops = [];
-
     for (const sel of selects) {
-      const day = parseInt(sel.dataset.day);
+      const day        = parseInt(sel.dataset.day);
       const existingId = sel.dataset.existingId ? parseInt(sel.dataset.existingId) : null;
-      const planId = sel.value ? parseInt(sel.value) : null;
+      const planId     = sel.value ? parseInt(sel.value) : null;
 
       if (planId) {
         if (existingId) {
-          // Supprimer puis recréer (upsert via delete+create)
           ops.push(
             SportAPI.deleteAssignment(existingId).catch(() => {}).then(() =>
               SportAPI.saveAssignment({ plan_id: planId, pigeon_id: pigeonId, group_name: groupName, day_of_week: day, week_start: _calWeekStart })
             )
           );
         } else {
-          ops.push(
-            SportAPI.saveAssignment({ plan_id: planId, pigeon_id: pigeonId, group_name: groupName, day_of_week: day, week_start: _calWeekStart })
-          );
+          ops.push(SportAPI.saveAssignment({ plan_id: planId, pigeon_id: pigeonId, group_name: groupName, day_of_week: day, week_start: _calWeekStart }));
         }
       } else if (existingId) {
         ops.push(SportAPI.deleteAssignment(existingId).catch(() => {}));
@@ -1012,9 +1115,8 @@ async function _calSave() {
 
     await Promise.all(ops);
     showToast('Planning enregistré !', 'success');
-
     const plans = await SportAPI.getPlans().catch(() => []);
-    const opts = (Array.isArray(plans) ? plans : []).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    const opts  = (Array.isArray(plans) ? plans : []).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
     await _calLoad(opts);
   } catch (err) {
     showToast(err.message, 'error');
@@ -1025,7 +1127,7 @@ async function _calSave() {
 }
 
 function _renderResolvedCalendar(resolved) {
-  const days = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+  const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
   return `
     <table class="table-modern" style="width:100%;">
       <thead><tr><th>Jour</th><th>Plan</th><th>Source</th></tr></thead>
@@ -1048,7 +1150,7 @@ function _renderResolvedCalendar(resolved) {
 
 /* ——— Utilitaire : parser FormData avec conversion types ——— */
 function parseFormData(form, numericFields = [], requiredFields = []) {
-  const fd = new FormData(form);
+  const fd   = new FormData(form);
   const data = {};
   for (const [k, v] of fd.entries()) {
     if (v === '') continue;
