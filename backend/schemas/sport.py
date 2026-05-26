@@ -167,6 +167,7 @@ class NutritionPlanBase(BaseModel):
     goal: Optional[str] = None
     description: Optional[str] = None
     composition: Optional[str] = None  # JSON string
+    mix_id: Optional[int] = None
     lundi: Optional[str] = None
     mardi: Optional[str] = None
     mercredi: Optional[str] = None
@@ -186,6 +187,7 @@ class NutritionPlanUpdate(BaseModel):
     goal: Optional[str] = None
     description: Optional[str] = None
     composition: Optional[str] = None
+    mix_id: Optional[int] = None
     lundi: Optional[str] = None
     mardi: Optional[str] = None
     mercredi: Optional[str] = None

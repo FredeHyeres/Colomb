@@ -105,6 +105,7 @@ class NutritionPlan(Base):
     goal = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
     composition = Column(Text, nullable=True)  # JSON: [{"ingredient_id": 1, "ingredient_name": "Blé", "percentage": 60}, ...]
+    mix_id = Column(Integer, ForeignKey("feed_mixes.id"), nullable=True)
     lundi = Column(String(200), nullable=True)
     mardi = Column(String(200), nullable=True)
     mercredi = Column(String(200), nullable=True)
@@ -113,6 +114,7 @@ class NutritionPlan(Base):
     samedi = Column(String(200), nullable=True)
     dimanche = Column(String(200), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    mix = relationship("FeedMix")
 
 
 class NutritionAssignment(Base):

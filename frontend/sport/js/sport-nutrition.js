@@ -618,8 +618,12 @@ async function _loadPlansTab() {
   if (!el) return;
 
   try {
-    const plans = await SportAPI.getPlans();
+    const [plans, mixes] = await Promise.all([
+      SportAPI.getPlans(),
+      SportAPI.getMixes().catch(() => []),
+    ]);
     const list = Array.isArray(plans) ? plans : (plans.items || []);
+    const mixMap = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m]));
 
     const month = new Date().getMonth() + 1;
     const summerAlert = (month >= 6 && month <= 8)
@@ -634,7 +638,9 @@ async function _loadPlansTab() {
     el.innerHTML = summerAlert + (list.length === 0
       ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun plan</h3><p>Créez votre premier plan alimentaire via le bouton "+ Nouveau plan".</p></div>`
       : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
-          ${list.map(p => `
+          ${list.map(p => {
+            const mix = p.mix_id ? mixMap[p.mix_id] : null;
+            return `
             <div class="card" style="padding:16px;">
               <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
                 <div>
@@ -644,8 +650,11 @@ async function _loadPlansTab() {
                 <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
               </div>
               ${p.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:6px;">${p.description}</p>` : ''}
-              ${_renderCompositionPreview(p.composition)}
-            </div>`).join('')}
+              ${mix
+                ? `<div style="font-size:0.78rem;margin-top:4px;">🔀 <strong>${mix.name}</strong>${mix.usage ? ` <span class="badge badge-info" style="font-size:0.68rem;">${mix.usage}</span>` : ''}</div>`
+                : '<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Aucun mélange associé</div>'}
+            </div>`;
+          }).join('')}
         </div>`);
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
@@ -653,16 +662,6 @@ async function _loadPlansTab() {
   }
 }
 
-function _renderCompositionPreview(compositionJson) {
-  if (!compositionJson) return '<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Composition non définie</div>';
-  try {
-    const comp = JSON.parse(compositionJson);
-    if (!Array.isArray(comp) || comp.length === 0) return '';
-    return `<div style="font-size:0.75rem;color:var(--text-light);margin-top:6px;">
-      ${comp.map(c => `<span style="background:var(--bg-secondary);border-radius:4px;padding:2px 6px;margin-right:4px;">${c.ingredient_name || c.ingredient_id} ${c.percentage}%</span>`).join('')}
-    </div>`;
-  } catch { return ''; }
-}
 
 async function deletePlan(planId) {
   if (!confirm('Supprimer ce plan alimentaire ? Cette action est irréversible.')) return;
@@ -675,57 +674,6 @@ async function deletePlan(planId) {
   }
 }
 
-/* ============================================================
-   COMPOSITION — Helpers pour le formulaire plan
-   ============================================================ */
-
-let _compIngOpts = '';
-let _compRowCount = 0;
-
-function addCompRow() {
-  _compRowCount++;
-  const id = _compRowCount;
-  const row = document.createElement('div');
-  row.className = 'comp-row';
-  row.dataset.rowId = id;
-  row.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:6px;';
-  row.innerHTML = `
-    <select class="form-control comp-ing" style="flex:1;">
-      <option value="">-- Ingrédient --</option>
-      ${_compIngOpts}
-    </select>
-    <input type="number" class="form-control comp-pct" style="width:80px;" min="0" max="100" step="0.1" placeholder="%">
-    <button type="button" class="btn btn-sm btn-icon comp-remove" data-row-id="${id}">🗑️</button>`;
-  document.getElementById('comp-rows')?.appendChild(row);
-}
-
-function removeCompRow(rowId) {
-  const row = document.querySelector(`.comp-row[data-row-id="${rowId}"]`);
-  if (row) { row.remove(); _updateCompTotal(); }
-}
-
-function _updateCompTotal() {
-  const total = [...document.querySelectorAll('.comp-pct')]
-    .reduce((sum, el) => sum + (parseFloat(el.value) || 0), 0);
-  const el = document.getElementById('comp-total');
-  if (!el) return;
-  el.textContent = `Total : ${total.toFixed(1)}%`;
-  el.style.color = Math.abs(total - 100) < 0.01 ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--text)');
-}
-
-function _getCompositionData() {
-  const comp = [];
-  document.querySelectorAll('.comp-row').forEach(row => {
-    const ingEl = row.querySelector('.comp-ing');
-    const pctEl = row.querySelector('.comp-pct');
-    if (ingEl?.value && pctEl?.value) {
-      const name = ingEl.options[ingEl.selectedIndex]?.text || '';
-      comp.push({ ingredient_id: parseInt(ingEl.value), ingredient_name: name, percentage: parseFloat(pctEl.value) });
-    }
-  });
-  return comp;
-}
-
 /* ——— Modal nouveau plan ——— */
 async function openPlanModal() {
   const overlay = document.getElementById('modal-overlay');
@@ -733,12 +681,12 @@ async function openPlanModal() {
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = '<div class="loader-spinner"></div>';
   overlay.style.display = 'flex';
+  document.getElementById('modal-close').onclick = closeModal;
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-  const ingredients = await SportAPI.getIngredients().catch(() => []);
-  const ingList = Array.isArray(ingredients) ? ingredients : [];
-
-  _compIngOpts = ingList.map(it => `<option value="${it.id}">${it.name || '—'}</option>`).join('');
-  _compRowCount = 0;
+  const mixes = await SportAPI.getMixes().catch(() => []);
+  const mixList = Array.isArray(mixes) ? mixes : [];
+  const mixOpts = mixList.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-plan">
@@ -763,52 +711,25 @@ async function openPlanModal() {
         <label class="form-label">Description</label>
         <textarea class="form-control" name="description" rows="2" placeholder="Instructions générales..."></textarea>
       </div>
-
-      <div style="margin:16px 0 6px;font-weight:600;font-size:0.9rem;">🌾 Composition</div>
-      <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:8px;">Définissez les ingrédients et leur pourcentage. Le total doit être égal à 100%.</p>
-      <div id="comp-rows"></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-        <button type="button" class="btn btn-secondary btn-sm" id="btn-add-comp-row">+ Ingrédient</button>
-        <span id="comp-total" style="font-size:0.85rem;font-weight:600;color:var(--text-light);">Total : 0%</span>
+      <div class="form-group">
+        <label class="form-label">🔀 Mélange associé</label>
+        <select class="form-control" name="mix_id">
+          <option value="">— Aucun mélange —</option>
+          ${mixOpts}
+        </select>
+        ${mixList.length === 0
+          ? `<p style="font-size:0.78rem;color:var(--text-light);margin-top:4px;">Aucun mélange disponible. <a href="#" onclick="closeModal();window.location.hash='nutrition'">Créez d'abord un mélange</a>.</p>`
+          : ''}
       </div>
-
-      <div class="modal-footer" style="padding:0;margin-top:4px;">
+      <div class="modal-footer" style="padding:0;margin-top:16px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
         <button type="submit" class="btn btn-primary">Créer le plan</button>
       </div>
     </form>`;
 
-  document.getElementById('modal-close').onclick = closeModal;
-  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
-
-  addCompRow();
-
-  document.getElementById('btn-add-comp-row').addEventListener('click', addCompRow);
-  document.getElementById('comp-rows').addEventListener('click', (e) => {
-    const btn = e.target.closest('.comp-remove');
-    if (btn) removeCompRow(parseInt(btn.dataset.rowId));
-  });
-  document.getElementById('comp-rows').addEventListener('input', (e) => {
-    if (e.target.classList.contains('comp-pct')) _updateCompTotal();
-  });
-
   document.getElementById('form-plan').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const fd = new FormData(e.target);
-    const data = {};
-    for (const [k, v] of fd.entries()) {
-      if (v !== '') data[k] = v;
-    }
-
-    const comp = _getCompositionData();
-    if (comp.length > 0) {
-      const total = comp.reduce((s, r) => s + r.percentage, 0);
-      if (Math.abs(total - 100) > 0.1) {
-        showToast(`Total des % doit être 100% (actuellement ${total.toFixed(1)}%)`, 'warning');
-        return;
-      }
-      data.composition = JSON.stringify(comp);
-    }
+    const data = parseFormData(e.target, ['mix_id'], ['name']);
 
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
