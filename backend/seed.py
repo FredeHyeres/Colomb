@@ -304,8 +304,9 @@ async def main():
     for i, (dt, stype, dist, weather, temp, wind, wind_dir) in enumerate(SESSIONS):
         row = await conn.fetchrow("""
             INSERT INTO training_sessions
-              (date, session_type, distance_km, weather, temperature, wind_speed, wind_direction)
-            VALUES ($1,$2::sessiontype,$3,$4,$5,$6,$7)
+              (date, session_type, distance_km, weather, temperature, wind_speed,
+               wind_direction, created_at)
+            VALUES ($1,$2::sessiontype,$3,$4,$5,$6,$7, now())
             RETURNING id
         """, dt, stype, float(dist), weather, temp, float(wind), wind_dir)
         sess_id = row["id"]
@@ -316,8 +317,8 @@ async def main():
             await conn.execute("""
                 INSERT INTO pigeon_training_results
                   (session_id, pigeon_id, return_time, recovery_score,
-                   motivation_score, condition_score, hydration_score)
-                VALUES ($1,$2,$3,$4,$5,$6,$7)
+                   motivation_score, condition_score, hydration_score, created_at)
+                VALUES ($1,$2,$3,$4,$5,$6,$7, now())
             """, sess_id, P[pk], rt, rec, mot, cond, hyd)
             res_count += 1
     print(f"✅ {sess_count} séances, {res_count} résultats entraînement insérés")
