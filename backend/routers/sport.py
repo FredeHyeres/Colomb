@@ -32,6 +32,7 @@ async def get_sessions(skip: int = 0, limit: int = 50, db: AsyncSession = Depend
     """Liste toutes les séances d'entraînement, du plus récent au plus ancien."""
     result = await db.execute(
         select(TrainingSession)
+        .options(selectinload(TrainingSession.results))
         .order_by(TrainingSession.date.desc())
         .offset(skip)
         .limit(limit)
@@ -59,8 +60,12 @@ async def create_session(data: TrainingSessionCreate, db: AsyncSession = Depends
     session = TrainingSession(**data.model_dump())
     db.add(session)
     await db.commit()
-    await db.refresh(session)
-    return session
+    result = await db.execute(
+        select(TrainingSession)
+        .options(selectinload(TrainingSession.results))
+        .where(TrainingSession.id == session.id)
+    )
+    return result.scalar_one()
 
 
 @router.put("/sessions/{session_id}", response_model=TrainingSessionResponse)
@@ -73,8 +78,12 @@ async def update_session(session_id: int, data: TrainingSessionUpdate, db: Async
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(session, key, value)
     await db.commit()
-    await db.refresh(session)
-    return session
+    result2 = await db.execute(
+        select(TrainingSession)
+        .options(selectinload(TrainingSession.results))
+        .where(TrainingSession.id == session_id)
+    )
+    return result2.scalar_one()
 
 
 @router.delete("/sessions/{session_id}", status_code=204)
