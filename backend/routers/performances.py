@@ -4,14 +4,17 @@ from sqlalchemy import select
 from database import get_db
 from models import Performance
 from schemas import PerformanceCreate, PerformanceUpdate, PerformanceResponse
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix="/performances", tags=["Performances"])
 
 
 @router.get("/", response_model=List[PerformanceResponse])
-async def get_performances(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Performance))
+async def get_performances(pigeon_id: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+    q = select(Performance)
+    if pigeon_id:
+        q = q.where(Performance.pigeon_id == pigeon_id)
+    result = await db.execute(q)
     return result.scalars().all()
 
 

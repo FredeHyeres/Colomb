@@ -44,7 +44,7 @@ async function loadHistory() {
   });
 
   document.getElementById('btn-load-history').addEventListener('click', () => {
-    if (select.value) loadPigeonHistory(parseInt(select.value), pigeons.find(p => p.id === parseInt(select.value)));
+    if (select.value) loadPigeonHistory(select.value, pigeons.find(p => String(p.id) === select.value));
   });
 }
 
