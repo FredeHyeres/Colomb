@@ -40,6 +40,9 @@ def _rec_to_response(rec: AIRecommendation) -> dict:
         "recommendation": rec.recommendation,
         "confiance": rec.confiance,
         "facteurs_explicatifs": _parse_json_field(rec.facteurs_explicatifs),
+        "title": rec.title,
+        "message": rec.message,
+        "action": rec.action,
         "resolved": rec.resolved,
         "created_at": rec.created_at,
     }

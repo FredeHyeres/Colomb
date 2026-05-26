@@ -192,6 +192,111 @@ def build_facteurs_explicatifs(results: list, scores: dict) -> list:
     return all_facteurs
 
 
+def generate_comment(
+    recommendation: str,
+    score_global: float,
+    avg_recovery: float,
+    results: list,
+    results_7d: list,
+    recovery_trend: str = "stable",
+    confiance: float = 0.5,
+) -> dict:
+    """Génère un commentaire contextuel et une action recommandée — pur Python, sans LLM."""
+    n_30d = len(results)
+    n_7d  = len(results_7d)
+
+    rec_recent = [r.recovery_score for r in results_7d if r.recovery_score is not None]
+    rec_older  = [r.recovery_score for r in results
+                  if r not in results_7d and r.recovery_score is not None]
+    avg_rec_7d  = round(sum(rec_recent) / len(rec_recent), 1) if rec_recent else None
+    avg_rec_old = round(sum(rec_older)  / len(rec_older),  1) if rec_older  else None
+
+    if recovery_trend == "progression":
+        trend_txt = "récupération en hausse"
+    elif recovery_trend == "declin":
+        trend_txt = "récupération en baisse"
+    else:
+        trend_txt = "récupération stable"
+
+    delta_txt = ""
+    if avg_rec_7d is not None and avg_rec_old is not None:
+        delta = round(avg_rec_7d - avg_rec_old, 1)
+        if delta > 0:
+            delta_txt = f" (+{delta} pts vs semaines précédentes)"
+        elif delta < 0:
+            delta_txt = f" ({delta} pts vs semaines précédentes)"
+
+    seances_txt = f"{n_30d} séance{'s' if n_30d > 1 else ''} sur 30 jours"
+    if n_7d > 0:
+        seances_txt += f", dont {n_7d} cette semaine"
+
+    if confiance >= 0.8:
+        confiance_txt = "Analyse fiable"
+    elif confiance >= 0.5:
+        confiance_txt = "Données partielles"
+    else:
+        confiance_txt = "Peu de données disponibles"
+
+    if recommendation == "concours":
+        if recovery_trend == "progression":
+            message = (
+                f"Forme excellente — {trend_txt}{delta_txt}. "
+                f"{seances_txt.capitalize()}. "
+                f"Score global {score_global}/100. {confiance_txt}."
+            )
+        else:
+            message = (
+                f"Condition suffisante pour la compétition — {trend_txt}. "
+                f"{seances_txt.capitalize()}. "
+                f"Score global {score_global}/100. {confiance_txt}."
+            )
+        title  = "Prêt pour le concours"
+        action = "Engager sur le prochain concours. Surveiller hydratation au retour."
+
+    elif recommendation == "entrainement_leger":
+        if recovery_trend == "declin":
+            message = (
+                f"Forme correcte mais {trend_txt}{delta_txt}. "
+                f"Maintenir le rythme sans surcharger. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+            )
+        else:
+            message = (
+                f"Bonne base — {trend_txt}. "
+                f"Le pigeon peut progresser avec un travail régulier. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+            )
+        title  = "Entraînement léger conseillé"
+        action = "Privilégier des lancers courts. Pas de concours cette semaine."
+
+    elif recommendation == "repos":
+        if n_7d == 0:
+            message = (
+                f"Aucune séance cette semaine — activité insuffisante pour évaluer la forme. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+            )
+            action = "Reprendre progressivement avec des vols de loft."
+        else:
+            message = (
+                f"Récupération insuffisante — {trend_txt}{delta_txt}. "
+                f"Récupération moyenne 7j : {avg_rec_7d}/10. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+            )
+            action = "Repos minimum 5 à 7 jours. Électrolytes et dépuratif recommandés."
+        title = "Repos recommandé"
+
+    else:  # reforme
+        message = (
+            f"Indices sportifs très bas — {trend_txt}{delta_txt}. "
+            f"Récupération moyenne 7j : {avg_rec_7d if avg_rec_7d else '—'}/10. "
+            f"Score global {score_global}/100. {confiance_txt}."
+        )
+        title  = "Bilan vétérinaire conseillé"
+        action = "Consultation vétérinaire recommandée avant toute reprise."
+
+    return {"title": title, "message": message, "action": action}
+
+
 async def generate_ai_recommendation(pigeon_id: str, db: AsyncSession) -> AIRecommendation:
     """
     Génère une recommandation XAI complète pour un pigeon.
@@ -233,22 +338,47 @@ async def generate_ai_recommendation(pigeon_id: str, db: AsyncSession) -> AIReco
 
     rec_data = compute_recommendation(scores, avg_recovery)
 
+    # Recovery trend à la volée pour le commentaire
+    rec_recent_vals = [r.recovery_score for r in results_7d if r.recovery_score is not None]
+    rec_older_vals  = [r.recovery_score for r in results
+                       if r not in results_7d and r.recovery_score is not None]
+    avg_r = sum(rec_recent_vals) / len(rec_recent_vals) if rec_recent_vals else None
+    avg_o = sum(rec_older_vals)  / len(rec_older_vals)  if rec_older_vals  else None
+    if avg_r is not None and avg_o is not None:
+        delta_trend = avg_r - avg_o
+        recovery_trend = "progression" if delta_trend > 0.5 else ("declin" if delta_trend < -0.5 else "stable")
+    else:
+        recovery_trend = "stable"
+
+    comment = generate_comment(
+        recommendation = rec_data["recommendation"],
+        score_global   = rec_data["score_global"],
+        avg_recovery   = avg_recovery,
+        results        = results,
+        results_7d     = results_7d,
+        recovery_trend = recovery_trend,
+        confiance      = rec_data["confiance"],
+    )
+
     # 3. Facteurs explicatifs
     facteurs = build_facteurs_explicatifs(results, scores)
 
     # 4. Sauvegarder
     rec = AIRecommendation(
-        pigeon_id=pigeon_id,
-        generated_at=datetime.now(timezone.utc),
-        score_forme=forme_data["score"],
-        score_endurance=endurance_data["score"],
-        score_vitesse=None,  # calculé dans une V2
-        score_global=rec_data["score_global"],
-        tendance=rec_data["tendance"],
-        recommendation=rec_data["recommendation"],
-        confiance=rec_data["confiance"],
-        facteurs_explicatifs=json.dumps(facteurs, ensure_ascii=False),
-        resolved=False,
+        pigeon_id            = pigeon_id,
+        generated_at         = datetime.now(timezone.utc),
+        score_forme          = forme_data["score"],
+        score_endurance      = endurance_data["score"],
+        score_vitesse        = None,
+        score_global         = rec_data["score_global"],
+        tendance             = rec_data["tendance"],
+        recommendation       = rec_data["recommendation"],
+        confiance            = rec_data["confiance"],
+        facteurs_explicatifs = json.dumps(facteurs, ensure_ascii=False),
+        title                = comment["title"],
+        message              = comment["message"],
+        action               = comment["action"],
+        resolved             = False,
     )
     db.add(rec)
 

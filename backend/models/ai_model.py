@@ -32,6 +32,9 @@ class AIRecommendation(Base):
     recommendation = Column(String(30), nullable=True)  # concours/repos/entrainement_leger/reforme
     confiance = Column(Float, nullable=True)          # 0-1
     facteurs_explicatifs = Column(Text, nullable=True)  # JSON sérialisé
+    title = Column(String(120), nullable=True)
+    message = Column(Text, nullable=True)
+    action = Column(Text, nullable=True)
     resolved = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     pigeon = relationship("Pigeon")

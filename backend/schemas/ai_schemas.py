@@ -14,6 +14,9 @@ class AIRecommendationBase(BaseModel):
     recommendation: Optional[str] = None
     confiance: Optional[float] = None
     facteurs_explicatifs: Optional[Any] = None  # JSON parsé en lecture
+    title: Optional[str] = None
+    message: Optional[str] = None
+    action: Optional[str] = None
 
 
 class AIRecommendationResponse(AIRecommendationBase):
