@@ -101,11 +101,11 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
     // Alerte fatigue
     const fatiguAlert = indices.fatigue != null && indices.fatigue > 70;
 
-    // Événements santé récents (30j) avec impact sport
+    // Événements santé récents (90j) avec impact sport
     const recentHealth = healthList.filter(h => {
       const d = new Date(h.date || h.created_at);
-      return (Date.now() - d) < 30 * 86400000;
-    }).slice(0, 5);
+      return (Date.now() - d) < 90 * 86400000;
+    }).slice(0, 8);
 
     container.innerHTML = `
       <!-- Alerte surcharge -->
@@ -147,7 +147,7 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
         <div class="card flex-1">
           <div class="card-header">
             <div class="card-title">📈 Tendances</div>
-            <div class="card-subtitle">Évolution 7 derniers jours</div>
+            <div class="card-subtitle">Évolution 90 derniers jours</div>
           </div>
           ${renderTendances(sessions, pigeonId)}
         </div>
@@ -156,7 +156,7 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
         <div class="card flex-1">
           <div class="card-header">
             <div class="card-title">🏥 Impact santé sur la condition</div>
-            <div class="card-subtitle">Événements médicaux récents (30j)</div>
+            <div class="card-subtitle">Événements médicaux récents (90j)</div>
           </div>
           ${renderHealthImpact(recentHealth)}
         </div>
@@ -199,25 +199,27 @@ function renderTendances(sessions, pigeonId) {
     return '<p style="color:var(--text-light);font-size:0.85rem;">Pas assez de séances pour calculer les tendances.</p>';
   }
 
-  // Trier par date
-  const sorted = [...sessions].sort((a, b) => new Date(a.date) - new Date(b.date));
+  // Trier par date (session_date vient du nouveau endpoint history)
+  const sorted = [...sessions].sort((a, b) => new Date(a.session_date || a.date) - new Date(b.session_date || b.date));
 
-  const getScore = (session) => {
-    if (session.avg_recovery != null) return session.avg_recovery;
-    const r = (session.results || []).find(x => String(x.pigeon_id) === String(pigeonId));
-    return r?.recovery_score ?? null;
+  const getScore = (session) => session.recovery_score ?? null;
+
+  // Moyenne 30 dernières vs 30 précédentes (sur 90j)
+  const recent30 = sorted.slice(-30).map(getScore).filter(x => x != null);
+  const prev30 = sorted.slice(-60, -30).map(getScore).filter(x => x != null);
+
+  const avg30 = recent30.length > 0 ? recent30.reduce((a, b) => a + b, 0) / recent30.length : null;
+  const avgPrev = prev30.length > 0 ? prev30.reduce((a, b) => a + b, 0) / prev30.length : null;
+
+  const inWindow = (s, fromDays, toDays) => {
+    const ms = Date.now() - new Date(s.session_date || s.date);
+    return ms >= fromDays * 86400000 && ms < toDays * 86400000;
   };
 
-  // Moyenne 7 dernières vs 7 précédentes
-  const recent7 = sorted.slice(-7).map(getScore).filter(x => x != null);
-  const prev7 = sorted.slice(-14, -7).map(getScore).filter(x => x != null);
-
-  const avg7 = recent7.length > 0 ? recent7.reduce((a, b) => a + b, 0) / recent7.length : null;
-  const avgPrev = prev7.length > 0 ? prev7.reduce((a, b) => a + b, 0) / prev7.length : null;
-
   const metrics = [
-    { label: 'Récupération moy. (7j)', val: avg7, prev: avgPrev, unit: '/10' },
-    { label: 'Nb séances (7j)', val: sorted.filter(s => (Date.now() - new Date(s.date)) < 7 * 86400000).length, prev: sorted.filter(s => { const d = Date.now() - new Date(s.date); return d >= 7 * 86400000 && d < 14 * 86400000; }).length, unit: '' }
+    { label: 'Récupération moy. (30j)', val: avg30, prev: avgPrev, unit: '/10' },
+    { label: 'Nb séances (30j)', val: sorted.filter(s => inWindow(s, 0, 30)).length, prev: sorted.filter(s => inWindow(s, 30, 60)).length, unit: '' },
+    { label: 'Nb séances (90j)', val: sorted.filter(s => inWindow(s, 0, 90)).length, prev: null, unit: '' }
   ];
 
   return metrics.map(m => {
@@ -263,8 +265,9 @@ function renderHealthImpact(healthEvents) {
     // Estimer l'impact selon le type et l'ancienneté
     let impact = '';
     if (isBad && daysAgo <= 7) impact = 'Impact récent probable sur la condition';
-    else if (isBad && daysAgo <= 14) impact = 'Récupération médicale en cours';
-    else if (isBad) impact = 'Événement passé, surveiller les performances';
+    else if (isBad && daysAgo <= 30) impact = 'Récupération médicale en cours';
+    else if (isBad && daysAgo <= 60) impact = 'Événement récent, surveiller les performances';
+    else if (isBad) impact = 'Événement ancien, impact probablement résorbé';
 
     return `
       <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
@@ -284,7 +287,9 @@ function renderRecentPerfs(sessions, pigeonId) {
     return '<div class="empty-state"><p>Aucune séance enregistrée.</p></div>';
   }
 
-  const sorted = [...sessions].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
+  const sorted = [...sessions]
+    .sort((a, b) => new Date(b.session_date || b.date) - new Date(a.session_date || a.date))
+    .slice(0, 10);
 
   return `
     <table class="table-modern">
@@ -299,18 +304,15 @@ function renderRecentPerfs(sessions, pigeonId) {
         </tr>
       </thead>
       <tbody>
-        ${sorted.map(s => {
-          const r = (s.results || []).find(x => String(x.pigeon_id) === String(pigeonId));
-          return `
-            <tr>
-              <td>${formatDate(s.date)}</td>
-              <td>${sessionTypeBadge(s.session_type)}</td>
-              <td>${s.distance_km != null ? s.distance_km + ' km' : '—'}</td>
-              <td>${r?.recovery_score != null ? renderScoreBar(r.recovery_score) : '<span style="color:var(--text-light)">—</span>'}</td>
-              <td>${r?.condition_score != null ? renderScoreBar(r.condition_score) : '<span style="color:var(--text-light)">—</span>'}</td>
-              <td>${r?.motivation_score != null ? renderScoreBar(r.motivation_score) : '<span style="color:var(--text-light)">—</span>'}</td>
-            </tr>`;
-        }).join('')}
+        ${sorted.map(s => `
+          <tr>
+            <td>${formatDate(s.session_date || s.date)}</td>
+            <td>${sessionTypeBadge(s.session_type)}</td>
+            <td>${s.distance_km != null ? s.distance_km + ' km' : '—'}</td>
+            <td>${s.recovery_score != null ? renderScoreBar(s.recovery_score) : '<span style="color:var(--text-light)">—</span>'}</td>
+            <td>${s.condition_score != null ? renderScoreBar(s.condition_score) : '<span style="color:var(--text-light)">—</span>'}</td>
+            <td>${s.motivation_score != null ? renderScoreBar(s.motivation_score) : '<span style="color:var(--text-light)">—</span>'}</td>
+          </tr>`).join('')}
       </tbody>
     </table>`;
 }
