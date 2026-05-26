@@ -131,6 +131,7 @@ async def get_dashboard(db: AsyncSession = Depends(get_db)):
     # 5 dernières sessions
     recent_result = await db.execute(
         select(TrainingSession)
+        .options(selectinload(TrainingSession.results))
         .order_by(TrainingSession.date.desc())
         .limit(5)
     )
