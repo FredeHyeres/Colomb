@@ -121,21 +121,12 @@ async function loadColony() {
     // Rendu doughnut
     renderColonyDoughnut(categories);
 
-    // Clics sur les mini-cards → page condition
+    // Clics sur les mini-cards → page condition avec pré-sélection
     document.querySelectorAll('.pigeon-mini-card[data-pigeon-id]').forEach(card => {
       card.addEventListener('click', () => {
-        const pigeonId = parseInt(card.dataset.pigeonId);
-        // Aller sur la page condition et sélectionner ce pigeon
+        const pigeonId = card.dataset.pigeonId; // UUID string, pas parseInt
+        sessionStorage.setItem('sport_selected_pigeon', pigeonId);
         showPage('condition');
-        // Attendre le DOM puis sélectionner
-        setTimeout(() => {
-          const sel = document.getElementById('condition-pigeon-select');
-          if (sel) {
-            sel.value = pigeonId;
-            sel.dispatchEvent(new Event('change'));
-            document.getElementById('btn-load-condition')?.click();
-          }
-        }, 100);
       });
     });
 

@@ -43,10 +43,22 @@ async function loadCondition() {
 
   document.getElementById('btn-load-condition').addEventListener('click', () => {
     if (select.value) {
-      const pigeon = pigeons.find(p => p.id === parseInt(select.value));
-      loadConditionForPigeon(parseInt(select.value), pigeon);
+      const pigeon = pigeons.find(p => String(p.id) === String(select.value));
+      loadConditionForPigeon(select.value, pigeon);
     }
   });
+
+  // Pré-sélection depuis le Monitoring colonie (sessionStorage)
+  const preselect = sessionStorage.getItem('sport_selected_pigeon');
+  if (preselect) {
+    sessionStorage.removeItem('sport_selected_pigeon');
+    select.value = preselect;
+    if (select.value) {
+      document.getElementById('btn-load-condition').disabled = false;
+      const pigeon = pigeons.find(p => String(p.id) === String(preselect));
+      loadConditionForPigeon(preselect, pigeon);
+    }
+  }
 }
 
 /* ——— Chargement condition complète ——— */
@@ -192,7 +204,7 @@ function renderTendances(sessions, pigeonId) {
 
   const getScore = (session) => {
     if (session.avg_recovery != null) return session.avg_recovery;
-    const r = (session.results || []).find(x => x.pigeon_id === pigeonId);
+    const r = (session.results || []).find(x => String(x.pigeon_id) === String(pigeonId));
     return r?.recovery_score ?? null;
   };
 
@@ -288,7 +300,7 @@ function renderRecentPerfs(sessions, pigeonId) {
       </thead>
       <tbody>
         ${sorted.map(s => {
-          const r = (s.results || []).find(x => x.pigeon_id === pigeonId);
+          const r = (s.results || []).find(x => String(x.pigeon_id) === String(pigeonId));
           return `
             <tr>
               <td>${formatDate(s.date)}</td>
