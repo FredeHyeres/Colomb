@@ -180,6 +180,19 @@ function retryLoad() {
   navigateTo(currentPage);
 }
 
+// ===== ROUTING PAR HASH =====
+function getPageFromHash() {
+  const hash = window.location.hash.replace('#', '').split('?')[0].trim();
+  return pages[hash] ? hash : null;
+}
+
+function handleHash() {
+  const page = getPageFromHash();
+  navigateTo(page || 'dashboard');
+}
+
+window.addEventListener('hashchange', handleHash);
+
 // ===== DÉMARRAGE =====
 // Délai 500ms pour laisser l'API finir son démarrage avant le premier appel
-setTimeout(() => navigateTo('dashboard'), 500);
+setTimeout(handleHash, 500);
