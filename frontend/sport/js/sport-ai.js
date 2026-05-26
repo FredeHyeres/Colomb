@@ -45,12 +45,12 @@ async function loadAIRecommendations() {
   });
 
   document.getElementById('btn-load-ai').addEventListener('click', () => {
-    if (select.value) loadAIForPigeon(parseInt(select.value));
+    if (select.value) loadAIForPigeon(select.value);
   });
 
   document.getElementById('btn-generate-ai').addEventListener('click', async () => {
     if (!select.value) return;
-    const pigeonId = parseInt(select.value);
+    const pigeonId = select.value;
     const btn = document.getElementById('btn-generate-ai');
     btn.disabled = true;
     btn.innerHTML = '<span class="loader-inline"></span> Analyse en cours...';
