@@ -176,6 +176,15 @@ const SportAPI = {
   createMix: (data) =>
     apiFetch('/sport/nutrition/mixes', { method: 'POST', body: JSON.stringify(data) }),
 
+  getMix: (id) =>
+    apiFetch(`/sport/nutrition/mixes/${id}`),
+
+  updateMix: (id, data) =>
+    apiFetch(`/sport/nutrition/mixes/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+
+  deleteMix: (id) =>
+    apiFetch(`/sport/nutrition/mixes/${id}`, { method: 'DELETE' }),
+
   getPlans: () =>
     apiFetch('/sport/nutrition/plans'),
 

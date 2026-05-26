@@ -183,6 +183,13 @@ async function loadMixesTab() {
     const mixes = await SportAPI.getMixes();
     const list = Array.isArray(mixes) ? mixes : (mixes.items || []);
 
+    const usageLabels = {
+      recuperation: 'Récupération',
+      entrainement: 'Entraînement',
+      pre_panier: 'Pré-panier',
+      enlogement: 'Enlogement',
+    };
+
     el.innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
         <button class="btn btn-primary btn-sm" onclick="openMixModal()">+ Créer un mélange</button>
@@ -194,14 +201,16 @@ async function loadMixesTab() {
               <div class="card" style="padding:16px;">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px;">
                   <div>
-                    <div style="font-weight:600;font-size:0.95rem;">${m.name || m.nom || '—'}</div>
-                    ${m.category ? `<span class="badge badge-info" style="margin-top:4px;">${m.category}</span>` : ''}
+                    <div style="font-weight:600;font-size:0.95rem;">${m.name || '—'}</div>
+                    ${m.usage ? `<span class="badge badge-info" style="margin-top:4px;">${usageLabels[m.usage] || m.usage}</span>` : ''}
                   </div>
-                  <span style="font-size:1.5rem;">🔀</span>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-sm btn-icon" onclick="openMixModal(${m.id})" title="Modifier">✏️</button>
+                    <button class="btn btn-sm btn-icon" onclick="deleteMixItem(${m.id})" title="Supprimer">🗑️</button>
+                  </div>
                 </div>
                 ${m.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:8px;">${m.description}</p>` : ''}
-                ${m.energy_kcal ? `<div style="font-size:0.8rem;"><strong>${m.energy_kcal} kcal/100g</strong></div>` : ''}
-                ${m.ingredients_count ? `<div style="font-size:0.78rem;color:var(--text-light);margin-top:4px;">${m.ingredients_count} ingrédient(s)</div>` : ''}
+                ${_renderMixCompositionPreview(m.composition)}
               </div>`).join('')}
           </div>`}
     `;
@@ -211,64 +220,98 @@ async function loadMixesTab() {
   }
 }
 
-/* ——— Modal mélange ——— */
-function openMixModal() {
+function _renderMixCompositionPreview(compositionJson) {
+  if (!compositionJson) return '<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Composition non définie</div>';
+  try {
+    const comp = JSON.parse(compositionJson);
+    if (!Array.isArray(comp) || comp.length === 0) return '';
+    return `<div style="font-size:0.75rem;color:var(--text-light);margin-top:6px;">
+      ${comp.map(c => `<span style="background:var(--bg-secondary);border-radius:4px;padding:2px 6px;margin-right:4px;">${c.type === 'supplement' ? '💊' : '🌾'} ${c.name} ${c.pct}%</span>`).join('')}
+    </div>`;
+  } catch { return ''; }
+}
+
+async function deleteMixItem(mixId) {
+  if (!confirm('Supprimer ce mélange ? Cette action est irréversible.')) return;
+  try {
+    await SportAPI.deleteMix(mixId);
+    showToast('Mélange supprimé.', 'success');
+    loadMixesTab();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+/* ——— Modal mélange (création et modification) ——— */
+async function openMixModal(mixId = null) {
   const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = '+ Nouveau mélange';
+  document.getElementById('modal-title').textContent = mixId ? '✏️ Modifier le mélange' : '+ Nouveau mélange';
   document.getElementById('modal').className = 'modal';
+  document.getElementById('modal-body').innerHTML = '<div class="loader-spinner"></div>';
+  overlay.style.display = 'flex';
+  document.getElementById('modal-close').onclick = closeModal;
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+  let mix = null;
+  if (mixId) {
+    try {
+      mix = await SportAPI.getMix(mixId);
+    } catch (err) {
+      showToast(err.message, 'error');
+      closeModal();
+      return;
+    }
+  }
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-mix">
       <div class="form-group">
         <label class="form-label">Nom du mélange *</label>
-        <input type="text" class="form-control" name="name" required placeholder="ex: Mélange course longue distance">
+        <input type="text" class="form-control" name="name" required
+          placeholder="ex: Mélange course longue distance"
+          value="${mix ? (mix.name || '') : ''}">
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Catégorie</label>
-          <select class="form-control" name="category">
-            <option value="">—</option>
-            <option value="entraînement">Entraînement</option>
-            <option value="course">Course</option>
-            <option value="repos">Repos</option>
-            <option value="récupération">Récupération</option>
-            <option value="hiver">Hiver</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Énergie estimée (kcal/100g)</label>
-          <input type="number" class="form-control" name="energy_kcal" step="1" placeholder="ex: 320">
-        </div>
+      <div class="form-group">
+        <label class="form-label">Usage</label>
+        <select class="form-control" name="usage">
+          <option value="">—</option>
+          <option value="recuperation"${mix?.usage === 'recuperation' ? ' selected' : ''}>Récupération</option>
+          <option value="entrainement"${mix?.usage === 'entrainement' ? ' selected' : ''}>Entraînement</option>
+          <option value="pre_panier"${mix?.usage === 'pre_panier' ? ' selected' : ''}>Pré-panier</option>
+          <option value="enlogement"${mix?.usage === 'enlogement' ? ' selected' : ''}>Enlogement</option>
+        </select>
       </div>
       <div class="form-group">
         <label class="form-label">Description</label>
-        <textarea class="form-control" name="description" rows="3" placeholder="Composition, usage recommandé..."></textarea>
+        <textarea class="form-control" name="description" rows="2"
+          placeholder="Composition, usage recommandé...">${mix?.description || ''}</textarea>
       </div>
       <div class="modal-footer" style="padding:0;margin-top:16px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Créer le mélange</button>
+        <button type="submit" class="btn btn-primary">${mixId ? 'Enregistrer' : 'Créer le mélange'}</button>
       </div>
     </form>`;
 
-  overlay.style.display = 'flex';
-  document.getElementById('modal-close').onclick = closeModal;
-  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
-
   document.getElementById('form-mix').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = parseFormData(e.target, ['energy_kcal'], ['name']);
+    const data = parseFormData(e.target, [], ['name']);
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true;
     btn.innerHTML = '<span class="loader-inline"></span>';
     try {
-      await SportAPI.createMix(data);
-      showToast('Mélange créé !', 'success');
+      if (mixId) {
+        await SportAPI.updateMix(mixId, data);
+        showToast('Mélange modifié !', 'success');
+      } else {
+        await SportAPI.createMix(data);
+        showToast('Mélange créé !', 'success');
+      }
       closeModal();
       loadMixesTab();
     } catch (err) {
       showToast(err.message, 'error');
       btn.disabled = false;
-      btn.textContent = 'Créer le mélange';
+      btn.textContent = mixId ? 'Enregistrer' : 'Créer le mélange';
     }
   });
 }
