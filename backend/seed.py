@@ -343,8 +343,8 @@ async def main():
     ING = {}
     for name, cat in ING_DATA:
         row = await conn.fetchrow("""
-            INSERT INTO feed_ingredients (name, category)
-            VALUES ($1,$2::ingredientcategory) RETURNING id
+            INSERT INTO feed_ingredients (name, category, created_at)
+            VALUES ($1,$2::ingredientcategory, now()) RETURNING id
         """, name, cat)
         ING[name] = row["id"]
 
@@ -358,8 +358,8 @@ async def main():
     SUP = {}
     for name, stype, dosage in SUP_DATA:
         row = await conn.fetchrow("""
-            INSERT INTO supplements (name, type, dosage)
-            VALUES ($1,$2::supplementtype,$3) RETURNING id
+            INSERT INTO supplements (name, type, dosage, created_at)
+            VALUES ($1,$2::supplementtype,$3, now()) RETURNING id
         """, name, stype, dosage)
         SUP[name] = row["id"]
 
@@ -394,8 +394,8 @@ async def main():
     MIX = {}
     for mname, usage, ings, sups in MIXES_DEF:
         row = await conn.fetchrow("""
-            INSERT INTO feed_mixes (name, usage, composition)
-            VALUES ($1,$2::mixusage,$3) RETURNING id
+            INSERT INTO feed_mixes (name, usage, composition, created_at)
+            VALUES ($1,$2::mixusage,$3, now()) RETURNING id
         """, mname, usage, make_comp(ings, sups))
         MIX[mname] = row["id"]
     print(f"✅ {len(MIX)} mélanges insérés")
@@ -417,8 +417,8 @@ async def main():
     for name,goal,lun,mar,mer,jeu,ven,sam,dim in PLANS_DEF:
         row = await conn.fetchrow("""
             INSERT INTO nutrition_plans
-              (name, goal, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id
+              (name, goal, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche, created_at)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now()) RETURNING id
         """, name, goal, lun, mar, mer, jeu, ven, sam, dim)
         PLAN[name] = row["id"]
     print(f"✅ {len(PLAN)} plans alimentaires insérés")
