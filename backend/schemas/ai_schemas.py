@@ -17,6 +17,10 @@ class AIRecommendationBase(BaseModel):
     title: Optional[str] = None
     message: Optional[str] = None
     action: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+    outcome: Optional[str] = None
+    outcome_notes: Optional[str] = None
+    outcome_date: Optional[date] = None
 
 
 class AIRecommendationResponse(AIRecommendationBase):
@@ -55,6 +59,45 @@ class SportEventCreate(SportEventBase):
 class SportEventResponse(SportEventBase):
     id: int
     created_at: datetime
+
+
+class ConcoursFeedbackCreate(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    pigeon_id: str
+    snapshot_id: Optional[int] = None
+    recommendation_id: Optional[int] = None
+    concours_date: date
+    distance_km: Optional[float] = None
+    conditions_meteo: Optional[str] = None
+    outcome: str
+    classement: Optional[int] = None
+    vitesse_mpm: Optional[float] = None
+    nb_engages: Optional[int] = None
+    notes: Optional[str] = None
+    share_anonymized: bool = False
+
+
+class ConcoursFeedbackResponse(ConcoursFeedbackCreate):
+    id: int
+    created_at: datetime
+
+
+class AnonymizedSnapshot(BaseModel):
+    """Export anonymisé pour le modèle collectif — aucune donnée identifiante."""
+    recovery_avg_7d: Optional[float] = None
+    recovery_avg_30d: Optional[float] = None
+    condition_avg_7d: Optional[float] = None
+    regularity_index: Optional[float] = None
+    training_load_30d: Optional[int] = None
+    fatigue_risk: Optional[str] = None
+    recovery_trend: Optional[str] = None
+    load_ratio: Optional[float] = None
+    distance_km: Optional[float] = None
+    conditions_meteo: Optional[str] = None
+    outcome: str
+    region: Optional[str] = None
+    systeme: Optional[str] = None
+    snapshot_version: str = "core_v1"
 
 
 class AIDashboardResponse(BaseModel):

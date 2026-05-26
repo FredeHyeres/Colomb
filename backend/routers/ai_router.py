@@ -44,6 +44,10 @@ def _rec_to_response(rec: AIRecommendation) -> dict:
         "message": rec.message,
         "action": rec.action,
         "resolved": rec.resolved,
+        "resolved_at": rec.resolved_at,
+        "outcome": rec.outcome,
+        "outcome_notes": rec.outcome_notes,
+        "outcome_date": rec.outcome_date,
         "created_at": rec.created_at,
     }
     return d

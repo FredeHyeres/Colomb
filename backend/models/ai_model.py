@@ -36,6 +36,11 @@ class AIRecommendation(Base):
     message = Column(Text, nullable=True)
     action = Column(Text, nullable=True)
     resolved = Column(Boolean, default=False, nullable=False)
+    resolved_at = Column(DateTime(timezone=True), nullable=True)
+    outcome = Column(String(30), nullable=True)
+    # rentre_classe / rentre_non_classe / non_rentre_jour / perdu / non_engage
+    outcome_notes = Column(Text, nullable=True)
+    outcome_date = Column(Date, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     pigeon = relationship("Pigeon")
 
@@ -50,6 +55,32 @@ class AISnapshot(Base):
     features = Column(Text, nullable=True)  # JSON sérialisé — 20 features
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     pigeon = relationship("Pigeon")
+
+
+class ConcoursFeedback(Base):
+    """
+    Feedback réel après concours — cœur du futur modèle collectif.
+    Lie un snapshot AISnapshot à un résultat concours observé.
+    Conçu pour l'agrégation anonymisée inter-éleveurs (opt-in).
+    """
+    __tablename__ = "concours_feedback"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    pigeon_id = Column(String, ForeignKey("pigeons.id"), nullable=False, index=True)
+    snapshot_id = Column(Integer, ForeignKey("ai_snapshots.id"), nullable=True)
+    recommendation_id = Column(Integer, ForeignKey("ai_recommendations.id"), nullable=True)
+    concours_date = Column(Date, nullable=False, index=True)
+    distance_km = Column(Float, nullable=True)
+    conditions_meteo = Column(String(50), nullable=True)
+    outcome = Column(String(30), nullable=False)
+    classement = Column(Integer, nullable=True)
+    vitesse_mpm = Column(Float, nullable=True)
+    nb_engages = Column(Integer, nullable=True)
+    notes = Column(Text, nullable=True)
+    share_anonymized = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    pigeon = relationship("Pigeon")
+    snapshot = relationship("AISnapshot")
+    recommendation = relationship("AIRecommendation")
 
 
 class SportEvent(Base):
