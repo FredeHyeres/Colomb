@@ -1,37 +1,46 @@
+"""reset_db.py — Vide TOUTES les tables (TRUNCATE CASCADE)"""
 import asyncio
-from sqlalchemy import text
-from database import engine
+import asyncpg
+from database import settings
 
-async def reset():
-    async with engine.begin() as conn:
-        # Désactive les contraintes FK temporairement
-        await conn.execute(
-            text("SET session_replication_role = 'replica'")
-        )
+DSN = (
+    f"postgresql://{settings.postgres_user}:{settings.postgres_password}"
+    f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
+)
 
-        # Vide toutes les tables dans l'ordre
-        # (des plus dépendantes aux moins dépendantes)
-        tables = [
-            'performances',
-            'sante',
-            'nichees',
-            'couples',
-            'pigeons',
-            'lignees',
-            'eleveur'
-        ]
+TABLES = [
+    "ai_recommendations", "ai_snapshots", "sport_events",
+    "pigeon_training_results", "training_sessions",
+    "nutrition_assignments", "nutrition_plans",
+    "feed_mix_ingredients", "feed_mixes", "supplements", "feed_ingredients",
+    "performances", "sante", "nichees", "couples",
+    "pigeons", "lignees", "eleveur",
+]
 
-        for table in tables:
-            await conn.execute(text(f"TRUNCATE TABLE {table} CASCADE"))
-            print(f"✅ Table {table} vidée")
 
-        # Réactive les contraintes FK
-        await conn.execute(
-            text("SET session_replication_role = 'origin'")
-        )
+async def main():
+    conn = await asyncpg.connect(DSN)
+    tlist = ", ".join(TABLES)
+    await conn.execute(f"TRUNCATE {tlist} CASCADE")
+    print("✅ TRUNCATE CASCADE exécuté\n")
 
-        print("\n🎉 Base de données vidée avec succès")
-        print("Structure des tables conservée")
-        print("Prêt pour les vraies données !")
+    print("Vérification des comptages :")
+    all_empty = True
+    for t in TABLES:
+        n = await conn.fetchval(f"SELECT COUNT(*) FROM {t}")
+        status = "✅" if n == 0 else "❌"
+        print(f"  {status}  {t:<40} {n} enregistrements")
+        if n != 0:
+            all_empty = False
 
-asyncio.run(reset())
+    print()
+    if all_empty:
+        print("✅ Toutes les tables sont vides. Prêt pour le seed.")
+    else:
+        print("❌ Certaines tables ne sont pas vides !")
+
+    await conn.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
