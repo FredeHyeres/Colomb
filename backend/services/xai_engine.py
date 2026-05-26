@@ -18,9 +18,9 @@ from models.ai_model import AIRecommendation, AISnapshot, SportEvent
 WEIGHTS = {"recovery": 0.40, "condition": 0.35, "regularity": 0.25}
 
 
-def compute_forme_score(results: list) -> dict:
+def compute_forme_score(results: list, results_7d: list = None) -> dict:
     """
-    Score forme basé sur les 5 derniers résultats.
+    Score forme basé sur les résultats 30j.
     vitesse_relative 40% + regularite 30% + progression 20% + ratio_completions 10%
     """
     if not results:
@@ -30,16 +30,26 @@ def compute_forme_score(results: list) -> dict:
     completions = [r for r in results if r.return_time is not None]
     ratio_completions = len(completions) / len(results) * 10
 
-    # regularite : nombre de séances sur les 5 dernières
-    regularite = min(10, len(results) * 2)
+    # Régularité basée sur volume 30j (max 10 séances = score 10)
+    regularite = min(10, len(results) * 1.0)
 
-    # progression : tendance du recovery_score
-    recovery_scores = [r.recovery_score for r in results if r.recovery_score is not None]
-    if len(recovery_scores) >= 2:
-        progression = (recovery_scores[-1] - recovery_scores[0]) / len(recovery_scores)
-        progression_score = max(0, min(10, 5 + progression * 2))
+    # Progression : récupération récente (7j) vs ancienne (8j-30j)
+    recent = results_7d if results_7d else results[:3]
+    older = [r for r in results if r not in recent]
+
+    rec_recent = [r.recovery_score for r in recent if r.recovery_score is not None]
+    rec_older = [r.recovery_score for r in older if r.recovery_score is not None]
+
+    avg_recent = sum(rec_recent) / len(rec_recent) if rec_recent else None
+    avg_older = sum(rec_older) / len(rec_older) if rec_older else None
+
+    if avg_recent is not None and avg_older is not None:
+        delta = avg_recent - avg_older
+        progression_score = max(0, min(10, 5 + delta))
+    elif avg_recent is not None:
+        progression_score = max(0, min(10, avg_recent))
     else:
-        progression_score = float(recovery_scores[0]) if recovery_scores else 5.0
+        progression_score = 5.0
 
     # vitesse_relative : basée sur internal_rank (rang inférieur = meilleur)
     ranks = [r.internal_rank for r in results if r.internal_rank is not None]
@@ -118,13 +128,13 @@ def compute_recommendation(scores: dict, avg_recovery: float) -> dict:
 
     confiance = min(1.0, len([s for s in scores.values() if isinstance(s, (int, float)) and s > 0]) / 3)
 
-    if score_global >= 75:
+    if score_global >= 70:
         rec, tendance = "concours", "progression"
         contre_indications = []
-    elif score_global >= 55:
+    elif score_global >= 50:
         rec, tendance = "entrainement_leger", "stable"
         contre_indications = ["Surveiller hydratation"]
-    elif score_global >= 35:
+    elif score_global >= 30:
         rec, tendance = "repos", "declin"
         contre_indications = ["Pas de concours avant recuperation complete"]
     else:
@@ -185,24 +195,31 @@ def build_facteurs_explicatifs(results: list, scores: dict) -> list:
 async def generate_ai_recommendation(pigeon_id: str, db: AsyncSession) -> AIRecommendation:
     """
     Génère une recommandation XAI complète pour un pigeon.
-    1. Récupère les 5 derniers résultats
+    1. Récupère les résultats sur 30 jours glissants
     2. Calcule tous les scores
     3. Construit les facteurs explicatifs
     4. Sauvegarde en DB
     5. Crée un SportEvent
     """
-    # 1. Récupérer les 5 derniers résultats avec la session
+    # 1. Récupérer les résultats des 30 derniers jours avec la session
+    cutoff_30d = date.today() - timedelta(days=30)
     result = await db.execute(
         select(PigeonTrainingResult)
         .options(selectinload(PigeonTrainingResult.session))
-        .where(PigeonTrainingResult.pigeon_id == pigeon_id)
-        .order_by(PigeonTrainingResult.id.desc())
-        .limit(5)
+        .join(TrainingSession)
+        .where(
+            PigeonTrainingResult.pigeon_id == pigeon_id,
+            TrainingSession.date >= cutoff_30d
+        )
+        .order_by(TrainingSession.date.desc())
     )
     results = result.scalars().all()
 
+    cutoff_7d = date.today() - timedelta(days=7)
+    results_7d = [r for r in results if r.session and r.session.date >= cutoff_7d]
+
     # 2. Calculer scores
-    forme_data = compute_forme_score(results)
+    forme_data = compute_forme_score(results, results_7d=results_7d)
     endurance_data = compute_endurance_score(results)
 
     rec_scores = [r.recovery_score for r in results if r.recovery_score is not None]
@@ -275,6 +292,7 @@ async def build_snapshot(pigeon_id: str, db: AsyncSession) -> AISnapshot:
     # Résultats 30 derniers jours
     r30 = await db.execute(
         select(PigeonTrainingResult)
+        .options(selectinload(PigeonTrainingResult.session))
         .join(TrainingSession)
         .where(
             PigeonTrainingResult.pigeon_id == pigeon_id,
@@ -292,6 +310,19 @@ async def build_snapshot(pigeon_id: str, db: AsyncSession) -> AISnapshot:
 
     avg_rec_7d = avg(rec_7d)
 
+    # Recovery trend : comparer 7j vs 14j-30j
+    cutoff_14d = today - timedelta(days=14)
+    results_14d_30d = [r for r in results_30d
+                       if r.session and cutoff_14d > r.session.date >= cutoff_30d]
+    rec_14d_30d = [r.recovery_score for r in results_14d_30d if r.recovery_score is not None]
+    avg_rec_14d_30d = avg(rec_14d_30d)
+
+    if avg_rec_7d is not None and avg_rec_14d_30d is not None:
+        delta = avg_rec_7d - avg_rec_14d_30d
+        recovery_trend = "progression" if delta > 0.5 else ("declin" if delta < -0.5 else "stable")
+    else:
+        recovery_trend = "stable"
+
     features = {
         "snapshot_date": str(today),
         "version": "core_v1",
@@ -306,13 +337,16 @@ async def build_snapshot(pigeon_id: str, db: AsyncSession) -> AISnapshot:
         "recovery_max_7d": max(rec_7d) if rec_7d else None,
         "condition_min_7d": min(cond_7d) if cond_7d else None,
         "hydration_min_7d": min(hydra_7d) if hydra_7d else None,
+        "recovery_avg_30d": avg([r.recovery_score for r in results_30d if r.recovery_score is not None]),
+        "condition_avg_30d": avg([r.condition_score for r in results_30d if r.condition_score is not None]),
+        "hydration_avg_30d": avg([r.hydration_score for r in results_30d if r.hydration_score is not None]),
         "completion_rate_7d": round(
             len([r for r in results_7d if r.return_time]) / len(results_7d), 2
         ) if results_7d else None,
         "avg_rank_7d": avg([r.internal_rank for r in results_7d if r.internal_rank is not None]),
         "load_ratio": round(len(results_7d) / (len(results_30d) / 4.3), 2) if results_30d else None,
         "regularity_index": round(len(results_30d) / 30 * 10, 2),
-        "recovery_trend": "stable",  # simplifié — calcul de tendance V2
+        "recovery_trend": recovery_trend,
         "fatigue_risk": (
             "faible" if avg_rec_7d and avg_rec_7d >= 6
             else "moyen" if avg_rec_7d and avg_rec_7d >= 4
