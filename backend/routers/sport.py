@@ -1,22 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.orm import selectinload
 from database import get_db
 from models.sport import (
     TrainingSession, PigeonTrainingResult,
-    FeedIngredient, FeedMix, NutritionPlan, Supplement,
+    FeedIngredient, FeedMix, NutritionPlan, NutritionAssignment, Supplement,
 )
+from models.pigeon import Pigeon
 from schemas.sport import (
     TrainingSessionCreate, TrainingSessionUpdate, TrainingSessionResponse,
     PigeonTrainingResultCreate, PigeonTrainingResultResponse,
     FeedIngredientCreate, FeedIngredientUpdate, FeedIngredientResponse,
     FeedMixCreate, FeedMixUpdate, FeedMixResponse,
     NutritionPlanCreate, NutritionPlanUpdate, NutritionPlanResponse,
+    NutritionAssignmentCreate, NutritionAssignmentResponse,
+    NutritionResolvedDay, NutritionResolvedResponse,
     SupplementCreate, SupplementUpdate, SupplementResponse,
     SportDashboardResponse,
 )
-from typing import List
+from typing import List, Optional
+from datetime import date, timedelta
 
 router = APIRouter(prefix="/sport", tags=["Sport"])
 
@@ -334,6 +338,157 @@ async def delete_plan(plan_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Plan non trouvé")
     await db.delete(obj)
     await db.commit()
+
+
+# ── Nutrition — Calendrier hebdomadaire ──────────────────────────────────────
+
+@router.get("/nutrition/calendar", response_model=List[NutritionAssignmentResponse])
+async def get_calendar(
+    week_start: Optional[date] = None,
+    pigeon_id: Optional[str] = None,
+    group_name: Optional[str] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """Retourne les assignations pour une semaine donnée (pigeon ou groupe)."""
+    if not week_start:
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+
+    q = (
+        select(NutritionAssignment)
+        .options(selectinload(NutritionAssignment.plan))
+        .where(NutritionAssignment.week_start == week_start)
+    )
+    if pigeon_id:
+        q = q.where(NutritionAssignment.pigeon_id == pigeon_id)
+    elif group_name:
+        q = q.where(
+            NutritionAssignment.group_name == group_name,
+            NutritionAssignment.pigeon_id == None,  # noqa: E711
+        )
+    result = await db.execute(q)
+    return result.scalars().all()
+
+
+@router.post("/nutrition/calendar", response_model=NutritionAssignmentResponse, status_code=201)
+async def upsert_assignment(data: NutritionAssignmentCreate, db: AsyncSession = Depends(get_db)):
+    """Crée ou met à jour une assignation (upsert par pigeon+jour+semaine ou groupe+jour+semaine)."""
+    # Chercher assignation existante
+    if data.pigeon_id:
+        cond = (
+            NutritionAssignment.pigeon_id == data.pigeon_id,
+            NutritionAssignment.day_of_week == data.day_of_week,
+            NutritionAssignment.week_start == data.week_start,
+        )
+    else:
+        cond = (
+            NutritionAssignment.group_name == data.group_name,
+            NutritionAssignment.pigeon_id == None,  # noqa: E711
+            NutritionAssignment.day_of_week == data.day_of_week,
+            NutritionAssignment.week_start == data.week_start,
+        )
+    result = await db.execute(
+        select(NutritionAssignment)
+        .options(selectinload(NutritionAssignment.plan))
+        .where(*cond)
+    )
+    obj = result.scalar_one_or_none()
+    if obj:
+        obj.plan_id = data.plan_id
+    else:
+        obj = NutritionAssignment(**data.model_dump())
+        db.add(obj)
+    await db.commit()
+    await db.refresh(obj)
+    # Recharger avec la relation plan
+    result2 = await db.execute(
+        select(NutritionAssignment)
+        .options(selectinload(NutritionAssignment.plan))
+        .where(NutritionAssignment.id == obj.id)
+    )
+    return result2.scalar_one()
+
+
+@router.delete("/nutrition/calendar/{assignment_id}", status_code=204)
+async def delete_assignment(assignment_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(NutritionAssignment).where(NutritionAssignment.id == assignment_id)
+    )
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Assignation non trouvée")
+    await db.delete(obj)
+    await db.commit()
+
+
+# ── Nutrition — Planning résolu (priorité individuel > groupe) ────────────────
+
+@router.get("/nutrition/resolved", response_model=NutritionResolvedResponse)
+async def get_resolved_calendar(
+    pigeon_id: str,
+    week_start: Optional[date] = None,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Retourne le planning résolu pour un pigeon sur une semaine.
+    Règle : plan individuel > plan groupe (statut) > plan groupe 'tous'.
+    """
+    if not week_start:
+        today = date.today()
+        week_start = today - timedelta(days=today.weekday())
+
+    # Récupérer le statut du pigeon pour le fallback groupe
+    pigeon_res = await db.execute(select(Pigeon).where(Pigeon.id == pigeon_id))
+    pigeon = pigeon_res.scalar_one_or_none()
+    pigeon_statut = pigeon.statut.value if pigeon else None
+
+    # Assignations individuelles
+    indiv_res = await db.execute(
+        select(NutritionAssignment)
+        .options(selectinload(NutritionAssignment.plan))
+        .where(
+            NutritionAssignment.pigeon_id == pigeon_id,
+            NutritionAssignment.week_start == week_start,
+        )
+    )
+    indiv_map = {a.day_of_week: a for a in indiv_res.scalars().all()}
+
+    # Assignations groupe (statut + 'tous')
+    group_conds = [NutritionAssignment.group_name == "tous"]
+    if pigeon_statut:
+        group_conds.append(NutritionAssignment.group_name == pigeon_statut)
+
+    group_res = await db.execute(
+        select(NutritionAssignment)
+        .options(selectinload(NutritionAssignment.plan))
+        .where(
+            NutritionAssignment.pigeon_id == None,  # noqa: E711
+            NutritionAssignment.week_start == week_start,
+            or_(*group_conds),
+        )
+    )
+    # Priorité : groupe statut > groupe 'tous'
+    group_map: dict = {}
+    for a in group_res.scalars().all():
+        dow = a.day_of_week
+        if dow not in group_map or a.group_name == pigeon_statut:
+            group_map[dow] = a
+
+    # Construire les 7 jours résolus
+    days = []
+    for dow in range(7):
+        if dow in indiv_map:
+            a = indiv_map[dow]
+            plan_resp = NutritionPlanResponse.model_validate(a.plan) if a.plan else None
+            days.append(NutritionResolvedDay(day_of_week=dow, plan=plan_resp, source="individual"))
+        elif dow in group_map:
+            a = group_map[dow]
+            plan_resp = NutritionPlanResponse.model_validate(a.plan) if a.plan else None
+            days.append(NutritionResolvedDay(day_of_week=dow, plan=plan_resp, source="group"))
+        else:
+            days.append(NutritionResolvedDay(day_of_week=dow, plan=None, source=None))
+
+    return NutritionResolvedResponse(pigeon_id=pigeon_id, week_start=week_start, days=days)
 
 
 # ── Suppléments ───────────────────────────────────────────────────────────────
