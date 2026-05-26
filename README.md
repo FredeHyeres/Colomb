@@ -1,4 +1,4 @@
-# 🕊️ Colomb — Gestion d'élevage colombophile
+# 🕊️ Colomb — Application Colombophile
 
 > Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé, sport et intelligence artificielle. Déploiement via **Docker Desktop**.
 
@@ -12,14 +12,19 @@
 >
 > **L'application est en cours de développement actif.**
 >
-> | Version | Statut | Description |
-> |---|---|---|
-> | **V1 — Élevage** | ✅ **Stable — prête à l'utilisation** | Pigeons, pedigrees, couples, santé, performances, éleveur |
-> | **V2 — Sport** | 🚧 En développement | Entraînements, monitoring colonie, analytics, condition sportive |
-> | **V3 — IA** | 🧪 Expérimental | Recommandations XAI, snapshots sportifs, moteur expert |
->
-> **Seule la V1 (module Élevage) est recommandée pour une utilisation en production.**
-> Les modules Sport et IA sont fonctionnels mais peuvent contenir des bugs ou évoluer significativement.
+> **Branche `main`** : développement V3 (IA avancée, ML, snapshots versionnés)
+> **Branche `v2`** : version stable — Élevage + Sport + XAI expérimental
+> **Branche `v1`** : version stable — Élevage uniquement
+
+---
+
+## 🗺️ Roadmap branches
+
+| Branche | Contenu | Statut |
+|---|---|---|
+| `v1` | Élevage (pigeons, pedigree, couples, santé, performances) | ✅ Stable |
+| `v2` | V1 + Sport (séances, analytics, nutrition) + XAI (recommandations, snapshots) | ✅ Stable |
+| `main` | V2 + évolutions V3 en cours (fenêtre 30j, snapshot_version, ML pipeline) | 🚧 Dev actif |
 
 ---
 
@@ -39,7 +44,7 @@
 | 🤝 **Éleveur** | Profil et coordonnées intégrés dans les exports PDF |
 | 📊 **Dashboard** | Vue synthétique des statistiques de l'élevage |
 
-### 🚧 V2 — Sport (en développement)
+### ✅ V2 — Sport (stable)
 
 | Module | Description |
 |---|---|
@@ -49,14 +54,16 @@
 | 📈 **Analytics** | 4 graphiques : évolution récupération, charge hebdo, température vs récup, régularité |
 | 💪 **Condition sportive** | Indices de condition, tendances 90j, impact santé, performances récentes |
 | 🥗 **Plans alimentaires** | Calendrier des plans de nutrition selon la période sportive |
+| 🤖 **XAI expérimental** | Recommandations explicables, snapshots sportifs, event store |
 
-### 🧪 V3 — Intelligence Artificielle (expérimental)
+### 🚧 V3 — IA avancée (dev actif sur `main`)
 
 | Module | Description |
 |---|---|
-| 🤖 **Recommandations XAI** | Moteur expert explicable : concours / repos / entraînement léger / réforme |
-| 📊 **Snapshots sportifs** | Indices calculés : récupération, condition, régularité, risque fatigue, charge |
-| 📋 **Event store** | Journal chronologique des événements sportifs par pigeon |
+| 🧠 **ML pipeline** | Modèles entraînés sur l'historique réel (récupération, performance) |
+| 📊 **Snapshots versionnés** | Fenêtre de calcul étendue 30j, `recovery_trend` calculé, seuils ajustés |
+| 🔮 **Prédiction** | Score de forme prédictif avant concours |
+| 📋 **Tableau de bord IA** | Vue consolidée recommandations + snapshots + événements |
 
 ---
 
@@ -79,7 +86,11 @@
 ### Installation
 
 ```bash
-# Cloner le dépôt
+# Cloner une version stable (recommandé)
+git clone -b v2 https://github.com/FredeHyeres/Colomb.git
+cd Colomb
+
+# Ou cloner le dev en cours (V3 — peut contenir des bugs)
 git clone https://github.com/FredeHyeres/Colomb.git
 cd Colomb
 

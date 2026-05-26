@@ -2,6 +2,9 @@
 Moteur XAI (Explainable AI) — Système expert colombophile.
 Génère des recommandations explicables basées sur l'historique sportif.
 """
+# Version : V3-dev
+# Depuis v2 : fenêtre de calcul étendue 7j → 30j, recovery_trend calculé,
+#             features 30j dans les snapshots, seuils ajustés (70/50/30)
 import json
 from datetime import datetime, timezone, date, timedelta
 from typing import Optional
