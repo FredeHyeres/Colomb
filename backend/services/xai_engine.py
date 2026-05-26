@@ -17,6 +17,15 @@ from models.ai_model import AIRecommendation, AISnapshot, SportEvent
 # Pondération des scores
 WEIGHTS = {"recovery": 0.40, "condition": 0.35, "regularity": 0.25}
 
+# Profil éleveur — seuils terrain calibrés
+ELEVEUR_PROFILE = {
+    "recovery_min_concours": 7.0,      # recovery_score minimum pour envisager concours
+    "seances_min_concours": 3,          # séances consécutives minimum
+    "repos_post_concours_jours": 10,    # jours de repos après concours difficile
+    "distance_cible_km": (300, 500),    # demi-fond PACA
+    "seuil_chaleur_thi": 72,            # THI au-delà duquel prudence hydratation
+}
+
 
 def compute_forme_score(results: list, results_7d: list = None) -> dict:
     """
@@ -200,8 +209,13 @@ def generate_comment(
     results_7d: list,
     recovery_trend: str = "stable",
     confiance: float = 0.5,
+    age_category: str = "adulte",
 ) -> dict:
-    """Génère un commentaire contextuel et une action recommandée — pur Python, sans LLM."""
+    """
+    Génère un commentaire contextuel et une action recommandée — pur Python, sans LLM.
+    Calibré sur : demi-fond PACA, naturel (yearlings) + veuvage simplifié (adultes),
+    récupération post-concours 10j minimum, critère concours combiné.
+    """
     n_30d = len(results)
     n_7d  = len(results_7d)
 
@@ -211,13 +225,6 @@ def generate_comment(
     avg_rec_7d  = round(sum(rec_recent) / len(rec_recent), 1) if rec_recent else None
     avg_rec_old = round(sum(rec_older)  / len(rec_older),  1) if rec_older  else None
 
-    if recovery_trend == "progression":
-        trend_txt = "récupération en hausse"
-    elif recovery_trend == "declin":
-        trend_txt = "récupération en baisse"
-    else:
-        trend_txt = "récupération stable"
-
     delta_txt = ""
     if avg_rec_7d is not None and avg_rec_old is not None:
         delta = round(avg_rec_7d - avg_rec_old, 1)
@@ -226,73 +233,153 @@ def generate_comment(
         elif delta < 0:
             delta_txt = f" ({delta} pts vs semaines précédentes)"
 
+    trend_map = {
+        "progression": "récupération en hausse",
+        "declin": "récupération en baisse",
+        "stable": "récupération stable",
+    }
+    trend_txt = trend_map.get(recovery_trend, "récupération stable")
+
     seances_txt = f"{n_30d} séance{'s' if n_30d > 1 else ''} sur 30 jours"
     if n_7d > 0:
         seances_txt += f", dont {n_7d} cette semaine"
 
-    if confiance >= 0.8:
-        confiance_txt = "Analyse fiable"
-    elif confiance >= 0.5:
-        confiance_txt = "Données partielles"
-    else:
-        confiance_txt = "Peu de données disponibles"
+    confiance_txt = (
+        "Analyse fiable" if confiance >= 0.8
+        else "Données partielles" if confiance >= 0.5
+        else "Peu de données — résultat indicatif"
+    )
+
+    systeme_txt = "veuvage simplifié" if age_category == "adulte" else "naturel"
+
+    # Vérification critère concours combiné (3 séances + recovery ≥ 7 + progression)
+    critere_seances  = n_7d >= ELEVEUR_PROFILE["seances_min_concours"] or n_30d >= 6
+    critere_recovery = avg_rec_7d is not None and avg_rec_7d >= ELEVEUR_PROFILE["recovery_min_concours"]
+    critere_prog     = recovery_trend == "progression"
+    criteres_ok      = sum([critere_seances, critere_recovery, critere_prog])
 
     if recommendation == "concours":
-        if recovery_trend == "progression":
+        if criteres_ok == 3:
             message = (
-                f"Forme excellente — {trend_txt}{delta_txt}. "
-                f"{seances_txt.capitalize()}. "
-                f"Score global {score_global}/100. {confiance_txt}."
+                f"Tous les critères sont réunis — {trend_txt}{delta_txt}. "
+                f"Récupération 7j : {avg_rec_7d}/10 "
+                f"(seuil demi-fond : {ELEVEUR_PROFILE['recovery_min_concours']}/10). "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100. {confiance_txt}."
             )
+            action = (
+                f"Engager sur demi-fond 300–500 km. "
+                f"En {systeme_txt}, surveiller la motivation à l'enlogement. "
+                f"Prévoir électrolytes au retour."
+            )
+            title = "Prêt pour le concours ✓"
         else:
+            manquants = []
+            if not critere_recovery:
+                manquants.append(f"récupération ({avg_rec_7d}/10 — seuil {ELEVEUR_PROFILE['recovery_min_concours']})")
+            if not critere_seances:
+                manquants.append("volume de séances insuffisant")
+            if not critere_prog:
+                manquants.append("progression non confirmée")
             message = (
-                f"Condition suffisante pour la compétition — {trend_txt}. "
-                f"{seances_txt.capitalize()}. "
-                f"Score global {score_global}/100. {confiance_txt}."
+                f"Score suffisant mais critères incomplets : {', '.join(manquants)}. "
+                f"{trend_txt.capitalize()}{delta_txt}. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100."
             )
-        title  = "Prêt pour le concours"
-        action = "Engager sur le prochain concours. Surveiller hydratation au retour."
+            action = (
+                f"Engageable avec prudence sur courte distance. "
+                f"Réévaluer après 2–3 séances supplémentaires."
+            )
+            title = "Concours possible — à surveiller"
 
     elif recommendation == "entrainement_leger":
-        if recovery_trend == "declin":
+        if recovery_trend == "progression":
+            message = (
+                f"Bonne dynamique — {trend_txt}{delta_txt}. "
+                f"Pas encore au niveau demi-fond mais en progression. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100. {confiance_txt}."
+            )
+            action = (
+                f"Maintenir le rythme en {systeme_txt}. "
+                f"Lancers 50–100 km cette semaine, viser 150 km la semaine prochaine. "
+                f"Ration sport + chanvre pour la motivation."
+            )
+        elif recovery_trend == "declin":
             message = (
                 f"Forme correcte mais {trend_txt}{delta_txt}. "
-                f"Maintenir le rythme sans surcharger. "
+                f"Attention à ne pas surcharger. "
                 f"{seances_txt.capitalize()}. Score global {score_global}/100."
+            )
+            action = (
+                f"Réduire la distance des lancers. "
+                f"Contrôler hydratation (climat PACA). "
+                f"Dépuratif léger si mucus présent."
             )
         else:
             message = (
-                f"Bonne base — {trend_txt}. "
-                f"Le pigeon peut progresser avec un travail régulier. "
+                f"Condition stable — {trend_txt}. "
+                f"Travail régulier recommandé avant d'envisager le demi-fond. "
                 f"{seances_txt.capitalize()}. Score global {score_global}/100."
             )
-        title  = "Entraînement léger conseillé"
-        action = "Privilégier des lancers courts. Pas de concours cette semaine."
+            action = (
+                f"Lancers progressifs 3×/semaine. "
+                f"Réévaluer dans 10 jours."
+            )
+        title = "Entraînement léger conseillé"
 
     elif recommendation == "repos":
         if n_7d == 0:
             message = (
                 f"Aucune séance cette semaine — activité insuffisante pour évaluer la forme. "
-                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+                f"{n_30d} séance{'s' if n_30d > 1 else ''} sur 30 jours seulement. "
+                f"Score global {score_global}/100."
             )
-            action = "Reprendre progressivement avec des vols de loft."
-        else:
+            action = (
+                f"Reprendre avec vols de loft 2–3 jours, "
+                f"puis lancers courts (20–50 km) avant toute décision de concours."
+            )
+        elif avg_rec_7d is not None and avg_rec_7d < 4:
             message = (
                 f"Récupération insuffisante — {trend_txt}{delta_txt}. "
-                f"Récupération moyenne 7j : {avg_rec_7d}/10. "
+                f"Récupération 7j : {avg_rec_7d}/10 (seuil critique : 4/10). "
                 f"{seances_txt.capitalize()}. Score global {score_global}/100."
             )
-            action = "Repos minimum 5 à 7 jours. Électrolytes et dépuratif recommandés."
+            action = (
+                f"Repos {ELEVEUR_PROFILE['repos_post_concours_jours']} jours minimum. "
+                f"Électrolytes J1–J3, dépuratif J4–J6. "
+                f"Contrôle respiratoire si récupération < 3/10."
+            )
+        else:
+            message = (
+                f"Forme en déclin — {trend_txt}{delta_txt}. "
+                f"Récupération 7j : {avg_rec_7d}/10. "
+                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+            )
+            action = (
+                f"Pause de 5–7 jours. Pas de lancer, vols de loft uniquement. "
+                f"Mélange dépuratif. Réévaluer avant tout enlogement."
+            )
         title = "Repos recommandé"
 
     else:  # reforme
         message = (
-            f"Indices sportifs très bas — {trend_txt}{delta_txt}. "
-            f"Récupération moyenne 7j : {avg_rec_7d if avg_rec_7d else '—'}/10. "
+            f"Indices sportifs très bas malgré {seances_txt}. "
+            f"Récupération 7j : {avg_rec_7d if avg_rec_7d else '—'}/10 — "
+            f"{trend_txt}{delta_txt}. "
             f"Score global {score_global}/100. {confiance_txt}."
         )
-        title  = "Bilan vétérinaire conseillé"
-        action = "Consultation vétérinaire recommandée avant toute reprise."
+        if age_category == "yearling":
+            action = (
+                f"Écarter du programme concours cette saison. "
+                f"Passer en naturel complet, observer au pigeonnier. "
+                f"Consultation vétérinaire recommandée (respiration, parasites)."
+            )
+        else:
+            action = (
+                f"Retirer du programme veuvage. "
+                f"Consultation vétérinaire avant toute décision de réforme définitive. "
+                f"Envisager passage en reproducteur si lignée intéressante."
+            )
+        title = "Bilan vétérinaire urgent"
 
     return {"title": title, "message": message, "action": action}
 
@@ -358,6 +445,8 @@ async def generate_ai_recommendation(pigeon_id: str, db: AsyncSession) -> AIReco
         results_7d     = results_7d,
         recovery_trend = recovery_trend,
         confiance      = rec_data["confiance"],
+        # age_category à brancher sur pigeon.annee_naissance (yearling = année en cours) en V3
+        age_category   = "adulte",
     )
 
     # 3. Facteurs explicatifs
