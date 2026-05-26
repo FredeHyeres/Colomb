@@ -163,23 +163,23 @@ async def main():
 
     sante_rows = []
     for pk in vaccin_targets:
-        sante_rows.append((P[pk],date(2024,1,15),"vaccination","Paramyxovirus","Vaccin Colombovac PMV"))
-        sante_rows.append((P[pk],date(2024,2,1), "vaccination","Salmonelle",   "Vaccin Salmonella"))
+        sante_rows.append((P[pk],date(2026,1,15),"vaccination","Paramyxovirus","Vaccin Colombovac PMV"))
+        sante_rows.append((P[pk],date(2026,2,1), "vaccination","Salmonelle",   "Vaccin Salmonella"))
     for pk in g2_repro:
-        sante_rows.append((P[pk],date(2024,1,10),"visite_veterinaire","Bilan annuel avant saison. RAS.",None))
+        sante_rows.append((P[pk],date(2026,1,10),"visite_veterinaire","Bilan annuel avant saison. RAS.",None))
 
     sante_rows += [
-        (P["P_G305"],date(2024,3,8), "visite_veterinaire","Examen suite trichomonose. Traitement prescrit.",None),
-        (P["P_G305"],date(2024,3,9), "observation","Bec légèrement souillé avant traitement",None),
-        (P["P_G305"],date(2024,3,10),"traitement","Trichomonose — ronidazole 7 jours","Ronidazole"),
-        (P["P_G311"],date(2024,5,1), "traitement","Coccidiose — toltrazuril 3 jours","Toltrazuril"),
-        (P["P_G311"],date(2024,5,20),"traitement","Ornithose — doxycycline 10 jours","Doxycycline"),
-        (P["P_G311"],date(2024,5,25),"visite_veterinaire","État critique. Pronostic réservé.",None),
-        (P["P_G311"],date(2024,5,28),"observation","État général très dégradé — décédé le 02/06/2024",None),
-        (P["P_G206"],date(2023,8,15),"traitement","Vers ronds — fenbendazole","Fenbendazole"),
-        (P["P_G206"],date(2023,9,1), "observation","Mise en retraite suite à fatigue chronique",None),
-        (P["P_G303"],date(2024,7,9), "observation","Légère respiration sifflante, traité préventivement",None),
-        (P["P_G303"],date(2024,7,10),"traitement","Mycoplasme — tylosine 7 jours","Tylosine"),
+        (P["P_G305"],date(2026,3,8), "visite_veterinaire","Examen suite trichomonose. Traitement prescrit.",None),
+        (P["P_G305"],date(2026,3,9), "observation","Bec légèrement souillé avant traitement",None),
+        (P["P_G305"],date(2026,3,10),"traitement","Trichomonose — ronidazole 7 jours","Ronidazole"),
+        (P["P_G311"],date(2026,5,1), "traitement","Coccidiose — toltrazuril 3 jours","Toltrazuril"),
+        (P["P_G311"],date(2026,5,20),"traitement","Ornithose — doxycycline 10 jours","Doxycycline"),
+        (P["P_G311"],date(2026,5,25),"visite_veterinaire","État critique. Pronostic réservé.",None),
+        (P["P_G311"],date(2026,5,28),"observation","État général très dégradé — décédé le 02/06/2026",None),
+        (P["P_G206"],date(2025,8,15),"traitement","Vers ronds — fenbendazole","Fenbendazole"),
+        (P["P_G206"],date(2025,9,1), "observation","Mise en retraite suite à fatigue chronique",None),
+        (P["P_G303"],date(2026,7,9), "observation","Légère respiration sifflante, traité préventivement",None),
+        (P["P_G303"],date(2026,7,10),"traitement","Mycoplasme — tylosine 7 jours","Tylosine"),
     ]
     for pig_id, dt, ttype, desc, produit in sante_rows:
         await conn.execute("""
@@ -192,65 +192,65 @@ async def main():
     # ÉTAPE 8 — PERFORMANCES (30 concours)
     # ══════════════════════════════════════════════════════
     CONCOURS = [
-        {"c":"C01","d":date(2024,3,9),  "l":"Marseille",    "km":150,"n":250,
+        {"c":"C01","d":date(2026,3,9),  "l":"Marseille",    "km":150,"n":250,
          "r":[("P_G301",12,1423),("P_G302",45,1398),("P_G203",8,1445),("P_G307",89,1356)]},
-        {"c":"C02","d":date(2024,3,23), "l":"Nîmes",        "km":200,"n":320,
+        {"c":"C02","d":date(2026,3,23), "l":"Nîmes",        "km":200,"n":320,
          "r":[("P_G301",8,1456),("P_G205",34,1401),("P_G307",120,1334),("P_G203",15,1432)]},
-        {"c":"C03","d":date(2024,4,6),  "l":"Montpellier",  "km":250,"n":280,
+        {"c":"C03","d":date(2026,4,6),  "l":"Montpellier",  "km":250,"n":280,
          "r":[("P_G301",5,1467),("P_G302",28,1412),("P_G207",42,1398),("P_G203",22,1421)]},
-        {"c":"C04","d":date(2024,4,20), "l":"Béziers",      "km":300,"n":310,
+        {"c":"C04","d":date(2026,4,20), "l":"Béziers",      "km":300,"n":310,
          "r":[("P_G301",3,1489),("P_G203",31,1398),("P_G307",67,1367),("P_G205",18,1434)]},
-        {"c":"C05","d":date(2024,5,4),  "l":"Carcassonne",  "km":350,"n":290,
+        {"c":"C05","d":date(2026,5,4),  "l":"Carcassonne",  "km":350,"n":290,
          "r":[("P_G301",7,1478),("P_G302",22,1423),("P_G207",15,1445),("P_G305",38,1401),("P_G307",98,1345)]},
-        {"c":"C06","d":date(2024,5,18), "l":"Toulouse",     "km":400,"n":340,
+        {"c":"C06","d":date(2026,5,18), "l":"Toulouse",     "km":400,"n":340,
          "r":[("P_G301",4,1501),("P_G203",48,1378),("P_G205",11,1467),("P_G307",145,1312)]},
-        {"c":"C07","d":date(2024,6,1),  "l":"Bordeaux",     "km":500,"n":280,
+        {"c":"C07","d":date(2026,6,1),  "l":"Bordeaux",     "km":500,"n":280,
          "r":[("P_G301",9,1456),("P_G302",31,1412),("P_G207",22,1434),("P_G305",14,1448),("P_G203",67,1356)]},
-        {"c":"C08","d":date(2024,6,15), "l":"Périgueux",    "km":450,"n":260,
+        {"c":"C08","d":date(2026,6,15), "l":"Périgueux",    "km":450,"n":260,
          "r":[("P_G301",6,1478),("P_G205",28,1412),("P_G307",89,1345),("P_G203",72,1334)]},
-        {"c":"C09","d":date(2024,6,29), "l":"Libourne",     "km":500,"n":245,
+        {"c":"C09","d":date(2026,6,29), "l":"Libourne",     "km":500,"n":245,
          "r":[("P_G301",11,1445),("P_G302",19,1432),("P_G207",8,1467),("P_G305",25,1423)]},
-        {"c":"C10","d":date(2024,7,13), "l":"Angoulême",    "km":550,"n":230,
+        {"c":"C10","d":date(2026,7,13), "l":"Angoulême",    "km":550,"n":230,
          "r":[("P_G301",14,1434),("P_G203",88,1312),("P_G205",33,1401),("P_G307",112,1323)]},
-        {"c":"C11","d":date(2024,7,27), "l":"Poitiers",     "km":600,"n":210,
+        {"c":"C11","d":date(2026,7,27), "l":"Poitiers",     "km":600,"n":210,
          "r":[("P_G301",18,1423),("P_G302",42,1389),("P_G207",29,1412),("P_G305",11,1456)]},
-        {"c":"C12","d":date(2024,8,10), "l":"Châtellerault","km":600,"n":195,
+        {"c":"C12","d":date(2026,8,10), "l":"Châtellerault","km":600,"n":195,
          "r":[("P_G301",22,1412),("P_G203",102,1289),("P_G307",78,1345),("P_G205",41,1378)]},
-        {"c":"C13","d":date(2024,8,24), "l":"Tours",        "km":550,"n":220,
+        {"c":"C13","d":date(2026,8,24), "l":"Tours",        "km":550,"n":220,
          "r":[("P_G301",9,1456),("P_G302",27,1412),("P_G207",19,1434),("P_G305",8,1467)]},
-        {"c":"C14","d":date(2024,9,7),  "l":"Blois",        "km":500,"n":240,
+        {"c":"C14","d":date(2026,9,7),  "l":"Blois",        "km":500,"n":240,
          "r":[("P_G301",5,1478),("P_G205",22,1423),("P_G307",54,1367),("P_G203",91,1301)]},
-        {"c":"C15","d":date(2024,9,21), "l":"Orléans",      "km":450,"n":255,
+        {"c":"C15","d":date(2026,9,21), "l":"Orléans",      "km":450,"n":255,
          "r":[("P_G301",4,1489),("P_G302",15,1445),("P_G207",11,1456),("P_G305",19,1434)]},
-        {"c":"C16","d":date(2024,10,5), "l":"Avignon",      "km":180,"n":180,
+        {"c":"C16","d":date(2026,10,5), "l":"Avignon",      "km":180,"n":180,
          "r":[("P_G301",2,1512),("P_G303",22,1423),("P_G308",45,1389),("P_G307",67,1356)]},
-        {"c":"C17","d":date(2024,10,19),"l":"Arles",        "km":200,"n":165,
+        {"c":"C17","d":date(2026,10,19),"l":"Arles",        "km":200,"n":165,
          "r":[("P_G301",3,1501),("P_G302",12,1456),("P_G303",31,1401),("P_G309",55,1367)]},
-        {"c":"C18","d":date(2024,11,2), "l":"Aix",          "km":220,"n":170,
+        {"c":"C18","d":date(2026,11,2), "l":"Aix",          "km":220,"n":170,
          "r":[("P_G301",1,1534),("P_G207",18,1434),("P_G307",88,1334),("P_G308",42,1389)]},
-        {"c":"C19","d":date(2024,11,16),"l":"Salon",        "km":180,"n":155,
+        {"c":"C19","d":date(2026,11,16),"l":"Salon",        "km":180,"n":155,
          "r":[("P_G302",8,1467),("P_G303",19,1423),("P_G305",5,1489),("P_G309",38,1389)]},
-        {"c":"C20","d":date(2024,11,30),"l":"Istres",       "km":200,"n":160,
+        {"c":"C20","d":date(2026,11,30),"l":"Istres",       "km":200,"n":160,
          "r":[("P_G301",2,1512),("P_G307",71,1345),("P_G308",28,1401),("P_G310",44,1378)]},
-        {"c":"C21","d":date(2025,3,8),  "l":"Marseille",    "km":150,"n":270,
+        {"c":"C21","d":date(2027,3,8),  "l":"Marseille",    "km":150,"n":270,
          "r":[("P_G301",3,1523),("P_G302",11,1467),("P_G303",28,1423),("P_G307",55,1367),("P_G309",41,1389)]},
-        {"c":"C22","d":date(2025,3,22), "l":"Nîmes",        "km":200,"n":310,
+        {"c":"C22","d":date(2027,3,22), "l":"Nîmes",        "km":200,"n":310,
          "r":[("P_G301",2,1534),("P_G305",9,1478),("P_G307",98,1334),("P_G310",51,1378)]},
-        {"c":"C23","d":date(2025,4,5),  "l":"Montpellier",  "km":250,"n":295,
+        {"c":"C23","d":date(2027,4,5),  "l":"Montpellier",  "km":250,"n":295,
          "r":[("P_G301",4,1512),("P_G302",18,1456),("P_G303",35,1412),("P_G207",45,1389)]},
-        {"c":"C24","d":date(2025,4,19), "l":"Béziers",      "km":300,"n":305,
+        {"c":"C24","d":date(2027,4,19), "l":"Béziers",      "km":300,"n":305,
          "r":[("P_G301",6,1501),("P_G305",12,1467),("P_G307",82,1345),("P_G309",48,1378)]},
-        {"c":"C25","d":date(2025,5,3),  "l":"Carcassonne",  "km":350,"n":285,
+        {"c":"C25","d":date(2027,5,3),  "l":"Carcassonne",  "km":350,"n":285,
          "r":[("P_G301",8,1489),("P_G302",24,1445),("P_G303",41,1401),("P_G310",58,1367)]},
-        {"c":"C26","d":date(2025,5,10), "l":"Marseille",    "km":150,"n":260,
+        {"c":"C26","d":date(2027,5,10), "l":"Marseille",    "km":150,"n":260,
          "r":[("P_G301",1,1556),("P_G307",77,1345),("P_G308",33,1401),("P_G309",29,1412)]},
-        {"c":"C27","d":date(2025,5,17), "l":"Avignon",      "km":180,"n":240,
+        {"c":"C27","d":date(2027,5,17), "l":"Avignon",      "km":180,"n":240,
          "r":[("P_G301",3,1523),("P_G302",14,1456),("P_G305",7,1489),("P_G310",45,1378)]},
-        {"c":"C28","d":date(2025,5,18), "l":"Nîmes",        "km":220,"n":275,
+        {"c":"C28","d":date(2027,5,18), "l":"Nîmes",        "km":220,"n":275,
          "r":[("P_G301",5,1501),("P_G303",33,1412),("P_G307",91,1334)]},  # P_G306 perdu — absent
-        {"c":"C29","d":date(2025,5,24), "l":"Arles",        "km":200,"n":250,
+        {"c":"C29","d":date(2027,5,24), "l":"Arles",        "km":200,"n":250,
          "r":[("P_G301",2,1534),("P_G302",9,1467),("P_G305",15,1456),("P_G309",37,1389)]},
-        {"c":"C30","d":date(2025,5,25), "l":"Salon",        "km":180,"n":235,
+        {"c":"C30","d":date(2027,5,25), "l":"Salon",        "km":180,"n":235,
          "r":[("P_G301",1,1545),("P_G307",88,1334),("P_G308",25,1412),("P_G310",41,1378)]},
     ]
     perf_count = 0
@@ -270,16 +270,16 @@ async def main():
     # ÉTAPE 9 — ENTRAÎNEMENTS
     # ══════════════════════════════════════════════════════
     SESSIONS = [
-        (date(2025,3,1),  "toss",50, "beau",         16.0,10,None),
-        (date(2025,3,8),  "toss",60, "vent modéré",  14.0,20,"N"),
-        (date(2025,3,15), "toss",65, "beau",         15.0,15,None),
-        (date(2025,3,22), "toss",70, "chaud",        18.0,5, "S"),
-        (date(2025,4,5),  "toss",75, "beau",         17.0,8, None),
-        (date(2025,4,12), "toss",80, "brumeux",      12.0,10,"W"),
-        (date(2025,4,19), "toss",85, "beau",         16.0,12,None),
-        (date(2025,4,26), "toss",90, "vent modéré",  15.0,25,"NW"),
-        (date(2025,5,3),  "toss",95, "chaud",        19.0,3, None),
-        (date(2025,5,10), "toss",85, "beau",         17.0,10,None),
+        (date(2026,3,1),  "toss",50, "beau",         16.0,10,None),
+        (date(2026,3,8),  "toss",60, "vent modéré",  14.0,20,"N"),
+        (date(2026,3,15), "toss",65, "beau",         15.0,15,None),
+        (date(2026,3,22), "toss",70, "chaud",        18.0,5, "S"),
+        (date(2026,4,5),  "toss",75, "beau",         17.0,8, None),
+        (date(2026,4,12), "toss",80, "brumeux",      12.0,10,"W"),
+        (date(2026,4,19), "toss",85, "beau",         16.0,12,None),
+        (date(2026,4,26), "toss",90, "vent modéré",  15.0,25,"NW"),
+        (date(2026,5,3),  "toss",95, "chaud",        19.0,3, None),
+        (date(2026,5,10), "toss",85, "beau",         17.0,10,None),
     ]
     # Scores (recovery, motivation, condition, hydration) par session, 0-10
     SCORES = {
@@ -430,13 +430,13 @@ async def main():
             INSERT INTO nutrition_assignments
               (pigeon_id, plan_id, date_debut, date_fin, is_individual, groupe)
             VALUES ($1,$2,$3,$4,$5,$6)
-        """, P[pk], PLAN["Demi-fond Saison"], date(2025,3,1), date(2025,6,30), False, "concours")
+        """, P[pk], PLAN["Demi-fond Saison"], date(2026,3,1), date(2026,6,30), False, "concours")
     for pk in actif_pigs:
         await conn.execute("""
             INSERT INTO nutrition_assignments
               (pigeon_id, plan_id, date_debut, date_fin, is_individual, groupe)
             VALUES ($1,$2,$3,$4,$5,$6)
-        """, P[pk], PLAN["Intersaison"], date(2025,1,1), date(2025,2,28), False, "actif")
+        """, P[pk], PLAN["Intersaison"], date(2026,1,1), date(2026,2,28), False, "actif")
 
     aff_n = await conn.fetchval("SELECT COUNT(*) FROM nutrition_assignments")
     print(f"✅ {aff_n} affectations nutrition insérées")
