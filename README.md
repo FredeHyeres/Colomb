@@ -1,4 +1,4 @@
-# 🦆 Colomd — Gestion d'élevage colombophile
+# 🦆 Colomb — Gestion d'élevage colombophile
 
 > Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé et statistiques. Déploiement via **Docker Desktop**.
 
@@ -104,4 +104,4 @@ Les contributions sont les bienvenues ! N'hésite pas à ouvrir une [issue](../.
 
 ---
 
-*Colomd — pigeon loft management app · colombophilie · racing pigeons · homing pigeons · gestion élevage*
+*Colomb — pigeon loft management app · colombophilie · racing pigeons · homing pigeons · gestion élevage*

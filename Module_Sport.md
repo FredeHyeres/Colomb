@@ -1,8 +1,8 @@
-# 🏆 Colomd — Module SPORT & Nutrition
+# 🏆 Colomb — Module SPORT & Nutrition
 
 ## Vision du module
 
-Le module **SPORT** a pour objectif de transformer Colomd en véritable plateforme de gestion sportive colombophile moderne.
+Le module **SPORT** a pour objectif de transformer Colomb en véritable plateforme de gestion sportive colombophile moderne.
 
 Contrairement aux logiciels classiques centrés uniquement sur :
 
@@ -10,7 +10,7 @@ Contrairement aux logiciels classiques centrés uniquement sur :
 * les pedigrees
 * les concours
 
-Colomd vise une approche complète intégrant :
+Colomb vise une approche complète intégrant :
 
 * préparation sportive
 * suivi d'entraînement
