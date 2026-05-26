@@ -74,15 +74,16 @@ async function loadPigeonHistory(pigeonId, pigeon) {
     const events = [];
 
     sessions.forEach(s => {
-      const myResult = (s.results || []).find(r => r.pigeon_id === pigeonId);
+      const rawDate = s.session_date || s.date;
+      if (!rawDate) return;
       events.push({
         type: s.session_type === 'race' ? 'race' : 'training',
-        date: new Date(s.date),
+        date: new Date(rawDate),
         title: s.session_type === 'race' ? '🏆 Concours' : `🏃 Séance ${s.session_type === 'loft' ? 'Loft' : 'Lancer'}`,
         desc: [
           s.distance_km ? `${s.distance_km} km` : null,
-          myResult ? `Récup: ${myResult.recovery_score || '—'}/10` : null,
-          myResult?.internal_rank ? `Rang #${myResult.internal_rank}` : null,
+          s.recovery_score != null ? `Récup: ${s.recovery_score}/10` : null,
+          s.internal_rank ? `Rang #${s.internal_rank}` : null,
           s.weather || null
         ].filter(Boolean).join(' · '),
         raw: s
@@ -129,11 +130,8 @@ async function loadPigeonHistory(pigeonId, pigeon) {
 
     // Données pour le chart (10 dernières séances avec recovery_score)
     const sessionResults = sessions
-      .map(s => {
-        const r = (s.results || []).find(x => x.pigeon_id === pigeonId);
-        return { date: s.date, score: r?.recovery_score };
-      })
-      .filter(x => x.score != null)
+      .map(s => ({ date: s.session_date || s.date, score: s.recovery_score }))
+      .filter(x => x.score != null && x.date)
       .sort((a, b) => new Date(a.date) - new Date(b.date))
       .slice(-10);
 

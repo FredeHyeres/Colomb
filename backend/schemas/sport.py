@@ -101,6 +101,10 @@ class PigeonTrainingResultResponse(PigeonTrainingResultBase):
     id: int
     session_id: int
     created_at: datetime
+    session_date: Optional[date] = None
+    session_type: Optional[str] = None
+    distance_km: Optional[float] = None
+    weather: Optional[str] = None
 
 
 # Résolution de la référence forward dans TrainingSessionResponse.results

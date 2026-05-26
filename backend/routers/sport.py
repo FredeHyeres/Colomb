@@ -113,13 +113,24 @@ async def add_result(session_id: int, data: PigeonTrainingResultCreate, db: Asyn
 
 @router.get("/pigeons/{pigeon_id}/history", response_model=List[PigeonTrainingResultResponse])
 async def get_pigeon_history(pigeon_id: str, db: AsyncSession = Depends(get_db)):
-    """Retourne l'historique d'entraînement complet d'un pigeon."""
+    """Retourne l'historique d'entraînement complet d'un pigeon avec la date de séance."""
     result = await db.execute(
         select(PigeonTrainingResult)
+        .options(selectinload(PigeonTrainingResult.session))
         .where(PigeonTrainingResult.pigeon_id == pigeon_id)
         .order_by(PigeonTrainingResult.id.desc())
     )
-    return result.scalars().all()
+    rows = result.scalars().all()
+    out = []
+    for r in rows:
+        d = PigeonTrainingResultResponse.model_validate(r)
+        if r.session:
+            d.session_date = r.session.date
+            d.session_type = r.session.session_type.value if r.session.session_type else None
+            d.distance_km = r.session.distance_km
+            d.weather = r.session.weather
+        out.append(d)
+    return out
 
 
 # ── Dashboard analytique ──────────────────────────────────────────────────────
