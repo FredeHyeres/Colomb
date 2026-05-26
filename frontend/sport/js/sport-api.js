@@ -182,6 +182,25 @@ const SportAPI = {
   createPlan: (data) =>
     apiFetch('/sport/nutrition/plans', { method: 'POST', body: JSON.stringify(data) }),
 
+  deletePlan: (id) =>
+    apiFetch(`/sport/nutrition/plans/${id}`, { method: 'DELETE' }),
+
+  getCalendar: (weekStart, pigeonId, groupName) => {
+    const p = new URLSearchParams({ week_start: weekStart });
+    if (pigeonId) p.set('pigeon_id', pigeonId);
+    if (groupName) p.set('group_name', groupName);
+    return apiFetch(`/sport/nutrition/calendar?${p}`);
+  },
+
+  saveAssignment: (data) =>
+    apiFetch('/sport/nutrition/calendar', { method: 'POST', body: JSON.stringify(data) }),
+
+  deleteAssignment: (id) =>
+    apiFetch(`/sport/nutrition/calendar/${id}`, { method: 'DELETE' }),
+
+  getResolvedCalendar: (weekStart, pigeonId) =>
+    apiFetch(`/sport/nutrition/resolved?week_start=${weekStart}&pigeon_id=${pigeonId}`),
+
   getSupplements: () =>
     apiFetch('/sport/supplements'),
 

@@ -101,7 +101,9 @@ class NutritionPlan(Base):
     __tablename__ = "nutrition_plans"
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(100), nullable=False, unique=True)
+    goal = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
+    composition = Column(Text, nullable=True)  # JSON: [{"ingredient_id": 1, "ingredient_name": "Blé", "percentage": 60}, ...]
     lundi = Column(String(200), nullable=True)
     mardi = Column(String(200), nullable=True)
     mercredi = Column(String(200), nullable=True)
@@ -110,6 +112,18 @@ class NutritionPlan(Base):
     samedi = Column(String(200), nullable=True)
     dimanche = Column(String(200), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class NutritionAssignment(Base):
+    __tablename__ = "nutrition_assignments"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    plan_id = Column(Integer, ForeignKey("nutrition_plans.id"), nullable=False)
+    pigeon_id = Column(String, ForeignKey("pigeons.id"), nullable=True)   # null = assignation groupe
+    group_name = Column(String(50), nullable=True)                         # null = assignation individuelle
+    day_of_week = Column(Integer, nullable=False)                          # 0=lundi, 6=dimanche
+    week_start = Column(Date, nullable=False)                              # lundi de la semaine
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    plan = relationship("NutritionPlan")
 
 
 class Supplement(Base):
