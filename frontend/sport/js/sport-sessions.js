@@ -313,9 +313,9 @@ async function openSessionDetail(sessionId) {
           <div class="stat-value">${session.distance_km}</div>
           <div class="stat-label">km</div>
         </div>` : ''}
-        ${session.temperature_c != null ? `<div class="stat-card stat-orange" style="flex:1;min-width:120px;">
+        ${session.temperature != null ? `<div class="stat-card stat-orange" style="flex:1;min-width:120px;">
           <div class="stat-icon">🌡️</div>
-          <div class="stat-value">${session.temperature_c}</div>
+          <div class="stat-value">${session.temperature}</div>
           <div class="stat-label">°C</div>
         </div>` : ''}
         ${session.weather ? `<div class="stat-card" style="flex:1;min-width:120px;">

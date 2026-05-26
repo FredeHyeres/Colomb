@@ -67,6 +67,7 @@ class TrainingSessionUpdate(BaseModel):
 class TrainingSessionResponse(TrainingSessionBase):
     id: int
     created_at: datetime
+    results: List['PigeonTrainingResultResponse'] = []
 
 
 # ── PigeonTrainingResult ──────────────────────────────────────────────────────
@@ -100,6 +101,10 @@ class PigeonTrainingResultResponse(PigeonTrainingResultBase):
     id: int
     session_id: int
     created_at: datetime
+
+
+# Résolution de la référence forward dans TrainingSessionResponse.results
+TrainingSessionResponse.model_rebuild()
 
 
 # ── FeedIngredient ────────────────────────────────────────────────────────────
