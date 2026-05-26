@@ -13,7 +13,11 @@ async function apiFetch(endpoint, options = {}) {
   });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    throw new Error(error.detail || `Erreur API (${response.status})`);
+    const raw = error.detail;
+    const msg = Array.isArray(raw)
+      ? raw.map(e => e.msg || JSON.stringify(e)).join(' | ')
+      : (raw || `Erreur API (${response.status})`);
+    throw new Error(msg);
   }
   if (response.status === 204) return null;
   return await response.json();

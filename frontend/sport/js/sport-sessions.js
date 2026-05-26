@@ -208,7 +208,7 @@ function openCreateSessionModal() {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Température (°C)</label>
-          <input type="number" class="form-control" name="temperature_c" step="0.5" placeholder="ex: 18">
+          <input type="number" class="form-control" name="temperature" step="0.5" placeholder="ex: 18">
         </div>
         <div class="form-group">
           <label class="form-label">Vent</label>
@@ -246,11 +246,12 @@ function openCreateSessionModal() {
     // Nettoyage types
     if (data.distance_km) data.distance_km = parseFloat(data.distance_km);
     else delete data.distance_km;
-    if (data.temperature_c) data.temperature_c = parseFloat(data.temperature_c);
-    else delete data.temperature_c;
+    if (data.temperature) data.temperature = parseFloat(data.temperature);
+    else delete data.temperature;
     if (!data.weather) delete data.weather;
     if (!data.wind) delete data.wind;
     if (!data.notes) delete data.notes;
+    console.log('[createSession] payload:', data);
 
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
@@ -378,7 +379,7 @@ async function openSessionDetail(sessionId) {
                       <div style="font-weight:600;">${pigeon.matricule || r.pigeon_id}</div>
                       ${pigeon.nom ? `<div style="font-size:0.75rem;color:var(--text-light);">${pigeon.nom}</div>` : ''}
                     </td>
-                    <td>${r.return_time_minutes != null ? r.return_time_minutes + ' min' : '—'}</td>
+                    <td>${r.return_time != null ? r.return_time + ' min' : '—'}</td>
                     <td>${r.internal_rank != null ? '#' + r.internal_rank : '—'}</td>
                     <td>${renderScoreBar(r.recovery_score)}</td>
                     <td>${renderScoreBar(r.hydration_score)}</td>
@@ -425,7 +426,7 @@ function openAddResultModal(sessionId, pigeons) {
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Temps de retour (min)</label>
-          <input type="number" class="form-control" name="return_time_minutes" step="1" min="0" placeholder="ex: 45">
+          <input type="number" class="form-control" name="return_time" step="1" min="0" placeholder="ex: 45">
         </div>
         <div class="form-group">
           <label class="form-label">Rang interne</label>
@@ -467,13 +468,14 @@ function openAddResultModal(sessionId, pigeons) {
     const fd = new FormData(e.target);
     const data = Object.fromEntries(fd.entries());
 
-    // Conversion types numériques
-    data.pigeon_id = parseInt(data.pigeon_id);
-    ['return_time_minutes', 'internal_rank', 'recovery_score', 'hydration_score', 'condition_score', 'motivation_score'].forEach(k => {
+    // pigeon_id est un UUID (string) — ne pas parser en int
+    if (!data.pigeon_id) { showToast('Veuillez sélectionner un pigeon.', 'error'); return; }
+    ['return_time', 'internal_rank', 'recovery_score', 'hydration_score', 'condition_score', 'motivation_score'].forEach(k => {
       if (data[k] !== '') data[k] = parseFloat(data[k]);
       else delete data[k];
     });
     if (!data.notes) delete data.notes;
+    console.log('[addResult] payload:', data);
 
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
