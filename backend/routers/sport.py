@@ -501,10 +501,14 @@ async def get_affectations_calendrier(
                 day_json = getattr(active_plan, day, None)
                 if day_json:
                     try:
-                        mix_ids = json.loads(day_json)
-                        names = [mix_map.get(mid, f"Mél.#{mid}") for mid in mix_ids]
-                    except (json.JSONDecodeError, TypeError):
-                        pass
+                        parsed = json.loads(day_json)
+                        if isinstance(parsed, list):
+                            names = [mix_map.get(mid, f"Mél.#{mid}") for mid in parsed]
+                        else:
+                            names = [str(day_json)[:60]]
+                    except (json.JSONDecodeError, TypeError, ValueError):
+                        # Texte brut (plans seed) → afficher directement
+                        names = [day_json[:60].rstrip()]
             setattr(row, day, names)
         rows.append(row)
 

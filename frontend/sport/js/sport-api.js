@@ -188,8 +188,14 @@ const SportAPI = {
   getPlans: () =>
     apiFetch('/sport/nutrition/plans'),
 
+  getPlan: (id) =>
+    apiFetch(`/sport/nutrition/plans/${id}`),
+
   createPlan: (data) =>
     apiFetch('/sport/nutrition/plans', { method: 'POST', body: JSON.stringify(data) }),
+
+  updatePlan: (id, data) =>
+    apiFetch(`/sport/nutrition/plans/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 
   deletePlan: (id) =>
     apiFetch(`/sport/nutrition/plans/${id}`, { method: 'DELETE' }),

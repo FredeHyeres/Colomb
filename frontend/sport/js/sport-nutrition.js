@@ -679,9 +679,15 @@ async function _loadPlansTab() {
         : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
             ${list.map(p => {
               const weekRows = _DAY_NAMES.map((day, i) => {
-                let mixIds = [];
-                try { if (p[day]) mixIds = JSON.parse(p[day]); } catch {}
-                const names = mixIds.map(id => mixMap[id]?.name || `Mél.#${id}`);
+                let names = [];
+                const raw = p[day];
+                if (raw) {
+                  try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed)) names = parsed.map(id => mixMap[id]?.name || `Mél.#${id}`);
+                    else names = [String(raw).slice(0, 60)];
+                  } catch { names = [String(raw).slice(0, 60)]; }
+                }
                 return names.length
                   ? `<tr><td style="font-size:0.78rem;font-weight:600;padding:2px 6px;white-space:nowrap;">${_DAY_LABELS[i]}</td><td style="font-size:0.77rem;padding:2px 6px;">${names.join(', ')}</td></tr>`
                   : '';
@@ -693,7 +699,10 @@ async function _loadPlansTab() {
                     <div style="font-weight:600;">${p.name||'—'}</div>
                     ${p.goal ? `<span class="badge badge-success" style="margin-top:4px;font-size:0.72rem;">${p.goal}</span>` : ''}
                   </div>
-                  <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
+                  <div style="display:flex;gap:6px;">
+                    <button class="btn btn-sm btn-icon" onclick="openPlanModal(${p.id})" title="Modifier">✏️</button>
+                    <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
+                  </div>
                 </div>
                 ${p.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:6px;">${p.description}</p>` : ''}
                 ${weekRows
@@ -717,46 +726,66 @@ async function deletePlan(planId) {
   } catch (err) { showToast(err.message, 'error'); }
 }
 
-async function openPlanModal() {
+async function openPlanModal(planId = null) {
   const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = '+ Nouveau plan alimentaire';
+  const isEdit = planId != null;
+  document.getElementById('modal-title').textContent = isEdit ? '✏️ Modifier le plan alimentaire' : '+ Nouveau plan alimentaire';
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = '<div class="loader-spinner"></div>';
   overlay.style.display = 'flex';
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-  const mixes   = await SportAPI.getMixes().catch(() => []);
+  const [mixes, existingPlan] = await Promise.all([
+    SportAPI.getMixes().catch(() => []),
+    isEdit ? SportAPI.getPlan(planId).catch(() => null) : Promise.resolve(null),
+  ]);
   const mixList = Array.isArray(mixes) ? mixes : [];
+  const mixById = Object.fromEntries(mixList.map(m => [m.id, m]));
 
   _planDays = [[], [], [], [], [], [], []];
+
+  if (existingPlan) {
+    _DAY_NAMES.forEach((day, i) => {
+      const raw = existingPlan[day];
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          _planDays[i] = parsed
+            .map(id => mixById[id] ? { id, name: mixById[id].name } : null)
+            .filter(Boolean);
+        }
+      } catch { /* texte libre, pas de mélanges */ }
+    });
+  }
 
   const mixOpts = mixList.length
     ? mixList.map(m => `<option value="${m.id}" data-name="${m.name}">${m.name}</option>`).join('')
     : '<option value="" disabled>Aucun mélange disponible</option>';
+
+  const goalOpts = ['', 'récupération', 'entraînement', 'pré-concours', 'dépuratif', 'énergie'];
+  const goalLabels = { '':'—', 'récupération':'Récupération', 'entraînement':'Entraînement', 'pré-concours':'Pré-concours', 'dépuratif':'Dépuratif', 'énergie':'Énergie' };
+  const currentGoal = existingPlan?.goal || '';
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-plan">
       <div class="form-row">
         <div class="form-group" style="flex:2;">
           <label class="form-label">Nom du plan *</label>
-          <input type="text" class="form-control" name="name" required placeholder="ex: Plan pré-saison 2026">
+          <input type="text" class="form-control" name="name" required placeholder="ex: Plan pré-saison 2026"
+            value="${existingPlan ? (existingPlan.name || '').replace(/"/g,'&quot;') : ''}">
         </div>
         <div class="form-group">
           <label class="form-label">Objectif</label>
           <select class="form-control" name="goal">
-            <option value="">—</option>
-            <option value="récupération">Récupération</option>
-            <option value="entraînement">Entraînement</option>
-            <option value="pré-concours">Pré-concours</option>
-            <option value="dépuratif">Dépuratif</option>
-            <option value="énergie">Énergie</option>
+            ${goalOpts.map(v => `<option value="${v}"${v === currentGoal ? ' selected' : ''}>${goalLabels[v]}</option>`).join('')}
           </select>
         </div>
       </div>
       <div class="form-group">
         <label class="form-label">Description</label>
-        <textarea class="form-control" name="description" rows="2" placeholder="Instructions générales..."></textarea>
+        <textarea class="form-control" name="description" rows="2" placeholder="Instructions générales...">${existingPlan?.description || ''}</textarea>
       </div>
 
       <div style="margin:16px 0 8px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
@@ -787,11 +816,12 @@ async function openPlanModal() {
 
       <div class="modal-footer" style="padding:0;margin-top:18px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Créer le plan</button>
+        <button type="submit" class="btn btn-primary">${isEdit ? 'Enregistrer' : 'Créer le plan'}</button>
       </div>
     </form>`;
 
   _DAY_LABELS.forEach((_, idx) => _planRenderDayTags(idx));
+  _planRenderSummary();
 
   document.querySelectorAll('.plan-day-add').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -820,12 +850,18 @@ async function openPlanModal() {
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<span class="loader-inline"></span>';
     try {
-      await SportAPI.createPlan(data);
-      showToast('Plan alimentaire créé !', 'success');
+      if (isEdit) {
+        await SportAPI.updatePlan(planId, data);
+        showToast('Plan alimentaire mis à jour !', 'success');
+      } else {
+        await SportAPI.createPlan(data);
+        showToast('Plan alimentaire créé !', 'success');
+      }
       closeModal(); _loadPlansTab();
     } catch (err) {
       showToast(err.message, 'error');
-      submitBtn.disabled = false; submitBtn.textContent = 'Créer le plan';
+      submitBtn.disabled = false;
+      submitBtn.textContent = isEdit ? 'Enregistrer' : 'Créer le plan';
     }
   });
 }
