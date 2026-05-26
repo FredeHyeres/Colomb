@@ -231,37 +231,51 @@ class SupplementResponse(SupplementBase):
 
 # ── NutritionAssignment ───────────────────────────────────────────────────────
 
-class NutritionAssignmentBase(BaseModel):
+class NutritionAssignmentCreate(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+    pigeon_id: str
     plan_id: int
-    pigeon_id: Optional[str] = None
-    group_name: Optional[str] = None
-    day_of_week: int  # 0=lundi, 6=dimanche
-    week_start: date
+    date_debut: date
+    date_fin: Optional[date] = None
+    is_individual: bool = False
+    groupe: Optional[str] = None
 
 
-class NutritionAssignmentCreate(NutritionAssignmentBase):
-    pass
-
-
-class NutritionAssignmentResponse(NutritionAssignmentBase):
+class NutritionAssignmentResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
     id: int
+    pigeon_id: str
+    plan_id: int
+    date_debut: date
+    date_fin: Optional[date] = None
+    is_individual: bool
+    groupe: Optional[str] = None
     created_at: datetime
     plan: Optional[NutritionPlanResponse] = None
 
 
-# ── NutritionResolved ─────────────────────────────────────────────────────────
+class NutritionAssignmentBulkCreate(BaseModel):
+    pigeon_ids: List[str]
+    plan_id: int
+    date_debut: date
+    date_fin: Optional[date] = None
+    is_individual: bool = False
+    groupe: Optional[str] = None
 
-class NutritionResolvedDay(BaseModel):
-    day_of_week: int
-    plan: Optional[NutritionPlanResponse] = None
-    source: Optional[str] = None  # "individual" | "group"
 
+# ── NutritionCalendar ─────────────────────────────────────────────────────────
 
-class NutritionResolvedResponse(BaseModel):
+class NutritionCalendarRow(BaseModel):
     pigeon_id: str
-    week_start: date
-    days: List[NutritionResolvedDay]
+    bague: str
+    nom: Optional[str] = None
+    lundi: List[str] = []
+    mardi: List[str] = []
+    mercredi: List[str] = []
+    jeudi: List[str] = []
+    vendredi: List[str] = []
+    samedi: List[str] = []
+    dimanche: List[str] = []
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────

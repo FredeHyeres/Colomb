@@ -2,7 +2,7 @@
    SPORT-NUTRITION.JS — Nutrition : mélanges, ingrédients, suppléments, plans
    ============================================================ */
 
-/* ——— Page principale : 5 onglets ——— */
+/* ——— Page principale : 6 onglets ——— */
 async function loadNutrition() {
   const content = document.getElementById('content');
   const btn = document.getElementById('btn-add');
@@ -15,12 +15,14 @@ async function loadNutrition() {
         <button class="tab-btn" data-tab="ingredients">🌾 Ingrédients</button>
         <button class="tab-btn" data-tab="supplements">💊 Suppléments</button>
         <button class="tab-btn" data-tab="plans">📋 Plan alimentaire</button>
+        <button class="tab-btn" data-tab="affectation">🎯 Affectation</button>
         <button class="tab-btn" data-tab="calendar">📅 Calendrier</button>
       </div>
       <div id="tab-mixes"       class="tab-panel active"><div class="loader-spinner"></div></div>
       <div id="tab-ingredients" class="tab-panel"><div class="loader-spinner"></div></div>
       <div id="tab-supplements" class="tab-panel"><div class="loader-spinner"></div></div>
       <div id="tab-plans"       class="tab-panel"><div class="loader-spinner"></div></div>
+      <div id="tab-affectation" class="tab-panel"><div class="loader-spinner"></div></div>
       <div id="tab-calendar"    class="tab-panel"><div class="loader-spinner"></div></div>
     </div>`;
 
@@ -37,6 +39,7 @@ async function loadNutrition() {
   loadIngredientsTab();
   loadSupplementsTab();
   _loadPlansTab();
+  _loadAffectationTab();
   _loadCalendarTab();
 }
 
@@ -874,150 +877,175 @@ function loadNutritionPlans() {
 }
 
 /* ============================================================
-   CALENDRIER HEBDOMADAIRE — NE PAS MODIFIER
+   ONGLET AFFECTATION
    ============================================================ */
 
-let _calWeekStart = _getWeekMonday(0);
-let _calAssignments = [];
+let _affAllPigeons = [];
+let _affSelectedIds = new Set();
+let _affPlan = null;
+let _affPlanMap = {};
+let _affMixMap = {};
 
-function _getWeekMonday(offsetWeeks) {
-  const d = new Date();
-  const dow = d.getDay();
-  const diff = dow === 0 ? -6 : 1 - dow;
-  d.setDate(d.getDate() + diff + offsetWeeks * 7);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function _shiftWeek(dateStr, offsetWeeks) {
-  const [y, mo, d] = dateStr.split('-').map(Number);
-  const dt = new Date(y, mo - 1, d);
-  dt.setDate(dt.getDate() + offsetWeeks * 7);
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-}
-
-function _weekLabel(dateStr) {
-  const d = new Date(dateStr + 'T00:00:00');
-  const end = new Date(d);
-  end.setDate(d.getDate() + 6);
-  return `Semaine du ${d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' })} au ${end.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' })}`;
-}
-
-async function _loadCalendarTab() {
-  const el = document.getElementById('tab-calendar');
+async function _loadAffectationTab() {
+  const el = document.getElementById('tab-affectation');
   if (!el) return;
-
   try {
-    const plans = await SportAPI.getPlans().catch(() => []);
+    const [allPigeons, plans, mixes, existingAff] = await Promise.all([
+      ElevageAPI.getPigeons().catch(() => []),
+      SportAPI.getPlans().catch(() => []),
+      SportAPI.getMixes().catch(() => []),
+      SportAPI.getAffectations({}).catch(() => []),
+    ]);
+    _affAllPigeons = Array.isArray(allPigeons) ? allPigeons : [];
     const planList = Array.isArray(plans) ? plans : [];
-    const planOpts = planList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    _affPlanMap = Object.fromEntries(planList.map(p => [p.id, p]));
+    _affMixMap  = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m.name]));
+    _affSelectedIds = new Set();
+
+    const planOpts = planList.map(p =>
+      `<option value="${p.id}">${p.name}${p.goal ? ' — ' + p.goal : ''}</option>`
+    ).join('');
+
+    const statuts = [
+      { value: 'actif',        label: 'Actif' },
+      { value: 'reproducteur', label: 'Reproducteur' },
+      { value: 'concours',     label: 'Concours' },
+      { value: 'retraite',     label: 'Retraite' },
+      { value: 'perdu',        label: 'Perdu' },
+      { value: 'decede',       label: 'Décédé' },
+    ];
 
     el.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <button class="btn btn-secondary btn-sm" id="cal-prev-week">← Préc.</button>
-        <span id="cal-week-label" style="font-weight:600;font-size:0.88rem;flex:1;"></span>
-        <button class="btn btn-secondary btn-sm" id="cal-next-week">Suiv. →</button>
-      </div>
-
-      <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:14px;">
-        <div class="form-group" style="margin:0;">
-          <label class="form-label" style="font-size:0.8rem;">Appliquer à</label>
-          <select class="form-control form-control-sm" id="cal-target-type" style="width:auto;">
-            <option value="group-tous">Tous les pigeons</option>
-            <option value="group-actif">Groupe : Actifs</option>
-            <option value="group-concours">Groupe : Concours</option>
-            <option value="group-reproducteur">Groupe : Reproducteurs</option>
-            <option value="pigeon">Pigeon spécifique…</option>
-          </select>
+      <!-- Section A : Choix des pigeons -->
+      <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">Section A — Choix des pigeons</div>
+        <div style="display:flex;gap:20px;margin-bottom:12px;">
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="aff-mode" value="groupe" checked> Mode Groupe</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="aff-mode" value="individuel"> Mode Individuel</label>
         </div>
-        <div class="form-group" id="cal-pigeon-wrap" style="margin:0;display:none;">
-          <label class="form-label" style="font-size:0.8rem;">Pigeon</label>
-          <select class="form-control form-control-sm" id="cal-pigeon-select" style="width:200px;">
-            <option value="">Choisir…</option>
-          </select>
-        </div>
-        <button class="btn btn-secondary btn-sm" id="cal-load-btn">Charger</button>
-      </div>
-
-      <div id="cal-grid">
-        ${_renderCalGrid([], planOpts)}
-      </div>
-
-      <div style="margin:14px 0;display:flex;gap:10px;">
-        <button class="btn btn-primary" id="cal-save-btn">💾 Enregistrer le planning</button>
-      </div>
-
-      <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
-        <div style="font-weight:600;margin-bottom:10px;font-size:0.9rem;">🔍 Planning résolu pour un pigeon</div>
-        <p style="font-size:0.78rem;color:var(--text-light);margin-bottom:10px;">Affiche le planning effectif du pigeon en appliquant la règle de priorité : plan individuel &gt; plan de groupe.</p>
-        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:10px;">
-          <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-size:0.8rem;">Pigeon</label>
-            <select class="form-control form-control-sm" id="cal-resolved-pigeon" style="width:200px;">
-              <option value="">Choisir…</option>
-            </select>
+        <!-- Groupe -->
+        <div id="aff-group-section">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+            ${statuts.map(s => `
+              <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:4px 12px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:0.84rem;">
+                <input type="checkbox" class="aff-group-cb" value="${s.value}" style="margin:0;">
+                ${s.label}
+              </label>`).join('')}
           </div>
-          <button class="btn btn-secondary btn-sm" id="cal-resolved-load">Voir planning</button>
+          <div id="aff-group-count" style="font-size:0.82rem;color:var(--text-light);">0 pigeon sélectionné</div>
         </div>
-        <div id="cal-resolved-result"></div>
+        <!-- Individuel -->
+        <div id="aff-individual-section" style="display:none;">
+          <input type="search" id="aff-indiv-search" class="form-control form-control-sm"
+            placeholder="Filtrer par bague ou nom..." style="margin-bottom:8px;">
+          <div id="aff-indiv-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff;"></div>
+          <div id="aff-indiv-count" style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">0 pigeon sélectionné</div>
+        </div>
+      </div>
+
+      <!-- Section B : Plan -->
+      <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">Section B — Plan alimentaire</div>
+        <select id="aff-plan-select" class="form-control" style="margin-bottom:10px;">
+          <option value="">— Choisir un plan —</option>
+          ${planOpts}
+        </select>
+        <div id="aff-plan-preview"></div>
+      </div>
+
+      <!-- Section C : Période -->
+      <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;margin-bottom:12px;">
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">Section C — Période</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:0.8rem;">Date de début *</label>
+            <input type="date" id="aff-date-debut" class="form-control" style="width:160px;">
+          </div>
+          <div class="form-group" id="aff-date-fin-wrap" style="margin:0;">
+            <label class="form-label" style="font-size:0.8rem;">Date de fin</label>
+            <input type="date" id="aff-date-fin" class="form-control" style="width:160px;">
+          </div>
+          <div class="form-group" id="aff-duree-wrap" style="margin:0;">
+            <label class="form-label" style="font-size:0.8rem;">Durée (semaines)</label>
+            <input type="number" id="aff-duree" class="form-control" min="1" step="1" style="width:110px;" placeholder="ex: 4">
+          </div>
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" style="font-size:0.8rem;">Reconductible</label>
+            <div style="display:flex;align-items:center;gap:6px;height:38px;">
+              <input type="checkbox" id="aff-reconductible" style="width:16px;height:16px;cursor:pointer;">
+              <span style="font-size:0.82rem;color:var(--text-light);">Pas de date de fin</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D : Bouton Affecter -->
+      <div style="margin-bottom:24px;">
+        <button class="btn btn-primary" id="aff-btn-submit">🎯 Affecter →</button>
+      </div>
+
+      <!-- Liste des affectations existantes -->
+      <div style="border-top:1px solid var(--border);padding-top:16px;">
+        <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">📋 Affectations enregistrées</div>
+        <div id="aff-list">
+          ${_renderAffectationsList(Array.isArray(existingAff) ? existingAff : [], _affPlanMap, _affAllPigeons)}
+        </div>
       </div>
     `;
 
-    document.getElementById('cal-week-label').textContent = _weekLabel(_calWeekStart);
-
-    document.getElementById('cal-prev-week').addEventListener('click', async () => {
-      _calWeekStart = _shiftWeek(_calWeekStart, -1);
-      document.getElementById('cal-week-label').textContent = _weekLabel(_calWeekStart);
-      await _calLoad(planOpts);
-    });
-    document.getElementById('cal-next-week').addEventListener('click', async () => {
-      _calWeekStart = _shiftWeek(_calWeekStart, 1);
-      document.getElementById('cal-week-label').textContent = _weekLabel(_calWeekStart);
-      await _calLoad(planOpts);
+    // Mode switch
+    document.querySelectorAll('[name="aff-mode"]').forEach(radio => {
+      radio.addEventListener('change', (e) => {
+        const isGroup = e.target.value === 'groupe';
+        document.getElementById('aff-group-section').style.display     = isGroup ? '' : 'none';
+        document.getElementById('aff-individual-section').style.display = isGroup ? 'none' : '';
+        _affSelectedIds.clear();
+        if (!isGroup) _affRenderIndivList('');
+      });
     });
 
-    document.getElementById('cal-target-type').addEventListener('change', async (e) => {
-      const wrap = document.getElementById('cal-pigeon-wrap');
-      if (e.target.value === 'pigeon') {
-        wrap.style.display = '';
-        const sel = document.getElementById('cal-pigeon-select');
-        if (sel.options.length <= 1) {
-          const pigeons = await getPigeonsCache();
-          pigeons.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.id;
-            opt.textContent = `${p.matricule}${p.nom ? ' — ' + p.nom : ''}`;
-            sel.appendChild(opt);
-          });
-        }
-      } else {
-        wrap.style.display = 'none';
+    // Group checkboxes
+    document.querySelectorAll('.aff-group-cb').forEach(cb => {
+      cb.addEventListener('change', () => {
+        _affSelectedIds.clear();
+        document.querySelectorAll('.aff-group-cb:checked').forEach(c => {
+          _affAllPigeons.filter(p => (p.statut || '').toLowerCase() === c.value)
+            .forEach(p => _affSelectedIds.add(p.id));
+        });
+        const n = _affSelectedIds.size;
+        document.getElementById('aff-group-count').textContent =
+          `${n} pigeon${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`;
+      });
+    });
+
+    // Individual list
+    document.getElementById('aff-indiv-search').addEventListener('input', e => _affRenderIndivList(e.target.value));
+
+    // Plan preview
+    document.getElementById('aff-plan-select').addEventListener('change', e => {
+      const pid = parseInt(e.target.value);
+      _affPlan = _affPlanMap[pid] || null;
+      _affRenderPlanPreview();
+    });
+
+    // Period sync
+    document.getElementById('aff-date-debut').addEventListener('change', () => _affSyncPeriod('debut'));
+    document.getElementById('aff-date-fin').addEventListener('change',   () => _affSyncPeriod('fin'));
+    document.getElementById('aff-duree').addEventListener('change',      () => _affSyncPeriod('duree'));
+
+    // Reconductible toggle
+    document.getElementById('aff-reconductible').addEventListener('change', e => {
+      const rec = e.target.checked;
+      document.getElementById('aff-date-fin-wrap').style.opacity = rec ? '0.4' : '1';
+      document.getElementById('aff-duree-wrap').style.opacity    = rec ? '0.4' : '1';
+      if (rec) {
+        document.getElementById('aff-date-fin').value = '';
+        document.getElementById('aff-duree').value    = '';
       }
     });
 
-    document.getElementById('cal-load-btn').addEventListener('click', () => _calLoad(planOpts));
-    document.getElementById('cal-save-btn').addEventListener('click', _calSave);
-
-    const pigeons = await getPigeonsCache();
-    const resolvedSel = document.getElementById('cal-resolved-pigeon');
-    pigeons.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = `${p.matricule}${p.nom ? ' — ' + p.nom : ''}`;
-      resolvedSel.appendChild(opt);
-    });
-    document.getElementById('cal-resolved-load').addEventListener('click', async () => {
-      const pid = document.getElementById('cal-resolved-pigeon').value;
-      if (!pid) { showToast('Sélectionnez un pigeon', 'warning'); return; }
-      try {
-        const resolved = await SportAPI.getResolvedCalendar(_calWeekStart, pid);
-        document.getElementById('cal-resolved-result').innerHTML = _renderResolvedCalendar(resolved);
-      } catch (err) { showToast(err.message, 'error'); }
-    });
-
-    await _calLoad(planOpts);
+    // Submit
+    document.getElementById('aff-btn-submit').addEventListener('click', _affShowConfirmation);
 
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
@@ -1025,127 +1053,343 @@ async function _loadCalendarTab() {
   }
 }
 
-function _renderCalGrid(assignments, planOpts) {
-  const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
-  return `
-    <table class="table-modern" style="width:100%;">
-      <thead><tr><th style="width:100px;">Jour</th><th>Plan alimentaire</th><th style="width:120px;">Source</th></tr></thead>
-      <tbody>
-        ${days.map((day, idx) => {
-          const a = assignments.find(x => x.day_of_week === idx);
-          const source = a ? (a.pigeon_id ? '👤 Individuel' : '👥 Groupe') : '';
-          return `
-            <tr>
-              <td style="font-weight:600;">${day}</td>
-              <td>
-                <select class="form-control form-control-sm cal-day-plan" data-day="${idx}" data-existing-id="${a?.id || ''}">
-                  <option value="">— Aucun plan —</option>
-                  ${planOpts}
-                </select>
-              </td>
-              <td style="font-size:0.8rem;color:var(--text-light);">${source}</td>
-            </tr>`;
+function _affRenderIndivList(filter) {
+  const el = document.getElementById('aff-indiv-list');
+  if (!el) return;
+  const f = (filter || '').toLowerCase().trim();
+  const filtered = f
+    ? _affAllPigeons.filter(p =>
+        (p.matricule || '').toLowerCase().includes(f) ||
+        (p.nom || '').toLowerCase().includes(f))
+    : _affAllPigeons;
+
+  if (filtered.length === 0) {
+    el.innerHTML = '<div style="padding:8px;font-size:0.82rem;color:var(--text-light);">Aucun pigeon trouvé.</div>';
+    return;
+  }
+
+  el.innerHTML = filtered.map(p => `
+    <label style="display:flex;align-items:center;gap:8px;padding:5px 8px;cursor:pointer;border-radius:4px;font-size:0.85rem;">
+      <input type="checkbox" class="aff-indiv-cb" value="${p.id}" ${_affSelectedIds.has(p.id) ? 'checked' : ''} style="margin:0;">
+      <span>${p.matricule}${p.nom ? ' — ' + p.nom : ''}</span>
+      ${p.statut ? `<span class="badge badge-secondary" style="font-size:0.68rem;margin-left:auto;">${p.statut}</span>` : ''}
+    </label>`).join('');
+
+  el.querySelectorAll('.aff-indiv-cb').forEach(cb => {
+    cb.addEventListener('change', e => {
+      if (e.target.checked) _affSelectedIds.add(e.target.value);
+      else _affSelectedIds.delete(e.target.value);
+      const n = _affSelectedIds.size;
+      const cnt = document.getElementById('aff-indiv-count');
+      if (cnt) cnt.textContent = `${n} pigeon${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`;
+    });
+  });
+}
+
+function _affRenderPlanPreview() {
+  const el = document.getElementById('aff-plan-preview');
+  if (!el) return;
+  if (!_affPlan) { el.innerHTML = ''; return; }
+  const p = _affPlan;
+  el.innerHTML = `
+    <table style="width:100%;font-size:0.75rem;border-collapse:collapse;margin-top:4px;background:#fff;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+      <thead><tr style="background:var(--bg-secondary);">
+        ${_DAY_LABELS.map(d => `<th style="padding:4px 5px;text-align:center;font-size:0.72rem;font-weight:600;">${d.substring(0, 3)}.</th>`).join('')}
+      </tr></thead>
+      <tbody><tr>
+        ${_DAY_NAMES.map(day => {
+          let names = [];
+          try { if (p[day]) names = JSON.parse(p[day]).map(id => _affMixMap[id] || `Mél.#${id}`); } catch {}
+          return `<td style="padding:4px 5px;text-align:center;vertical-align:top;">
+            ${names.length
+              ? names.map(n => `<div style="background:var(--bg-secondary);border-radius:3px;padding:1px 4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;">${n}</div>`).join('')
+              : '<span style="color:var(--text-light);">—</span>'}
+          </td>`;
         }).join('')}
-      </tbody>
+      </tr></tbody>
     </table>`;
 }
 
-async function _calLoad(planOpts) {
-  const targetType = document.getElementById('cal-target-type')?.value;
-  let pigeonId = null, groupName = null;
-  if (targetType === 'pigeon') {
-    pigeonId = document.getElementById('cal-pigeon-select')?.value;
-    if (!pigeonId) return;
-  } else {
-    groupName = targetType.replace('group-', '');
+function _affSyncPeriod(changed) {
+  const debut = document.getElementById('aff-date-debut');
+  const fin   = document.getElementById('aff-date-fin');
+  const duree = document.getElementById('aff-duree');
+  const rec   = document.getElementById('aff-reconductible');
+  if (rec?.checked) return;
+
+  if ((changed === 'debut' || changed === 'fin') && debut.value && fin.value) {
+    const diff = Math.round((new Date(fin.value) - new Date(debut.value)) / (7 * 86400000));
+    if (diff > 0) duree.value = diff;
+  } else if (changed === 'duree' && debut.value && duree.value) {
+    const d = new Date(debut.value);
+    d.setDate(d.getDate() + parseInt(duree.value) * 7 - 1);
+    fin.value = d.toISOString().split('T')[0];
+  }
+}
+
+async function _affShowConfirmation() {
+  const pigeonIds  = Array.from(_affSelectedIds);
+  if (pigeonIds.length === 0) { showToast('Sélectionnez au moins un pigeon', 'warning'); return; }
+
+  const planId = document.getElementById('aff-plan-select').value;
+  if (!planId) { showToast('Sélectionnez un plan alimentaire', 'warning'); return; }
+
+  const dateDebut = document.getElementById('aff-date-debut').value;
+  if (!dateDebut) { showToast('Sélectionnez une date de début', 'warning'); return; }
+
+  const reconductible = document.getElementById('aff-reconductible').checked;
+  const dateFin = reconductible ? null : (document.getElementById('aff-date-fin').value || null);
+  const mode = document.querySelector('[name="aff-mode"]:checked')?.value || 'groupe';
+  const isIndividual = (mode === 'individuel');
+  const groupeVal = !isIndividual
+    ? Array.from(document.querySelectorAll('.aff-group-cb:checked')).map(c => c.value).join(',') || null
+    : null;
+
+  const plan = _affPlanMap[parseInt(planId)];
+  const periodStr = dateFin
+    ? `du ${formatDate(dateDebut)} au ${formatDate(dateFin)}`
+    : `à partir du ${formatDate(dateDebut)} (reconductible)`;
+
+  // Vérifier conflits si mode groupe
+  let conflictingIds = new Set();
+  if (!isIndividual) {
+    try {
+      const allIndiv = await SportAPI.getAffectations({ is_individual: true });
+      const end = dateFin ? new Date(dateFin) : new Date('9999-12-31');
+      const start = new Date(dateDebut);
+      (Array.isArray(allIndiv) ? allIndiv : []).forEach(a => {
+        if (!pigeonIds.includes(a.pigeon_id)) return;
+        const aStart = new Date(a.date_debut);
+        const aEnd   = a.date_fin ? new Date(a.date_fin) : new Date('9999-12-31');
+        if (aStart <= end && aEnd >= start) conflictingIds.add(a.pigeon_id);
+      });
+    } catch {}
   }
 
+  const eligibleCount = pigeonIds.length - conflictingIds.size;
+  const pigeonsHtml = pigeonIds.map(pid => {
+    const p = _affAllPigeons.find(x => x.id === pid);
+    const label = p ? `${p.matricule}${p.nom ? ' — ' + p.nom : ''}` : pid;
+    const conflict = conflictingIds.has(pid);
+    return `<div style="font-size:0.82rem;padding:2px 0;${conflict ? 'color:var(--warning);' : ''}">
+      ${conflict ? '⚠️ ' : ''}<span>${label}</span>${conflict ? ' <em style="font-size:0.76rem;">(ignoré)</em>' : ''}
+    </div>`;
+  }).join('');
+
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = '✅ Confirmer l\'affectation';
+  document.getElementById('modal').className = 'modal';
+  document.getElementById('modal-body').innerHTML = `
+    <div style="background:var(--bg-secondary);border-radius:8px;padding:16px;margin-bottom:16px;">
+      <div style="margin-bottom:8px;">📋 <strong>Plan :</strong> ${plan ? plan.name : '#' + planId}</div>
+      <div style="margin-bottom:8px;">🕊️ <strong>Pigeons :</strong>
+        ${eligibleCount} pigeon${eligibleCount > 1 ? 's' : ''} affecté${eligibleCount > 1 ? 's' : ''}
+        ${conflictingIds.size > 0
+          ? `<span style="color:var(--warning);font-size:0.82rem;"> — ⚠️ ${conflictingIds.size} ignoré${conflictingIds.size > 1 ? 's' : ''} (affectation individuelle prioritaire)</span>`
+          : ''}
+      </div>
+      <div style="margin-bottom:12px;">📅 <strong>Période :</strong> ${periodStr}</div>
+      <details style="font-size:0.82rem;">
+        <summary style="cursor:pointer;color:var(--text-light);user-select:none;">Détail des pigeons (${pigeonIds.length})</summary>
+        <div style="margin-top:6px;max-height:160px;overflow-y:auto;">${pigeonsHtml}</div>
+      </details>
+    </div>
+    <div class="modal-footer" style="padding:0;">
+      <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button type="button" class="btn btn-primary" id="aff-confirm-btn">Confirmer l'affectation</button>
+    </div>
+  `;
+  overlay.style.display = 'flex';
+  document.getElementById('modal-close').onclick = closeModal;
+  overlay.onclick = e => { if (e.target === overlay) closeModal(); };
+
+  document.getElementById('aff-confirm-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('aff-confirm-btn');
+    btn.disabled = true; btn.innerHTML = '<span class="loader-inline"></span>';
+    try {
+      await SportAPI.createAffectations({
+        pigeon_ids:   pigeonIds,
+        plan_id:      parseInt(planId),
+        date_debut:   dateDebut,
+        date_fin:     dateFin,
+        is_individual: isIndividual,
+        groupe:       groupeVal,
+      });
+      const n = eligibleCount;
+      showToast(`${n} affectation${n > 1 ? 's' : ''} créée${n > 1 ? 's' : ''} !`, 'success');
+      closeModal();
+      _loadAffectationTab();
+    } catch (err) {
+      showToast(err.message, 'error');
+      btn.disabled = false; btn.textContent = 'Confirmer l\'affectation';
+    }
+  });
+}
+
+function _renderAffectationsList(affList, planMap, pigeonList) {
+  if (!affList.length) {
+    return '<div style="font-size:0.85rem;color:var(--text-light);">Aucune affectation enregistrée.</div>';
+  }
+  const pigeonMap = Object.fromEntries(pigeonList.map(p => [p.id, p]));
+  return `
+    <div style="overflow-x:auto;">
+      <table class="table-modern" style="font-size:0.82rem;">
+        <thead><tr><th>Pigeon</th><th>Plan</th><th>Début</th><th>Fin</th><th>Type</th><th></th></tr></thead>
+        <tbody>
+          ${affList.map(a => {
+            const pigeon = pigeonMap[a.pigeon_id];
+            const plan   = a.plan || planMap[a.plan_id];
+            return `
+              <tr>
+                <td>${pigeon ? pigeon.matricule : a.pigeon_id}</td>
+                <td>${plan ? plan.name : 'Plan #' + a.plan_id}</td>
+                <td>${formatDate(a.date_debut)}</td>
+                <td>${a.date_fin ? formatDate(a.date_fin) : '♾️'}</td>
+                <td><span class="badge ${a.is_individual ? 'badge-info' : 'badge-secondary'}" style="font-size:0.72rem;">${a.is_individual ? '👤 Individuel' : '👥 Groupe'}</span></td>
+                <td><button class="btn btn-sm btn-icon" onclick="deleteAffectation(${a.id})" title="Supprimer">🗑️</button></td>
+              </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function deleteAffectation(id) {
+  if (!confirm('Supprimer cette affectation ?')) return;
   try {
-    _calAssignments = await SportAPI.getCalendar(_calWeekStart, pigeonId, groupName);
-    if (!Array.isArray(_calAssignments)) _calAssignments = [];
-
-    const plans = await SportAPI.getPlans().catch(() => []);
-    const planList = Array.isArray(plans) ? plans : [];
-    const opts = planList.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    document.getElementById('cal-grid').innerHTML = _renderCalGrid(_calAssignments, opts);
-
-    _calAssignments.forEach(a => {
-      const sel = document.querySelector(`.cal-day-plan[data-day="${a.day_of_week}"]`);
-      if (sel) { sel.value = a.plan_id; sel.dataset.existingId = a.id; }
-    });
+    await SportAPI.deleteAffectation(id);
+    showToast('Affectation supprimée.', 'success');
+    _loadAffectationTab();
   } catch (err) { showToast(err.message, 'error'); }
 }
 
-async function _calSave() {
-  const targetType = document.getElementById('cal-target-type')?.value;
-  let pigeonId = null, groupName = null;
-  if (targetType === 'pigeon') {
-    pigeonId = document.getElementById('cal-pigeon-select')?.value;
-    if (!pigeonId) { showToast('Sélectionnez un pigeon', 'warning'); return; }
-  } else {
-    groupName = targetType.replace('group-', '');
-  }
+/* ============================================================
+   CALENDRIER HEBDOMADAIRE — nouveau format par pigeon/semaine
+   ============================================================ */
 
-  const saveBtn = document.getElementById('cal-save-btn');
-  saveBtn.disabled = true;
-  saveBtn.innerHTML = '<span class="loader-inline"></span> Enregistrement...';
+let _calNewWeek = _isoWeekOf(new Date());
 
+function _isoWeekOf(d) {
+  const dt = new Date(d.getTime());
+  const dow = dt.getDay() || 7;
+  dt.setDate(dt.getDate() + 4 - dow);
+  const yearStart = new Date(dt.getFullYear(), 0, 1);
+  const weekNum = Math.ceil(((dt - yearStart) / 86400000 + 1) / 7);
+  return `${dt.getFullYear()}-W${String(weekNum).padStart(2, '0')}`;
+}
+
+function _isoWeekMonday(semaine) {
+  const [yearStr, wStr] = semaine.split('-W');
+  const year = parseInt(yearStr), week = parseInt(wStr);
+  const jan4 = new Date(year, 0, 4);
+  const dow4 = jan4.getDay() || 7;
+  const startW1 = new Date(jan4.getTime() - (dow4 - 1) * 86400000);
+  return new Date(startW1.getTime() + (week - 1) * 7 * 86400000);
+}
+
+function _isoWeekShift(semaine, n) {
+  const monday = _isoWeekMonday(semaine);
+  monday.setDate(monday.getDate() + n * 7);
+  return _isoWeekOf(monday);
+}
+
+function _isoWeekLabel(semaine) {
+  const week = parseInt(semaine.split('-W')[1]);
+  const monday = _isoWeekMonday(semaine);
+  const sunday = new Date(monday.getTime() + 6 * 86400000);
+  const mStr = monday.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+  const sStr = sunday.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
+  return `Semaine ${week} — ${mStr} au ${sStr}`;
+}
+
+async function _loadCalendarTab() {
+  const el = document.getElementById('tab-calendar');
+  if (!el) return;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn btn-secondary btn-sm" id="cal2-prev">← Préc.</button>
+      <span id="cal2-label" style="font-weight:600;font-size:0.88rem;flex:1;text-align:center;"></span>
+      <button class="btn btn-secondary btn-sm" id="cal2-today">Aujourd'hui</button>
+      <button class="btn btn-secondary btn-sm" id="cal2-next">Suiv. →</button>
+    </div>
+    <div id="cal2-table"><div class="loader-spinner"></div></div>
+  `;
+
+  document.getElementById('cal2-label').textContent = _isoWeekLabel(_calNewWeek);
+
+  document.getElementById('cal2-prev').addEventListener('click', async () => {
+    _calNewWeek = _isoWeekShift(_calNewWeek, -1);
+    document.getElementById('cal2-label').textContent = _isoWeekLabel(_calNewWeek);
+    await _cal2Load();
+  });
+  document.getElementById('cal2-next').addEventListener('click', async () => {
+    _calNewWeek = _isoWeekShift(_calNewWeek, 1);
+    document.getElementById('cal2-label').textContent = _isoWeekLabel(_calNewWeek);
+    await _cal2Load();
+  });
+  document.getElementById('cal2-today').addEventListener('click', async () => {
+    _calNewWeek = _isoWeekOf(new Date());
+    document.getElementById('cal2-label').textContent = _isoWeekLabel(_calNewWeek);
+    await _cal2Load();
+  });
+
+  await _cal2Load();
+}
+
+async function _cal2Load() {
+  const el = document.getElementById('cal2-table');
+  if (!el) return;
+  el.innerHTML = '<div class="loader-spinner"></div>';
   try {
-    const selects = document.querySelectorAll('.cal-day-plan');
-    const ops = [];
-    for (const sel of selects) {
-      const day        = parseInt(sel.dataset.day);
-      const existingId = sel.dataset.existingId ? parseInt(sel.dataset.existingId) : null;
-      const planId     = sel.value ? parseInt(sel.value) : null;
-
-      if (planId) {
-        if (existingId) {
-          ops.push(
-            SportAPI.deleteAssignment(existingId).catch(() => {}).then(() =>
-              SportAPI.saveAssignment({ plan_id: planId, pigeon_id: pigeonId, group_name: groupName, day_of_week: day, week_start: _calWeekStart })
-            )
-          );
-        } else {
-          ops.push(SportAPI.saveAssignment({ plan_id: planId, pigeon_id: pigeonId, group_name: groupName, day_of_week: day, week_start: _calWeekStart }));
-        }
-      } else if (existingId) {
-        ops.push(SportAPI.deleteAssignment(existingId).catch(() => {}));
-      }
-    }
-
-    await Promise.all(ops);
-    showToast('Planning enregistré !', 'success');
-    const plans = await SportAPI.getPlans().catch(() => []);
-    const opts  = (Array.isArray(plans) ? plans : []).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
-    await _calLoad(opts);
+    const rows = await SportAPI.getAffectationsCalendrier(_calNewWeek);
+    el.innerHTML = _cal2RenderTable(Array.isArray(rows) ? rows : []);
   } catch (err) {
+    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
     showToast(err.message, 'error');
-  } finally {
-    saveBtn.disabled = false;
-    saveBtn.textContent = '💾 Enregistrer le planning';
   }
 }
 
-function _renderResolvedCalendar(resolved) {
-  const days = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+function _cal2RenderTable(rows) {
+  const dayKeys   = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+  const dayLabels = ['Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.','Dim.'];
+
+  if (rows.length === 0) {
+    return `<div class="empty-state">
+      <div class="empty-icon">📅</div>
+      <h3>Aucune affectation cette semaine</h3>
+      <p>Créez des affectations dans l'onglet <strong>🎯 Affectation</strong> pour les voir ici.</p>
+    </div>`;
+  }
+
   return `
-    <table class="table-modern" style="width:100%;">
-      <thead><tr><th>Jour</th><th>Plan</th><th>Source</th></tr></thead>
-      <tbody>
-        ${resolved.days.map(d => `
+    <div style="overflow-x:auto;">
+      <table class="table-modern" style="min-width:680px;width:100%;">
+        <thead>
           <tr>
-            <td style="font-weight:600;">${days[d.day_of_week]}</td>
-            <td>${d.plan
-              ? `<strong>${d.plan.name}</strong>${d.plan.goal ? ` <span class="badge badge-success" style="font-size:0.7rem;">${d.plan.goal}</span>` : ''}`
-              : '<span style="color:var(--text-light);">—</span>'}</td>
-            <td>${d.source === 'individual'
-              ? '<span class="badge badge-info" style="font-size:0.72rem;">👤 Individuel</span>'
-              : d.source === 'group'
-                ? '<span class="badge badge-secondary" style="font-size:0.72rem;">👥 Groupe</span>'
-                : '—'}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>`;
+            <th style="min-width:130px;position:sticky;left:0;background:var(--bg-secondary);">Pigeon</th>
+            ${dayLabels.map(d => `<th style="text-align:center;min-width:80px;">${d}</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map(row => `
+            <tr>
+              <td style="font-weight:600;font-size:0.88rem;position:sticky;left:0;background:#fff;">
+                ${row.bague}
+                ${row.nom ? `<br><span style="font-weight:400;font-size:0.76rem;color:var(--text-light);">${row.nom}</span>` : ''}
+              </td>
+              ${dayKeys.map(day => {
+                const mixes = row[day] || [];
+                return `<td style="font-size:0.78rem;text-align:center;vertical-align:top;padding:6px 4px;">
+                  ${mixes.length
+                    ? mixes.map(m => `<div style="background:var(--primary);color:#fff;border-radius:4px;padding:2px 5px;margin-bottom:2px;white-space:nowrap;font-size:0.72rem;">${m}</div>`).join('')
+                    : '<span style="color:var(--text-light);">—</span>'}
+                </td>`;
+              }).join('')}
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
 }
 
 /* ——— Utilitaire : parser FormData avec conversion types ——— */

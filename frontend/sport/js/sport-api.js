@@ -194,21 +194,21 @@ const SportAPI = {
   deletePlan: (id) =>
     apiFetch(`/sport/nutrition/plans/${id}`, { method: 'DELETE' }),
 
-  getCalendar: (weekStart, pigeonId, groupName) => {
-    const p = new URLSearchParams({ week_start: weekStart });
-    if (pigeonId) p.set('pigeon_id', pigeonId);
-    if (groupName) p.set('group_name', groupName);
-    return apiFetch(`/sport/nutrition/calendar?${p}`);
+  getAffectations: (params = {}) => {
+    const p = new URLSearchParams();
+    if (params.pigeon_id) p.set('pigeon_id', params.pigeon_id);
+    if (params.is_individual !== undefined) p.set('is_individual', params.is_individual);
+    return apiFetch(`/sport/nutrition/affectations/?${p}`);
   },
 
-  saveAssignment: (data) =>
-    apiFetch('/sport/nutrition/calendar', { method: 'POST', body: JSON.stringify(data) }),
+  createAffectations: (data) =>
+    apiFetch('/sport/nutrition/affectations/', { method: 'POST', body: JSON.stringify(data) }),
 
-  deleteAssignment: (id) =>
-    apiFetch(`/sport/nutrition/calendar/${id}`, { method: 'DELETE' }),
+  getAffectationsCalendrier: (semaine) =>
+    apiFetch(`/sport/nutrition/affectations/calendrier?semaine=${semaine}`),
 
-  getResolvedCalendar: (weekStart, pigeonId) =>
-    apiFetch(`/sport/nutrition/resolved?week_start=${weekStart}&pigeon_id=${pigeonId}`),
+  deleteAffectation: (id) =>
+    apiFetch(`/sport/nutrition/affectations/${id}`, { method: 'DELETE' }),
 
   getSupplements: () =>
     apiFetch('/sport/supplements'),

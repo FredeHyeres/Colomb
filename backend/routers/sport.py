@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, or_
@@ -7,7 +8,7 @@ from models.sport import (
     TrainingSession, PigeonTrainingResult,
     FeedIngredient, FeedMix, NutritionPlan, NutritionAssignment, Supplement,
 )
-from models.pigeon import Pigeon
+from models.pigeon import Pigeon, Statut
 from schemas.sport import (
     TrainingSessionCreate, TrainingSessionUpdate, TrainingSessionResponse,
     PigeonTrainingResultCreate, PigeonTrainingResultResponse,
@@ -15,7 +16,7 @@ from schemas.sport import (
     FeedMixCreate, FeedMixUpdate, FeedMixResponse,
     NutritionPlanCreate, NutritionPlanUpdate, NutritionPlanResponse,
     NutritionAssignmentCreate, NutritionAssignmentResponse,
-    NutritionResolvedDay, NutritionResolvedResponse,
+    NutritionAssignmentBulkCreate, NutritionCalendarRow,
     SupplementCreate, SupplementUpdate, SupplementResponse,
     SportDashboardResponse,
 )
@@ -350,155 +351,176 @@ async def delete_plan(plan_id: int, db: AsyncSession = Depends(get_db)):
     await db.commit()
 
 
-# ── Nutrition — Calendrier hebdomadaire ──────────────────────────────────────
+# ── Nutrition — Affectations (période) ───────────────────────────────────────
 
-@router.get("/nutrition/calendar", response_model=List[NutritionAssignmentResponse])
-async def get_calendar(
-    week_start: Optional[date] = None,
+@router.get("/nutrition/affectations/", response_model=List[NutritionAssignmentResponse])
+async def get_affectations(
     pigeon_id: Optional[str] = None,
-    group_name: Optional[str] = None,
+    is_individual: Optional[bool] = None,
     db: AsyncSession = Depends(get_db),
 ):
-    """Retourne les assignations pour une semaine donnée (pigeon ou groupe)."""
-    if not week_start:
-        today = date.today()
-        week_start = today - timedelta(days=today.weekday())
-
+    """Liste les affectations, optionnellement filtrées par pigeon ou type."""
     q = (
         select(NutritionAssignment)
         .options(selectinload(NutritionAssignment.plan))
-        .where(NutritionAssignment.week_start == week_start)
+        .order_by(NutritionAssignment.date_debut.desc())
     )
     if pigeon_id:
         q = q.where(NutritionAssignment.pigeon_id == pigeon_id)
-    elif group_name:
-        q = q.where(
-            NutritionAssignment.group_name == group_name,
-            NutritionAssignment.pigeon_id == None,  # noqa: E711
-        )
+    if is_individual is not None:
+        q = q.where(NutritionAssignment.is_individual == is_individual)
     result = await db.execute(q)
     return result.scalars().all()
 
 
-@router.post("/nutrition/calendar", response_model=NutritionAssignmentResponse, status_code=201)
-async def upsert_assignment(data: NutritionAssignmentCreate, db: AsyncSession = Depends(get_db)):
-    """Crée ou met à jour une assignation (upsert par pigeon+jour+semaine ou groupe+jour+semaine)."""
-    # Chercher assignation existante
-    if data.pigeon_id:
-        cond = (
-            NutritionAssignment.pigeon_id == data.pigeon_id,
-            NutritionAssignment.day_of_week == data.day_of_week,
-            NutritionAssignment.week_start == data.week_start,
+@router.post("/nutrition/affectations/", response_model=List[NutritionAssignmentResponse], status_code=201)
+async def create_affectations(data: NutritionAssignmentBulkCreate, db: AsyncSession = Depends(get_db)):
+    """
+    Crée une affectation de plan pour une liste de pigeons.
+    Si is_individual=False : exclut automatiquement les pigeons ayant une affectation
+    individuelle active sur la même période (règle de priorité).
+    """
+    pigeon_ids = list(data.pigeon_ids)
+
+    if not data.is_individual and pigeon_ids:
+        # Exclure les pigeons avec une affectation individuelle qui chevauche la période
+        end = data.date_fin or date(9999, 12, 31)
+        conflict_res = await db.execute(
+            select(NutritionAssignment.pigeon_id).where(
+                NutritionAssignment.is_individual == True,  # noqa: E712
+                NutritionAssignment.pigeon_id.in_(pigeon_ids),
+                NutritionAssignment.date_debut <= end,
+                or_(
+                    NutritionAssignment.date_fin == None,  # noqa: E711
+                    NutritionAssignment.date_fin >= data.date_debut,
+                ),
+            )
         )
-    else:
-        cond = (
-            NutritionAssignment.group_name == data.group_name,
-            NutritionAssignment.pigeon_id == None,  # noqa: E711
-            NutritionAssignment.day_of_week == data.day_of_week,
-            NutritionAssignment.week_start == data.week_start,
+        excluded = {row[0] for row in conflict_res.all()}
+        pigeon_ids = [pid for pid in pigeon_ids if pid not in excluded]
+
+    created = []
+    for pid in pigeon_ids:
+        obj = NutritionAssignment(
+            pigeon_id=pid,
+            plan_id=data.plan_id,
+            date_debut=data.date_debut,
+            date_fin=data.date_fin,
+            is_individual=data.is_individual,
+            groupe=data.groupe,
         )
-    result = await db.execute(
-        select(NutritionAssignment)
-        .options(selectinload(NutritionAssignment.plan))
-        .where(*cond)
-    )
-    obj = result.scalar_one_or_none()
-    if obj:
-        obj.plan_id = data.plan_id
-    else:
-        obj = NutritionAssignment(**data.model_dump())
         db.add(obj)
+        created.append(obj)
+
     await db.commit()
-    await db.refresh(obj)
-    # Recharger avec la relation plan
-    result2 = await db.execute(
+    for obj in created:
+        await db.refresh(obj)
+
+    # Recharger avec les relations
+    if not created:
+        return []
+    ids = [obj.id for obj in created]
+    result = await db.execute(
         select(NutritionAssignment)
         .options(selectinload(NutritionAssignment.plan))
-        .where(NutritionAssignment.id == obj.id)
+        .where(NutritionAssignment.id.in_(ids))
     )
-    return result2.scalar_one()
+    return result.scalars().all()
 
 
-@router.delete("/nutrition/calendar/{assignment_id}", status_code=204)
-async def delete_assignment(assignment_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(NutritionAssignment).where(NutritionAssignment.id == assignment_id)
-    )
-    obj = result.scalar_one_or_none()
-    if not obj:
-        raise HTTPException(status_code=404, detail="Assignation non trouvée")
-    await db.delete(obj)
-    await db.commit()
-
-
-# ── Nutrition — Planning résolu (priorité individuel > groupe) ────────────────
-
-@router.get("/nutrition/resolved", response_model=NutritionResolvedResponse)
-async def get_resolved_calendar(
-    pigeon_id: str,
-    week_start: Optional[date] = None,
+@router.get("/nutrition/affectations/calendrier", response_model=List[NutritionCalendarRow])
+async def get_affectations_calendrier(
+    semaine: str,  # format ISO : "2025-W22"
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Retourne le planning résolu pour un pigeon sur une semaine.
-    Règle : plan individuel > plan groupe (statut) > plan groupe 'tous'.
+    Retourne pour chaque pigeon actif le planning résolu pour la semaine ISO donnée.
+    Priorité : affectation individuelle (is_individual=True) > groupe.
+    Exclut les pigeons statut perdu et decede.
     """
-    if not week_start:
-        today = date.today()
-        week_start = today - timedelta(days=today.weekday())
+    try:
+        year_str, week_str = semaine.split("-W")
+        week_start = date.fromisocalendar(int(year_str), int(week_str), 1)
+    except (ValueError, AttributeError):
+        raise HTTPException(status_code=400, detail="Format semaine invalide. Attendu: YYYY-Www")
+    week_end = week_start + timedelta(days=6)
 
-    # Récupérer le statut du pigeon pour le fallback groupe
-    pigeon_res = await db.execute(select(Pigeon).where(Pigeon.id == pigeon_id))
-    pigeon = pigeon_res.scalar_one_or_none()
-    pigeon_statut = pigeon.statut.value if pigeon else None
+    # Charger les mélanges pour résolution des noms
+    mixes_res = await db.execute(select(FeedMix))
+    mix_map = {m.id: m.name for m in mixes_res.scalars().all()}
 
-    # Assignations individuelles
-    indiv_res = await db.execute(
+    # Pigeons actifs (exclure perdu et decede)
+    pigeons_res = await db.execute(
+        select(Pigeon).where(
+            Pigeon.statut.notin_([Statut.perdu, Statut.decede])
+        ).order_by(Pigeon.matricule)
+    )
+    pigeons = pigeons_res.scalars().all()
+    if not pigeons:
+        return []
+
+    pigeon_ids = [p.id for p in pigeons]
+
+    # Charger toutes les affectations qui chevauchent la semaine
+    aff_res = await db.execute(
         select(NutritionAssignment)
         .options(selectinload(NutritionAssignment.plan))
         .where(
-            NutritionAssignment.pigeon_id == pigeon_id,
-            NutritionAssignment.week_start == week_start,
+            NutritionAssignment.pigeon_id.in_(pigeon_ids),
+            NutritionAssignment.date_debut <= week_end,
+            or_(
+                NutritionAssignment.date_fin == None,  # noqa: E711
+                NutritionAssignment.date_fin >= week_start,
+            ),
         )
     )
-    indiv_map = {a.day_of_week: a for a in indiv_res.scalars().all()}
+    all_aff = aff_res.scalars().all()
 
-    # Assignations groupe (statut + 'tous')
-    group_conds = [NutritionAssignment.group_name == "tous"]
-    if pigeon_statut:
-        group_conds.append(NutritionAssignment.group_name == pigeon_statut)
+    # Indexer par pigeon
+    aff_by_pigeon: dict = {}
+    for a in all_aff:
+        aff_by_pigeon.setdefault(a.pigeon_id, []).append(a)
 
-    group_res = await db.execute(
-        select(NutritionAssignment)
-        .options(selectinload(NutritionAssignment.plan))
-        .where(
-            NutritionAssignment.pigeon_id == None,  # noqa: E711
-            NutritionAssignment.week_start == week_start,
-            or_(*group_conds),
+    day_names = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+    rows = []
+    for pigeon in pigeons:
+        assignments = aff_by_pigeon.get(pigeon.id, [])
+        # Priorité individuel > groupe
+        indiv_plan = next((a.plan for a in assignments if a.is_individual), None)
+        group_plan = next((a.plan for a in assignments if not a.is_individual), None)
+        active_plan = indiv_plan or group_plan
+
+        row = NutritionCalendarRow(
+            pigeon_id=pigeon.id,
+            bague=pigeon.matricule,
+            nom=None,
         )
+        for day in day_names:
+            names: List[str] = []
+            if active_plan:
+                day_json = getattr(active_plan, day, None)
+                if day_json:
+                    try:
+                        mix_ids = json.loads(day_json)
+                        names = [mix_map.get(mid, f"Mél.#{mid}") for mid in mix_ids]
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+            setattr(row, day, names)
+        rows.append(row)
+
+    return rows
+
+
+@router.delete("/nutrition/affectations/{affectation_id}", status_code=204)
+async def delete_affectation(affectation_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(NutritionAssignment).where(NutritionAssignment.id == affectation_id)
     )
-    # Priorité : groupe statut > groupe 'tous'
-    group_map: dict = {}
-    for a in group_res.scalars().all():
-        dow = a.day_of_week
-        if dow not in group_map or a.group_name == pigeon_statut:
-            group_map[dow] = a
-
-    # Construire les 7 jours résolus
-    days = []
-    for dow in range(7):
-        if dow in indiv_map:
-            a = indiv_map[dow]
-            plan_resp = NutritionPlanResponse.model_validate(a.plan) if a.plan else None
-            days.append(NutritionResolvedDay(day_of_week=dow, plan=plan_resp, source="individual"))
-        elif dow in group_map:
-            a = group_map[dow]
-            plan_resp = NutritionPlanResponse.model_validate(a.plan) if a.plan else None
-            days.append(NutritionResolvedDay(day_of_week=dow, plan=plan_resp, source="group"))
-        else:
-            days.append(NutritionResolvedDay(day_of_week=dow, plan=None, source=None))
-
-    return NutritionResolvedResponse(pigeon_id=pigeon_id, week_start=week_start, days=days)
+    obj = result.scalar_one_or_none()
+    if not obj:
+        raise HTTPException(status_code=404, detail="Affectation non trouvée")
+    await db.delete(obj)
+    await db.commit()
 
 
 # ── Suppléments ───────────────────────────────────────────────────────────────

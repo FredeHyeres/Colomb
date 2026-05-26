@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, String, Integer, Float, Date, DateTime, ForeignKey, Enum as SAEnum, Text, Table
+from sqlalchemy import Column, String, Integer, Float, Date, DateTime, ForeignKey, Enum as SAEnum, Text, Table, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 from database import Base
@@ -120,13 +120,15 @@ class NutritionPlan(Base):
 class NutritionAssignment(Base):
     __tablename__ = "nutrition_assignments"
     id = Column(Integer, primary_key=True, autoincrement=True)
+    pigeon_id = Column(String, ForeignKey("pigeons.id"), nullable=False)
     plan_id = Column(Integer, ForeignKey("nutrition_plans.id"), nullable=False)
-    pigeon_id = Column(String, ForeignKey("pigeons.id"), nullable=True)   # null = assignation groupe
-    group_name = Column(String(50), nullable=True)                         # null = assignation individuelle
-    day_of_week = Column(Integer, nullable=False)                          # 0=lundi, 6=dimanche
-    week_start = Column(Date, nullable=False)                              # lundi de la semaine
+    date_debut = Column(Date, nullable=False)
+    date_fin = Column(Date, nullable=True)                   # null = reconductible
+    is_individual = Column(Boolean, default=False, nullable=False)
+    groupe = Column(String(50), nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     plan = relationship("NutritionPlan")
+    pigeon = relationship("Pigeon")
 
 
 class Supplement(Base):
