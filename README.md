@@ -1,6 +1,6 @@
 # 🕊️ Colomb — Gestion d'élevage colombophile
 
-> Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé, sport et intelligence artificielle. Déploiement via **Docker Desktop**.
+> Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé, sport et statistiques. Déploiement via **Docker Desktop**.
 
 ![Python](https://img.shields.io/badge/Python-FastAPI-blue?logo=python)
 ![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
@@ -16,10 +16,10 @@
 > |---|---|---|
 > | **V1 — Élevage** | ✅ **Stable — prête à l'utilisation** | Pigeons, pedigrees, couples, santé, performances, éleveur |
 > | **V2 — Sport** | 🚧 En développement | Entraînements, monitoring colonie, analytics, condition sportive |
-> | **V3 — IA** | 🧪 Expérimental | Recommandations XAI, snapshots sportifs, moteur expert |
+> | **V3 — IA** | 🧪 Expérimental | Disponible sur la branche `main` |
 >
-> **Seule la V1 (module Élevage) est recommandée pour une utilisation en production.**
-> Les modules Sport et IA sont fonctionnels mais peuvent contenir des bugs ou évoluer significativement.
+> **Cette branche (v2) contient les modules Élevage (stable) et Sport (en développement).**
+> Le module Sport est fonctionnel mais peut contenir des bugs ou évoluer. La V3 IA est disponible sur `main`.
 
 ---
 
@@ -50,14 +50,6 @@
 | 💪 **Condition sportive** | Indices de condition, tendances 90j, impact santé, performances récentes |
 | 🥗 **Plans alimentaires** | Calendrier des plans de nutrition selon la période sportive |
 
-### 🧪 V3 — Intelligence Artificielle (expérimental)
-
-| Module | Description |
-|---|---|
-| 🤖 **Recommandations XAI** | Moteur expert explicable : concours / repos / entraînement léger / réforme |
-| 📊 **Snapshots sportifs** | Indices calculés : récupération, condition, régularité, risque fatigue, charge |
-| 📋 **Event store** | Journal chronologique des événements sportifs par pigeon |
-
 ---
 
 ## 🛠️ Stack technique
@@ -79,8 +71,8 @@
 ### Installation
 
 ```bash
-# Cloner le dépôt
-git clone https://github.com/FredeHyeres/Colomb.git
+# Cloner le dépôt (branche v2)
+git clone -b v2 https://github.com/FredeHyeres/Colomb.git
 cd Colomb
 
 # Lancer l'application
