@@ -137,8 +137,11 @@ async def get_snapshots(pigeon_id: str, db: AsyncSession = Depends(get_db)):
 @router.post("/snapshots/{pigeon_id}/build", response_model=AISnapshotResponse)
 async def build_snapshot_endpoint(pigeon_id: str, db: AsyncSession = Depends(get_db)):
     """Calcule et persiste un snapshot sportif pour le pigeon à la date d'aujourd'hui."""
-    snap = await build_snapshot(pigeon_id, db)
-    return _snap_to_response(snap)
+    try:
+        snap = await build_snapshot(pigeon_id, db)
+        return _snap_to_response(snap)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
 # ── Événements sportifs ───────────────────────────────────────────────────────
