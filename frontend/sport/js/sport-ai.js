@@ -197,14 +197,15 @@ function renderRecommendations(recs, pigeonId, resolved) {
         </div>`;
   }
 
-  const severityMap = {
-    critical: { cls: 'critical', icon: '⚠️', label: 'Critique' },
-    warning: { cls: 'warning', icon: '💡', label: 'Attention' },
-    info: { cls: 'info', icon: 'ℹ️', label: 'Info' }
+  const recMap = {
+    concours:           { cls: 'success',  icon: '🏆', label: 'Concours' },
+    entrainement_leger: { cls: 'info',     icon: '🏃', label: 'Entraînement' },
+    repos:              { cls: 'warning',  icon: '⚠️', label: 'Repos' },
+    reforme:            { cls: 'critical', icon: '🚨', label: 'Réforme' },
   };
 
   return recs.map(r => {
-    const s = severityMap[r.severity] || { cls: 'info', icon: 'ℹ️', label: 'Info' };
+    const s = recMap[r.recommendation] || { cls: 'info', icon: 'ℹ️', label: 'Info' };
     return `
       <div class="alert-card ${s.cls}" style="margin-bottom:10px;">
         <span class="alert-icon">${s.icon}</span>
