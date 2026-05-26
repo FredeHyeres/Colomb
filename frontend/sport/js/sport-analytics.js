@@ -70,7 +70,7 @@ async function loadAnalytics() {
           <div class="card-header">
             <div>
               <div class="card-title">📈 Évolution récupération moyenne</div>
-              <div class="card-subtitle">30 derniers jours</div>
+              <div class="card-subtitle">90 derniers jours</div>
             </div>
           </div>
           <div class="chart-container">
@@ -132,12 +132,12 @@ async function loadAnalytics() {
   }
 }
 
-/* ——— Données : récupération moyenne par jour (30j) ——— */
+/* ——— Données : récupération moyenne par jour (90j) ——— */
 function computeRecoveryTrend(sessions) {
   const today = new Date();
   const days = {};
 
-  for (let i = 29; i >= 0; i--) {
+  for (let i = 89; i >= 0; i--) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const key = d.toISOString().split('T')[0];
