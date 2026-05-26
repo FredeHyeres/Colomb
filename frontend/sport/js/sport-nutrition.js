@@ -1403,14 +1403,14 @@ function _cal2RenderTable(rows) {
       <table class="table-modern" style="min-width:680px;width:100%;">
         <thead>
           <tr>
-            <th style="min-width:130px;position:sticky;left:0;background:var(--bg-secondary);">Pigeon</th>
+            <th style="min-width:130px;position:sticky;left:0;background:var(--bg-secondary);color:var(--text);">Pigeon</th>
             ${dayLabels.map(d => `<th style="text-align:center;min-width:80px;">${d}</th>`).join('')}
           </tr>
         </thead>
         <tbody>
           ${rows.map(row => `
             <tr>
-              <td style="font-weight:600;font-size:0.88rem;position:sticky;left:0;background:#fff;">
+              <td style="font-weight:600;font-size:0.88rem;position:sticky;left:0;background:var(--bg-card);">
                 ${row.bague}
                 ${row.nom ? `<br><span style="font-weight:400;font-size:0.76rem;color:var(--text-light);">${row.nom}</span>` : ''}
               </td>
