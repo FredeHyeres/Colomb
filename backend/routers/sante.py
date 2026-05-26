@@ -4,14 +4,17 @@ from sqlalchemy import select
 from database import get_db
 from models import Sante
 from schemas import SanteCreate, SanteUpdate, SanteResponse
-from typing import List
+from typing import List, Optional
 
 router = APIRouter(prefix="/sante", tags=["Santé"])
 
 
 @router.get("/", response_model=List[SanteResponse])
-async def get_evenements(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Sante))
+async def get_evenements(pigeon_id: Optional[str] = None, db: AsyncSession = Depends(get_db)):
+    q = select(Sante)
+    if pigeon_id:
+        q = q.where(Sante.pigeon_id == pigeon_id)
+    result = await db.execute(q)
     return result.scalars().all()
 
 

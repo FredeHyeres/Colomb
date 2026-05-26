@@ -251,7 +251,7 @@ const ElevageAPI = {
     apiFetch('/pigeons/'),
 
   getPigeonHealth: (pigeonId) =>
-    apiFetch(`/sante/?pigeon_id=${pigeonId}`),
+    apiFetch(`/sante/pigeon/${pigeonId}`),
 
   getPigeonPerfs: (pigeonId) =>
     apiFetch(`/performances/?pigeon_id=${pigeonId}`),
