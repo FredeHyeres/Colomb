@@ -201,14 +201,14 @@ function computeWeeklyCharge(sessions) {
 function computeTempVsRecovery(sessions) {
   const points = [];
   sessions.forEach(s => {
-    if (s.temperature_c == null) return;
-    const r = s.results || [];
-    const scores = r.filter(x => x.recovery_score != null).map(x => x.recovery_score);
+    const temp = s.temperature ?? s.temperature_c;
+    if (temp == null) return;
+    const scores = (s.results || []).filter(x => x.recovery_score != null).map(x => x.recovery_score);
     if (s.avg_recovery != null) {
-      points.push({ x: s.temperature_c, y: s.avg_recovery });
+      points.push({ x: temp, y: s.avg_recovery });
     } else if (scores.length > 0) {
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      points.push({ x: s.temperature_c, y: +avg.toFixed(2) });
+      points.push({ x: temp, y: +avg.toFixed(2) });
     }
   });
   return points;
@@ -218,18 +218,17 @@ function computeTempVsRecovery(sessions) {
 function computeRegularity(pigeons, histories) {
   return pigeons.map((p, idx) => {
     const hist = histories[idx];
-    const sessionList = hist?.sessions || (Array.isArray(hist) ? hist : []);
-    const scores = sessionList
-      .map(s => {
-        const r = (s.results || []).find(x => x.pigeon_id === p.id);
-        return r?.recovery_score ?? s.avg_recovery ?? null;
-      })
-      .filter(x => x != null)
-      .slice(-8); // 8 dernières séances
+    // getPigeonHistory retourne un tableau plat de PigeonTrainingResultResponse
+    const sessionList = Array.isArray(hist) ? hist : (hist?.sessions || []);
+    const sorted = [...sessionList].sort((a, b) =>
+      new Date(a.session_date || a.date) - new Date(b.session_date || b.date)
+    );
+    const last8 = sorted.slice(-8);
+    const scores = last8.map(s => s.recovery_score ?? null).filter(x => x != null);
     return {
       pigeon: p,
       scores,
-      labels: sessionList.slice(-8).map(s => formatDateShort(s.date))
+      labels: last8.map(s => formatDateShort(s.session_date || s.date))
     };
   });
 }
