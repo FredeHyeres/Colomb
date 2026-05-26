@@ -25,10 +25,15 @@ async function loadAnalytics() {
 
     const sessionList = Array.isArray(sessions) ? sessions : (sessions.items || sessions.results || []);
 
-    // Charger historiques des 3 premiers pigeons pour régularité
-    const top3 = pigeons.slice(0, 5);
+    // Sélectionner les pigeons qui ont des résultats dans les séances
+    const pigeonIdsWithData = new Set(
+      sessionList.flatMap(s => (s.results || []).map(r => r.pigeon_id))
+    );
+    const top3 = pigeons
+      .filter(p => pigeonIdsWithData.has(p.id))
+      .slice(0, 5);
     const histories = await Promise.all(
-      top3.map(p => SportAPI.getPigeonHistory(p.id).catch(() => ({ sessions: [] })))
+      top3.map(p => SportAPI.getPigeonHistory(p.id).catch(() => []))
     );
 
     // Données agrégées
