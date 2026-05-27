@@ -8,23 +8,21 @@
 
 ---
 
-> ## ⚠️ Statut du projet
+> ## Statut du projet
 >
-> **L'application est en cours de développement actif.**
->
-> **Branche `main`** : développement V3 (IA avancée, ML, snapshots versionnés)
-> **Branche `v2`** : version stable — Élevage + Sport + XAI expérimental
-> **Branche `v1`** : version stable — Élevage uniquement
+> **Branche `main`** : V3 stable — XAI Engine finalisé, boucle feedback, ELEVEUR_RULES
+> **Branche `v2`** : archive — Élevage + Sport + XAI expérimental
+> **Tag `v3.0.0`** · **Tag `v2.0.0`** · **Tag `v1.0.0`**
 
 ---
 
-## 🗺️ Roadmap branches
+## 🗺️ Versions
 
-| Branche | Contenu | Statut |
+| Tag | Contenu | Statut |
 |---|---|---|
-| `v1` | Élevage (pigeons, pedigree, couples, santé, performances) | ✅ Stable |
-| `v2` | V1 + Sport (séances, analytics, nutrition) + XAI (recommandations, snapshots) | ✅ Stable |
-| `main` | V2 + évolutions V3 en cours (fenêtre 30j, snapshot_version, ML pipeline) | 🚧 Dev actif |
+| `v1.0.0` | Élevage (pigeons, pedigree, couples, santé, performances) | ✅ Archive |
+| `v2.0.0` | V1 + Sport (séances, analytics, nutrition) + XAI expérimental | ✅ Archive |
+| `v3.0.0` | XAI Engine finalisé · boucle feedback · ELEVEUR_RULES · robustesse UI | ✅ Stable |
 
 ---
 
@@ -56,14 +54,15 @@
 | 🥗 **Plans alimentaires** | Calendrier des plans de nutrition selon la période sportive |
 | 🤖 **XAI expérimental** | Recommandations explicables, snapshots sportifs, event store |
 
-### 🚧 V3 — IA avancée (dev actif sur `main`)
+### ✅ V3 — XAI Engine finalisé (stable sur `main`)
 
 | Module | Description |
 |---|---|
-| 🧠 **ML pipeline** | Modèles entraînés sur l'historique réel (récupération, performance) |
-| 📊 **Snapshots versionnés** | Fenêtre de calcul étendue 30j, `recovery_trend` calculé, seuils ajustés |
-| 🔮 **Prédiction** | Score de forme prédictif avant concours |
-| 📋 **Tableau de bord IA** | Vue consolidée recommandations + snapshots + événements |
+| 📊 **Snapshots versionnés** | Fenêtre de calcul étendue 30j, `recovery_trend` calculé, seuils ajustés 70/50/30 |
+| 🧠 **XAI Engine** | `compute_age_category()` automatique · yearling/adulte · ELEVEUR_RULES source de vérité |
+| ⏱️ **Repos différencié** | 12j yearling / 10j adulte post-concours · messages adaptés par profil |
+| 📝 **Boucle feedback** | Outcome modal · résultat concours · share anonymisé · pending feedback dashboard |
+| 🛡️ **Robustesse UI** | `renderEmptyState()` · zones blanches éliminées · erreurs API gérées partout |
 
 ---
 
@@ -86,13 +85,12 @@
 ### Installation
 
 ```bash
-# Cloner une version stable (recommandé)
-git clone -b v2 https://github.com/FredeHyeres/Colomb.git
-cd Colomb
-
-# Ou cloner le dev en cours (V3 — peut contenir des bugs)
+# Cloner la version stable V3 (recommandé)
 git clone https://github.com/FredeHyeres/Colomb.git
 cd Colomb
+
+# Ou une version archivée spécifique
+git clone -b v2 https://github.com/FredeHyeres/Colomb.git
 
 # Lancer l'application
 docker compose up --build
