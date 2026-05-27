@@ -3,6 +3,15 @@
    Recommandations actives, snapshots sportifs, event store
    ============================================================ */
 
+function renderEmptyState(icon, title, subtitle = '') {
+  return `
+    <div class="empty-state" style="padding:40px 20px;">
+      <div class="empty-icon">${icon}</div>
+      <h3>${title}</h3>
+      ${subtitle ? `<p>${subtitle}</p>` : ''}
+    </div>`;
+}
+
 async function loadAIRecommendations() {
   const content = document.getElementById('content');
   const btn = document.getElementById('btn-add');
@@ -105,7 +114,7 @@ async function loadAIForPigeon(pigeonId) {
         </div>
 
         <div id="active-recs">
-          ${renderRecommendations(actives, pigeonId, false)}
+          ${renderRecommendations(actives, pigeonId, false, lastSnap ? lastSnap.id : null)}
         </div>
 
         <div id="resolved-recs" style="display:none;">
@@ -177,14 +186,24 @@ async function loadAIForPigeon(pigeonId) {
       });
     });
 
+    // Boutons outcome
+    container.querySelectorAll('.btn-outcome-rec').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const recId  = parseInt(btn.dataset.recId);
+        const pId    = parseInt(btn.dataset.pigeonId);
+        const snapId = btn.dataset.snapId ? parseInt(btn.dataset.snapId) : null;
+        openOutcomeModal(recId, pId, snapId);
+      });
+    });
+
   } catch (err) {
-    container.innerHTML = `<div class="card"><p style="color:var(--danger);">Erreur : ${err.message}</p></div>`;
+    container.innerHTML = `<div class="card">${renderEmptyState('⚠️', 'Erreur de chargement', err.message)}</div>`;
     showToast(err.message, 'error');
   }
 }
 
 /* ——— Rendu recommandations ——— */
-function renderRecommendations(recs, pigeonId, resolved) {
+function renderRecommendations(recs, pigeonId, resolved, snapId = null) {
   if (recs.length === 0) {
     return resolved
       ? '<p style="color:var(--text-light);font-size:0.85rem;">Aucune recommandation résolue.</p>'
@@ -223,7 +242,15 @@ function renderRecommendations(recs, pigeonId, resolved) {
                 ${resolved && r.resolved_at ? ` · Résolu le ${formatDate(r.resolved_at)}` : ''}
               </div>
             </div>
-            ${!resolved ? `<button class="btn btn-sm btn-success btn-resolve-rec" data-rec-id="${r.id}">✅ Résoudre</button>` : ''}
+            ${!resolved ? `
+              <div style="display:flex;gap:6px;flex-shrink:0;">
+                <button class="btn btn-sm btn-success btn-resolve-rec" data-rec-id="${r.id}">✅ Résoudre</button>
+                <button class="btn btn-sm btn-primary btn-outcome-rec"
+                  data-rec-id="${r.id}"
+                  data-pigeon-id="${pigeonId}"
+                  data-snap-id="${snapId || ''}"
+                >📝 Outcome</button>
+              </div>` : ''}
           </div>
         </div>
       </div>`;
@@ -250,7 +277,7 @@ function renderSnapshot(snap) {
   const available = indices.filter(i => i.val != null);
 
   if (available.length === 0) {
-    return '<p style="color:var(--text-light);font-size:0.85rem;">Données de snapshot non disponibles.</p>';
+    return renderEmptyState('📊', 'Snapshot sans données exploitables', 'Relancez une analyse après avoir enregistré des séances.');
   }
 
   return `
@@ -267,7 +294,7 @@ function renderSnapshot(snap) {
 /* ——— Rendu event store ——— */
 function renderEventStore(events) {
   if (events.length === 0) {
-    return '<div class="empty-state" style="padding:30px;"><p>Aucun événement enregistré.</p></div>';
+    return renderEmptyState('📋', 'Aucun événement enregistré', 'Les événements apparaîtront automatiquement lors des analyses.');
   }
 
   const sorted = [...events].sort((a, b) => new Date(b.timestamp || b.created_at) - new Date(a.timestamp || a.created_at));
@@ -295,6 +322,162 @@ function renderEventStore(events) {
       }).join('')}
       ${events.length > 20 ? `<p style="text-align:center;color:var(--text-light);font-size:0.78rem;margin-top:8px;">+ ${events.length - 20} événements plus anciens</p>` : ''}
     </div>`;
+}
+
+/* ——— Modale Outcome après concours ——— */
+async function openOutcomeModal(recId, pigeonId, snapId) {
+  // Récupérer les infos de la reco pour le sous-titre
+  let recTitle = 'Recommandation';
+  let recLabel = '';
+  try {
+    const recs = await AIAPI.getRecommendations(pigeonId).catch(() => []);
+    const rec = (Array.isArray(recs) ? recs : []).find(r => r.id === recId);
+    if (rec) {
+      const recMap = {
+        concours:           { label: 'Concours' },
+        entrainement_leger: { label: 'Entraînement' },
+        repos:              { label: 'Repos' },
+        reforme:            { label: 'Réforme' },
+      };
+      recLabel = (recMap[rec.recommendation] || {}).label || rec.recommendation || '';
+      recTitle = rec.title || rec.recommendation || 'Recommandation';
+    }
+  } catch (_) {}
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'outcome-modal-overlay';
+  overlay.innerHTML = `
+    <div class="outcome-modal" role="dialog" aria-modal="true">
+      <h3>📝 Résultat après concours</h3>
+      <div class="modal-subtitle">
+        Recommandation : ${recLabel ? `<span class="badge badge-info" style="margin-right:4px;">${recLabel}</span>` : ''}${recTitle}
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Outcome de la recommandation</div>
+        <div class="form-group">
+          <label>Résultat <span style="color:var(--danger);">*</span></label>
+          <select class="form-control" id="om-outcome">
+            <option value="">— Choisir —</option>
+            <option value="confirme">✅ Confirmée — le pigeon était prêt</option>
+            <option value="infirme">❌ Infirmée — la reco était mauvaise</option>
+            <option value="partiel">⚠️ Partielle — résultat mitigé</option>
+          </select>
+          <div id="om-outcome-error" style="color:var(--danger);font-size:0.8rem;margin-top:4px;display:none;">Veuillez choisir un résultat.</div>
+        </div>
+        <div class="form-group">
+          <label>Date du résultat</label>
+          <input type="date" class="form-control" id="om-outcome-date" value="${today}">
+        </div>
+        <div class="form-group">
+          <label>Observations</label>
+          <textarea class="form-control" id="om-outcome-notes" rows="2" placeholder="Vos observations..."></textarea>
+        </div>
+      </div>
+
+      <div class="form-section">
+        <div class="form-section-title">Lier un résultat concours <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optionnel)</span></div>
+        <div class="form-group">
+          <label>Date du concours</label>
+          <input type="date" class="form-control" id="om-concours-date" value="${today}">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div class="form-group">
+            <label>Distance (km)</label>
+            <input type="number" class="form-control" id="om-distance" step="0.1" min="0" placeholder="ex: 150.5">
+          </div>
+          <div class="form-group">
+            <label>Position d'arrivée</label>
+            <input type="number" class="form-control" id="om-classement" min="1" placeholder="ex: 3">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Nombre de pigeons engagés</label>
+          <input type="number" class="form-control" id="om-nb-partants" min="1" placeholder="ex: 120">
+        </div>
+      </div>
+
+      <label class="share-block" for="om-share">
+        <input type="checkbox" id="om-share">
+        <div>
+          <div style="font-size:0.88rem;font-weight:500;">Partager ce feedback de façon anonyme pour améliorer l'IA collective</div>
+          <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">Aucune donnée personnelle transmise — uniquement les scores numériques</div>
+        </div>
+      </label>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="om-cancel">Annuler</button>
+        <button class="btn btn-primary" id="om-save">Enregistrer →</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  const close = () => overlay.remove();
+
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  overlay.querySelector('#om-cancel').addEventListener('click', close);
+
+  overlay.querySelector('#om-save').addEventListener('click', async () => {
+    const outcome      = overlay.querySelector('#om-outcome').value;
+    const outcomeDate  = overlay.querySelector('#om-outcome-date').value;
+    const outcomeNotes = overlay.querySelector('#om-outcome-notes').value.trim();
+    const concoursDate = overlay.querySelector('#om-concours-date').value;
+    const distance     = overlay.querySelector('#om-distance').value;
+    const classement   = overlay.querySelector('#om-classement').value;
+    const nbPartants   = overlay.querySelector('#om-nb-partants').value;
+    const share        = overlay.querySelector('#om-share').checked;
+
+    const errEl = overlay.querySelector('#om-outcome-error');
+    if (!outcome) {
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    const saveBtn = overlay.querySelector('#om-save');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="loader-inline"></span> Enregistrement...';
+
+    try {
+      await AIAPI.resolveRecommendationWithOutcome(recId, {
+        outcome,
+        outcome_notes: outcomeNotes || null,
+        outcome_date: outcomeDate || null,
+      });
+    } catch (err) {
+      showToast(err.message || 'Erreur lors de la résolution', 'error');
+      saveBtn.disabled = false;
+      saveBtn.textContent = 'Enregistrer →';
+      return;
+    }
+
+    if (distance || classement) {
+      try {
+        await AIAPI.submitConcoursFeedback({
+          pigeon_id:         pigeonId,
+          recommendation_id: recId,
+          snapshot_id:       snapId || null,
+          concours_date:     concoursDate || today,
+          distance_km:       distance ? parseFloat(distance) : null,
+          classement:        classement ? parseInt(classement) : null,
+          nb_partants:       nbPartants ? parseInt(nbPartants) : null,
+          outcome,
+          notes:             outcomeNotes || null,
+          share_anonymized:  share,
+        });
+      } catch (err) {
+        showToast('Feedback résultat non enregistré : ' + (err.message || 'erreur'), 'warning');
+      }
+    }
+
+    showToast('Feedback enregistré !', 'success');
+    close();
+    loadAIForPigeon(pigeonId);
+  });
 }
 
 /* ——— Toggle recommandations résolues ——— */

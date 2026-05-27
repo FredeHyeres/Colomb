@@ -2,19 +2,32 @@
    SPORT-DASHBOARD.JS — Dashboard principal Sport
    ============================================================ */
 
+function renderEmptyState(icon, title, subtitle = '') {
+  return `
+    <div class="empty-state" style="padding:40px 20px;">
+      <div class="empty-icon">${icon}</div>
+      <h3>${title}</h3>
+      ${subtitle ? `<p>${subtitle}</p>` : ''}
+    </div>`;
+}
+
 async function loadSportDashboard() {
   const content = document.getElementById('content');
   content.innerHTML = '<div class="loader-spinner"></div>';
 
-  // Chargement parallèle
-  const [dashboard, pigeons] = await Promise.all([
-    SportAPI.getDashboard().catch(() => ({})),
-    getPigeonsCache()
-  ]);
+  let pigeons = [];
+  try {
+    const [, p] = await Promise.all([
+      SportAPI.getDashboard().catch(() => ({})),
+      getPigeonsCache()
+    ]);
+    pigeons = p;
+  } catch (err) {
+    content.innerHTML = renderEmptyState('⚠️', 'Erreur de chargement', err.message);
+    return;
+  }
 
-  // Calculer stats à partir des données disponibles
   const totalPigeons = pigeons.length || 0;
-  const activeCount = pigeons.filter(p => p.statut === 'actif' || !p.statut).length;
 
   content.innerHTML = `
     <!-- Stat cards -->
@@ -64,6 +77,17 @@ async function loadSportDashboard() {
       </div>
     </div>
 
+    <!-- Feedbacks en attente -->
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-header">
+        <div>
+          <div class="card-title">📝 Pigeons en attente de feedback</div>
+          <div class="card-subtitle">Recommandations actives non résolues pour l'écurie</div>
+        </div>
+      </div>
+      <div id="widget-pending-feedback"><div class="loader-spinner"></div></div>
+    </div>
+
     <!-- Dernières séances + Nutrition -->
     <div class="dashboard-row">
       <div class="card flex-2">
@@ -98,9 +122,75 @@ async function loadSportDashboard() {
 
   // Charger les widgets en parallèle
   loadAIAlertWidget(pigeons);
+  loadPendingFeedbackWidget(pigeons);
   loadHealthWidget(pigeons);
   loadRecentSessionsWidget();
   loadNutritionWidget();
+}
+
+/* ——— Widget feedbacks en attente ——— */
+async function loadPendingFeedbackWidget(pigeons) {
+  const el = document.getElementById('widget-pending-feedback');
+  if (!el) return;
+
+  try {
+    if (!pigeons || pigeons.length === 0) {
+      el.innerHTML = renderEmptyState('🕊️', 'Aucun pigeon enregistré', 'Ajoutez des pigeons pour commencer le suivi.');
+      return;
+    }
+
+    const allRecs = await Promise.all(
+      pigeons.map(p => AIAPI.getRecommendations(p.id).catch(() => []))
+    );
+
+    const pending = [];
+    allRecs.forEach((recs, idx) => {
+      (recs || []).filter(r => !r.resolved_at).forEach(r => {
+        pending.push({ ...r, _pigeon: pigeons[idx] });
+      });
+    });
+
+    if (pending.length === 0) {
+      el.innerHTML = renderEmptyState('✅', 'Aucun feedback en attente', 'Tous les résultats de concours ont été saisis.');
+      return;
+    }
+
+    const recMap = {
+      concours:           { label: 'Concours',      cls: 'badge-success' },
+      entrainement_leger: { label: 'Entraînement',  cls: 'badge-info' },
+      repos:              { label: 'Repos',          cls: 'badge-warning' },
+      reforme:            { label: 'Réforme',        cls: 'badge-danger' },
+    };
+
+    el.innerHTML = pending.slice(0, 10).map(r => {
+      const s = recMap[r.recommendation] || { label: r.recommendation || 'Info', cls: 'badge-info' };
+      const p = r._pigeon;
+      return `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+            <span class="chip" style="flex-shrink:0;">${p.matricule}${p.nom ? ' — ' + p.nom : ''}</span>
+            <span class="badge ${s.cls}" style="flex-shrink:0;">${s.label}</span>
+            <span style="font-size:0.82rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.title || r.recommendation || ''}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <span style="font-size:0.75rem;color:var(--text-light);">${formatDate(r.created_at)}</span>
+            <button class="btn btn-sm btn-primary btn-dash-outcome"
+              data-rec-id="${r.id}"
+              data-pigeon-id="${p.id}"
+            >📝 Feedback</button>
+          </div>
+        </div>`;
+    }).join('') + (pending.length > 10 ? `<p style="text-align:center;color:var(--text-light);font-size:0.78rem;margin-top:8px;">+ ${pending.length - 10} autres en attente</p>` : '');
+
+    el.querySelectorAll('.btn-dash-outcome').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openOutcomeModal(parseInt(btn.dataset.recId), parseInt(btn.dataset.pigeonId), null);
+      });
+    });
+
+  } catch (err) {
+    el.innerHTML = renderEmptyState('⚠️', 'Impossible de charger les feedbacks', err.message);
+  }
 }
 
 /* ——— Widget alertes IA ——— */
@@ -111,7 +201,7 @@ async function loadAIAlertWidget(pigeons) {
   try {
     const top3 = (pigeons || []).slice(0, 3);
     if (top3.length === 0) {
-      el.innerHTML = '<div class="empty-state"><p>Aucun pigeon enregistré.</p></div>';
+      el.innerHTML = renderEmptyState('🕊️', 'Aucun pigeon enregistré', 'Ajoutez des pigeons pour voir les alertes IA.');
       return;
     }
 
@@ -171,7 +261,7 @@ async function loadAIAlertWidget(pigeons) {
     }).join('') + (actives.length > 5 ? `<p style="text-align:center;color:var(--text-light);font-size:0.8rem;margin-top:8px;">+ ${actives.length - 5} autres alertes</p>` : '');
 
   } catch (err) {
-    el.innerHTML = `<div class="empty-state"><p style="color:var(--danger);">Impossible de charger les alertes IA.</p></div>`;
+    el.innerHTML = renderEmptyState('⚠️', 'Impossible de charger les alertes IA', err.message);
   }
 }
 
@@ -183,7 +273,7 @@ async function loadHealthWidget(pigeons) {
   try {
     const top3 = (pigeons || []).slice(0, 3);
     if (top3.length === 0) {
-      el.innerHTML = '<p style="color:var(--text-light);font-size:0.85rem;">Aucun pigeon.</p>';
+      el.innerHTML = renderEmptyState('🏥', 'Aucun pigeon', 'Ajoutez des pigeons pour suivre leur santé.');
       return;
     }
 
@@ -201,7 +291,7 @@ async function loadHealthWidget(pigeons) {
     const recent = allEvents.slice(0, 5);
 
     if (recent.length === 0) {
-      el.innerHTML = '<p style="color:var(--text-light);font-size:0.85rem;">Aucun événement médical récent.</p>';
+      el.innerHTML = renderEmptyState('🟢', 'Aucun événement médical récent', 'Tous les pigeons semblent en bonne santé.');
     } else {
       el.innerHTML = recent.map(e => {
         const isBad = ['maladie', 'traitement', 'blessure'].includes((e.type || '').toLowerCase());
@@ -219,7 +309,7 @@ async function loadHealthWidget(pigeons) {
     el.innerHTML += `<div style="margin-top:12px;"><a href="http://localhost:8080/#sante" target="_blank" style="font-size:0.8rem;color:var(--accent);">→ Ouvrir module santé</a></div>`;
 
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);font-size:0.82rem;">Erreur chargement santé.</p>`;
+    el.innerHTML = renderEmptyState('⚠️', 'Erreur chargement santé', err.message);
   }
 }
 
@@ -284,7 +374,7 @@ async function loadRecentSessionsWidget() {
         </tbody>
       </table>`;
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);font-size:0.82rem;">Erreur : ${err.message}</p>`;
+    el.innerHTML = renderEmptyState('⚠️', 'Erreur chargement séances', err.message);
   }
 }
 
@@ -298,12 +388,7 @@ async function loadNutritionWidget() {
     const list = Array.isArray(plans) ? plans : (plans.items || []);
 
     if (list.length === 0) {
-      el.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🌾</div>
-          <h3>Aucun plan actif</h3>
-          <p>Créez un plan alimentaire.</p>
-        </div>`;
+      el.innerHTML = renderEmptyState('🌾', 'Aucun plan actif', 'Créez un plan alimentaire dans le module Nutrition.');
       return;
     }
 
@@ -326,6 +411,6 @@ async function loadNutritionWidget() {
         <a href="#" style="font-size:0.8rem;color:var(--accent);" onclick="event.preventDefault();showPage('plans')">→ Gérer les plans</a>
       </div>`;
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);font-size:0.82rem;">Erreur nutrition.</p>`;
+    el.innerHTML = renderEmptyState('⚠️', 'Erreur chargement nutrition', err.message);
   }
 }

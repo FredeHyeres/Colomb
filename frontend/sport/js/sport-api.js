@@ -236,6 +236,18 @@ const AIAPI = {
   resolveRecommendation: (recId) =>
     apiFetch(`/ai/recommendations/${recId}/resolve`, { method: 'PUT' }),
 
+  resolveRecommendationWithOutcome: (recId, body) =>
+    apiFetch(`/recommendations/${recId}/resolve`, {
+      method: 'PATCH',
+      body: JSON.stringify(body)
+    }),
+
+  submitConcoursFeedback: (body) =>
+    apiFetch('/feedback/concours', {
+      method: 'POST',
+      body: JSON.stringify(body)
+    }),
+
   getSnapshots: (pigeonId) =>
     apiFetch(`/ai/snapshots/${pigeonId}`),
 

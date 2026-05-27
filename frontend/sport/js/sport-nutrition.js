@@ -32,6 +32,7 @@ async function loadNutrition() {
       document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
       tabBtn.classList.add('active');
       document.getElementById(`tab-${tabBtn.dataset.tab}`)?.classList.add('active');
+      if (tabBtn.dataset.tab === 'calendar') _cal2Load();
     });
   });
 
@@ -1186,30 +1187,11 @@ async function _affShowConfirmation() {
     ? `du ${formatDate(dateDebut)} au ${formatDate(dateFin)}`
     : `à partir du ${formatDate(dateDebut)} (reconductible)`;
 
-  // Vérifier conflits si mode groupe
-  let conflictingIds = new Set();
-  if (!isIndividual) {
-    try {
-      const allIndiv = await SportAPI.getAffectations({ is_individual: true });
-      const end = dateFin ? new Date(dateFin) : new Date('9999-12-31');
-      const start = new Date(dateDebut);
-      (Array.isArray(allIndiv) ? allIndiv : []).forEach(a => {
-        if (!pigeonIds.includes(a.pigeon_id)) return;
-        const aStart = new Date(a.date_debut);
-        const aEnd   = a.date_fin ? new Date(a.date_fin) : new Date('9999-12-31');
-        if (aStart <= end && aEnd >= start) conflictingIds.add(a.pigeon_id);
-      });
-    } catch {}
-  }
-
-  const eligibleCount = pigeonIds.length - conflictingIds.size;
+  const eligibleCount = pigeonIds.length;
   const pigeonsHtml = pigeonIds.map(pid => {
     const p = _affAllPigeons.find(x => x.id === pid);
     const label = p ? `${p.matricule}${p.nom ? ' — ' + p.nom : ''}` : pid;
-    const conflict = conflictingIds.has(pid);
-    return `<div style="font-size:0.82rem;padding:2px 0;${conflict ? 'color:var(--warning);' : ''}">
-      ${conflict ? '⚠️ ' : ''}<span>${label}</span>${conflict ? ' <em style="font-size:0.76rem;">(ignoré)</em>' : ''}
-    </div>`;
+    return `<div style="font-size:0.82rem;padding:2px 0;"><span>${label}</span></div>`;
   }).join('');
 
   const overlay = document.getElementById('modal-overlay');
@@ -1220,9 +1202,7 @@ async function _affShowConfirmation() {
       <div style="margin-bottom:8px;">📋 <strong>Plan :</strong> ${plan ? plan.name : '#' + planId}</div>
       <div style="margin-bottom:8px;">🕊️ <strong>Pigeons :</strong>
         ${eligibleCount} pigeon${eligibleCount > 1 ? 's' : ''} affecté${eligibleCount > 1 ? 's' : ''}
-        ${conflictingIds.size > 0
-          ? `<span style="color:var(--warning);font-size:0.82rem;"> — ⚠️ ${conflictingIds.size} ignoré${conflictingIds.size > 1 ? 's' : ''} (affectation individuelle prioritaire)</span>`
-          : ''}
+        <span style="font-size:0.8rem;color:var(--text-light);"> — les affectations précédentes seront remplacées</span>
       </div>
       <div style="margin-bottom:12px;">📅 <strong>Période :</strong> ${periodStr}</div>
       <details style="font-size:0.82rem;">

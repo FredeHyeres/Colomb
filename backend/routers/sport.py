@@ -388,27 +388,21 @@ async def get_affectations(
 async def create_affectations(data: NutritionAssignmentBulkCreate, db: AsyncSession = Depends(get_db)):
     """
     Crée une affectation de plan pour une liste de pigeons.
-    Si is_individual=False : exclut automatiquement les pigeons ayant une affectation
-    individuelle active sur la même période (règle de priorité).
+    Si un pigeon possède déjà une affectation, elle est supprimée avant la création
+    de la nouvelle (règle : une affectation active par pigeon).
     """
     pigeon_ids = list(data.pigeon_ids)
 
-    if not data.is_individual and pigeon_ids:
-        # Exclure les pigeons avec une affectation individuelle qui chevauche la période
-        end = data.date_fin or date(9999, 12, 31)
-        conflict_res = await db.execute(
-            select(NutritionAssignment.pigeon_id).where(
-                NutritionAssignment.is_individual == True,  # noqa: E712
-                NutritionAssignment.pigeon_id.in_(pigeon_ids),
-                NutritionAssignment.date_debut <= end,
-                or_(
-                    NutritionAssignment.date_fin == None,  # noqa: E711
-                    NutritionAssignment.date_fin >= data.date_debut,
-                ),
+    if pigeon_ids:
+        # Supprimer toutes les affectations existantes pour ces pigeons
+        existing_res = await db.execute(
+            select(NutritionAssignment).where(
+                NutritionAssignment.pigeon_id.in_(pigeon_ids)
             )
         )
-        excluded = {row[0] for row in conflict_res.all()}
-        pigeon_ids = [pid for pid in pigeon_ids if pid not in excluded]
+        for existing in existing_res.scalars().all():
+            await db.delete(existing)
+        await db.flush()
 
     created = []
     for pid in pigeon_ids:

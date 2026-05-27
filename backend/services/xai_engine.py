@@ -13,6 +13,7 @@ from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from models.sport import TrainingSession, PigeonTrainingResult
 from models.ai_model import AIRecommendation, AISnapshot, SportEvent
+from models.pigeon import Pigeon
 
 # Pondération des scores
 WEIGHTS = {"recovery": 0.40, "condition": 0.35, "regularity": 0.25}
@@ -21,10 +22,17 @@ WEIGHTS = {"recovery": 0.40, "condition": 0.35, "regularity": 0.25}
 ELEVEUR_PROFILE = {
     "recovery_min_concours": 7.0,      # recovery_score minimum pour envisager concours
     "seances_min_concours": 3,          # séances consécutives minimum
-    "repos_post_concours_jours": 10,    # jours de repos après concours difficile
+    "repos_post_concours_jours": {"yearling": 12, "adulte": 10},  # standard fédéral §5 ELEVEUR_RULES
     "distance_cible_km": (300, 500),    # demi-fond PACA
     "seuil_chaleur_thi": 72,            # THI au-delà duquel prudence hydratation
 }
+
+
+def compute_age_category(annee_naissance: int) -> str:
+    """Yearling = né l'année civile en cours. Standard fédéral colombophile."""
+    if annee_naissance >= date.today().year:
+        return "yearling"
+    return "adulte"
 
 
 def compute_forme_score(results: list, results_7d: list = None) -> dict:
@@ -338,13 +346,18 @@ def generate_comment(
                 f"puis lancers courts (20–50 km) avant toute décision de concours."
             )
         elif avg_rec_7d is not None and avg_rec_7d < 4:
+            _rest_days = ELEVEUR_PROFILE["repos_post_concours_jours"].get(age_category, 10)
+            _yearling_note = (
+                " Première saison — la récupération complète est prioritaire sur le calendrier."
+                if age_category == "yearling" else ""
+            )
             message = (
                 f"Récupération insuffisante — {trend_txt}{delta_txt}. "
                 f"Récupération 7j : {avg_rec_7d}/10 (seuil critique : 4/10). "
-                f"{seances_txt.capitalize()}. Score global {score_global}/100."
+                f"{seances_txt.capitalize()}. Score global {score_global}/100.{_yearling_note}"
             )
             action = (
-                f"Repos {ELEVEUR_PROFILE['repos_post_concours_jours']} jours minimum. "
+                f"Repos {_rest_days} jours minimum. "
                 f"Électrolytes J1–J3, dépuratif J4–J6. "
                 f"Contrôle respiratoire si récupération < 3/10."
             )
@@ -393,6 +406,15 @@ async def generate_ai_recommendation(pigeon_id: str, db: AsyncSession) -> AIReco
     4. Sauvegarde en DB
     5. Crée un SportEvent
     """
+    # 0. Récupérer le pigeon pour le calcul de age_category
+    pigeon_result = await db.execute(select(Pigeon).where(Pigeon.id == pigeon_id))
+    pigeon = pigeon_result.scalar_one_or_none()
+    age_category = (
+        compute_age_category(pigeon.annee_naissance)
+        if pigeon and pigeon.annee_naissance
+        else "adulte"
+    )
+
     # 1. Récupérer les résultats des 30 derniers jours avec la session
     cutoff_30d = date.today() - timedelta(days=30)
     result = await db.execute(
@@ -445,8 +467,7 @@ async def generate_ai_recommendation(pigeon_id: str, db: AsyncSession) -> AIReco
         results_7d     = results_7d,
         recovery_trend = recovery_trend,
         confiance      = rec_data["confiance"],
-        # age_category à brancher sur pigeon.annee_naissance (yearling = année en cours) en V3
-        age_category   = "adulte",
+        age_category   = age_category,
     )
 
     # 3. Facteurs explicatifs

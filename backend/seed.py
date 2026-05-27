@@ -93,6 +93,8 @@ async def main():
         ("P_G310","FR-2024-010010",2024,"femelle","actif","Delbar",       "P_G209","P_G210","Aura"),
         ("P_G311","FR-2024-011011",2024,"male","decede","Lokale PACA",    None,None,"Tramontano"),
         ("P_G312","FR-2023-012012",2023,"femelle","actif","Lokale PACA",  None,None,"Levante"),
+        ("P_G313","FR-2026-013013",2026,"male","actif","Janssen",       "P_G201","P_G202","Vent'Neuf"),
+        ("P_G314","FR-2026-014014",2026,"femelle","actif","Van Loon",   "P_G203","P_G204","Aube"),
     ]
 
     P = {}
