@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 import os
@@ -33,14 +34,30 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+ALLOWED_ORIGINS = ["http://localhost:8080", "http://127.0.0.1:8080"]
+
 # CORS — permet au frontend d'appeler l'API
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Garantit que les headers CORS sont présents même sur les 500
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "")
+    headers = {}
+    if origin in ALLOWED_ORIGINS:
+        headers["Access-Control-Allow-Origin"] = origin
+    return JSONResponse(
+        status_code=500,
+        content={"detail": str(exc)},
+        headers=headers,
+    )
 
 # Servir les photos uploadées
 app.mount("/uploads", StaticFiles(directory="/app/uploads"), name="uploads")

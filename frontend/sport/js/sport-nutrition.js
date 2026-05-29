@@ -118,7 +118,7 @@ async function deleteMixItem(mixId) {
    ============================================================ */
 
 let _ingState = { items: [] };
-// item: { id:"ing_X", name:"...", pct:50.00 }
+// item: { id:"ing_X", name:"...", pct:50.00, locked:false }
 
 let _supState = { items: [] };
 // item: { id:"sup_X", name:"...", quantity:"", unit:"g/kg" }
@@ -126,8 +126,20 @@ let _supState = { items: [] };
 /* ——— Ingrédients ——— */
 function _ingAddItem(id, name) {
   if (_ingState.items.find(i => i.id === id)) { showToast('Déjà dans la composition', 'warning'); return; }
-  _ingState.items.push({ id, name, pct: 0 });
+  _ingState.items.push({ id, name, pct: 0, locked: false });
   _ingRebalanceEqual();
+  _ingRenderList();
+}
+
+function _ingToggleLock(idx) {
+  const items = _ingState.items;
+  if (items[idx].locked) {
+    items[idx].locked = false;
+  } else {
+    const unlocked = items.filter(i => !i.locked).length;
+    if (unlocked <= 2) { showToast('Il faut au moins 2 ingrédients déverrouillés pour redistribuer', 'warning'); return; }
+    items[idx].locked = true;
+  }
   _ingRenderList();
 }
 
@@ -138,40 +150,46 @@ function _ingRemoveItem(idx) {
 }
 
 function _ingRebalanceEqual() {
-  const n = _ingState.items.length;
-  if (n === 0) return;
-  const share = parseFloat((100 / n).toFixed(2));
-  const last  = parseFloat((100 - share * (n - 1)).toFixed(2));
-  _ingState.items.forEach((item, i) => { item.pct = i === n - 1 ? last : share; });
+  const unlocked = _ingState.items.filter(i => !i.locked);
+  if (unlocked.length === 0) return;
+  const lockedSum = _ingState.items.filter(i => i.locked).reduce((s, i) => s + i.pct, 0);
+  const available = parseFloat((100 - lockedSum).toFixed(2));
+  const n = unlocked.length;
+  const share = parseFloat((available / n).toFixed(2));
+  const last  = parseFloat((available - share * (n - 1)).toFixed(2));
+  unlocked.forEach((item, i) => { item.pct = i === n - 1 ? last : share; });
 }
 
-/* ——— Algorithme proportionnel ——— */
+/* ——— Max dynamique pour un ingrédient (laisse 1% à chaque autre déverrouillé) ——— */
+function _ingMaxForItem(idx) {
+  const lockedSum = _ingState.items.filter(i => i.locked).reduce((s, i) => s + i.pct, 0);
+  const otherUnlocked = _ingState.items.filter((item, i) => i !== idx && !item.locked).length;
+  return Math.max(0, parseFloat((100 - lockedSum - otherUnlocked).toFixed(2)));
+}
+
+/* ——— Algorithme proportionnel (respecte les verrous + plafond dynamique) ——— */
 function _ingApplyChange(idx, rawVal) {
-  const newPct = Math.min(100, Math.max(0, parseFloat(rawVal) || 0));
+  const maxAllowed = _ingMaxForItem(idx);
+  const newPct = Math.min(maxAllowed, Math.max(0, parseFloat(rawVal) || 0));
   const oldPct = _ingState.items[idx].pct;
-  const activeOthers = _ingState.items.filter((item, i) => i !== idx && item.pct > 0);
+  const activeOthers = _ingState.items.filter((item, i) => i !== idx && item.pct > 0 && !item.locked);
 
   _ingState.items[idx].pct = newPct;
 
-  if (activeOthers.length === 0) return; // aucun autre actif, pas de redistribution
+  if (activeOthers.length === 0) return;
 
   if (Math.abs(oldPct - 100) < 0.001) {
-    // CAS 1 : était à 100% → redistribution égale
     const share = (100 - newPct) / activeOthers.length;
     activeOthers.forEach(o => { o.pct = Math.max(0, share); });
   } else {
-    // Recalcul proportionnel
     const oldOthersSum = 100 - oldPct;
     const newOthersSum = 100 - newPct;
-    activeOthers.forEach(o => {
-      o.pct = Math.max(0, (o.pct * newOthersSum) / oldOthersSum);
-    });
+    if (Math.abs(oldOthersSum) > 0.001) {
+      activeOthers.forEach(o => { o.pct = Math.max(0, (o.pct * newOthersSum) / oldOthersSum); });
+    }
   }
 
-  // CAS 3 : borner entre 0 et 100
   _ingState.items.forEach(item => { item.pct = Math.min(100, Math.max(0, item.pct)); });
-
-  // CAS 4 : corriger les arrondis pour total = 100.00% exact
   _ingState.items.forEach(item => { item.pct = parseFloat(item.pct.toFixed(2)); });
   const sum = _ingState.items.reduce((s, i) => s + i.pct, 0);
   const residual = parseFloat((100 - sum).toFixed(2));
@@ -184,8 +202,14 @@ function _ingUpdateDOM() {
   _ingState.items.forEach((item, idx) => {
     const slider = document.querySelector(`.mix-ing-slider[data-idx="${idx}"]`);
     const input  = document.querySelector(`.mix-ing-input[data-idx="${idx}"]`);
-    if (slider) slider.value = item.pct;
-    if (input)  input.value  = item.pct;
+    if (!item.locked) {
+      const maxVal = _ingMaxForItem(idx);
+      if (slider) { slider.max = maxVal; slider.value = item.pct; }
+      if (input)  { input.max  = maxVal; input.value  = item.pct; }
+    } else {
+      if (slider) slider.value = item.pct;
+      if (input)  input.value  = item.pct;
+    }
   });
   const totalEl = document.getElementById('mix-ing-total');
   if (totalEl) {
@@ -208,16 +232,26 @@ function _ingRenderList() {
     return;
   }
 
-  el.innerHTML = _ingState.items.map((item, idx) => `
-    <div class="mix-ing-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-      <span style="flex:1;font-size:0.88rem;min-width:100px;">🌾 ${item.name}</span>
-      <input type="range" min="0" max="100" step="0.01" value="${item.pct}"
-        class="mix-ing-slider" data-idx="${idx}" style="flex:2;min-width:100px;accent-color:var(--accent);">
-      <input type="number" min="0" max="100" step="0.01" value="${item.pct}"
-        class="form-control mix-ing-input" style="width:80px;" data-idx="${idx}">
+  const unlockedCount = _ingState.items.filter(i => !i.locked).length;
+  el.innerHTML = _ingState.items.map((item, idx) => {
+    const canLock    = !item.locked && unlockedCount > 2;
+    const lockDisabled = !item.locked && !canLock ? 'disabled title="2 ingrédients déverrouillés minimum"' : '';
+    const maxVal     = item.locked ? 100 : _ingMaxForItem(idx);
+    return `
+    <div class="mix-ing-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;${item.locked ? 'opacity:0.75;' : ''}">
+      <button type="button" class="btn btn-sm btn-icon mix-ing-lock" data-idx="${idx}" ${lockDisabled}
+        style="font-size:1rem;padding:2px 5px;${item.locked ? 'color:var(--accent);' : 'color:var(--text-light);'}"
+        title="${item.locked ? 'Déverrouiller' : 'Verrouiller'}">${item.locked ? '🔒' : '🔓'}</button>
+      <span style="flex:1;font-size:0.88rem;min-width:90px;">🌾 ${item.name}</span>
+      <input type="range" min="0" max="${maxVal}" step="0.01" value="${item.pct}"
+        class="mix-ing-slider" data-idx="${idx}"
+        style="flex:2;min-width:100px;accent-color:var(--accent);" ${item.locked ? 'disabled' : ''}>
+      <input type="number" min="0" max="${maxVal}" step="0.01" value="${item.pct}"
+        class="form-control mix-ing-input" style="width:80px;" data-idx="${idx}" ${item.locked ? 'disabled' : ''}>
       <span style="font-size:0.8rem;color:var(--text-light);width:14px;">%</span>
       <button type="button" class="btn btn-sm btn-icon mix-ing-remove" data-idx="${idx}">🗑️</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 
   _ingUpdateDOM();
 
@@ -236,6 +270,9 @@ function _ingRenderList() {
   });
   el.querySelectorAll('.mix-ing-remove').forEach(btn => {
     btn.addEventListener('click', (e) => _ingRemoveItem(parseInt(e.target.dataset.idx)));
+  });
+  el.querySelectorAll('.mix-ing-lock').forEach(btn => {
+    btn.addEventListener('click', (e) => _ingToggleLock(parseInt(e.target.dataset.idx)));
   });
 }
 
@@ -479,11 +516,11 @@ async function loadIngredientsTab() {
                 <tr>
                   <td><strong>${ing.name || '—'}</strong></td>
                   <td>${ing.category ? `<span class="badge badge-info">${ing.category}</span>` : '—'}</td>
-                  <td>${renderMiniBar(ing.protein_pct,'#2980B9')} ${ing.protein_pct!=null?ing.protein_pct+'%':'—'}</td>
-                  <td>${renderMiniBar(ing.fat_pct,'#E67E22')} ${ing.fat_pct!=null?ing.fat_pct+'%':'—'}</td>
-                  <td>${renderMiniBar(ing.carb_pct,'#27AE60')} ${ing.carb_pct!=null?ing.carb_pct+'%':'—'}</td>
-                  <td>${ing.energy_kcal!=null?ing.energy_kcal+' kcal':'—'}</td>
-                  <td style="font-size:0.78rem;color:var(--text-light);">${ing.notes||''}</td>
+                  <td>${renderMiniBar(ing.proteines_pct,'#2980B9')} ${ing.proteines_pct!=null?ing.proteines_pct+'%':'—'}</td>
+                  <td>${renderMiniBar(ing.lipides_pct,'#E67E22')} ${ing.lipides_pct!=null?ing.lipides_pct+'%':'—'}</td>
+                  <td>${renderMiniBar(ing.glucides_pct,'#27AE60')} ${ing.glucides_pct!=null?ing.glucides_pct+'%':'—'}</td>
+                  <td>${ing.energie_kcal!=null?ing.energie_kcal+' kcal':'—'}</td>
+                  <td style="font-size:0.78rem;color:var(--text-light);">${ing.notes_eleveurs||''}</td>
                 </tr>`).join('')}
             </tbody>
           </table>`}`;
@@ -525,17 +562,17 @@ function openIngredientModal() {
         </div>
         <div class="form-group">
           <label class="form-label">Énergie (kcal/100g)</label>
-          <input type="number" class="form-control" name="energy_kcal" step="1" min="0" placeholder="ex: 350">
+          <input type="number" class="form-control" name="energie_kcal" step="1" min="0" placeholder="ex: 350">
         </div>
       </div>
       <div class="form-row-3">
-        <div class="form-group"><label class="form-label">Protéines (%)</label><input type="number" class="form-control" name="protein_pct" step="0.1" min="0" max="100"></div>
-        <div class="form-group"><label class="form-label">Lipides (%)</label><input type="number" class="form-control" name="fat_pct" step="0.1" min="0" max="100"></div>
-        <div class="form-group"><label class="form-label">Glucides (%)</label><input type="number" class="form-control" name="carb_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Protéines (%)</label><input type="number" class="form-control" name="proteines_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Lipides (%)</label><input type="number" class="form-control" name="lipides_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">Glucides (%)</label><input type="number" class="form-control" name="glucides_pct" step="0.1" min="0" max="100"></div>
       </div>
       <div class="form-group">
         <label class="form-label">Notes</label>
-        <textarea class="form-control" name="notes" rows="2" placeholder="Observations, source..."></textarea>
+        <textarea class="form-control" name="notes_eleveurs" rows="2" placeholder="Observations, source..."></textarea>
       </div>
       <div class="modal-footer" style="padding:0;margin-top:16px;">
         <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
@@ -548,7 +585,7 @@ function openIngredientModal() {
 
   document.getElementById('form-ingredient').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const data = parseFormData(e.target, ['energy_kcal','protein_pct','fat_pct','carb_pct'], ['name']);
+    const data = parseFormData(e.target, ['energie_kcal','proteines_pct','lipides_pct','glucides_pct'], ['name']);
     const btn = e.target.querySelector('[type=submit]');
     btn.disabled = true; btn.innerHTML = '<span class="loader-inline"></span>';
     try {
@@ -653,7 +690,94 @@ function openSupplementModal() {
 const _DAY_NAMES  = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
 const _DAY_LABELS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
 let _planDays = [[], [], [], [], [], [], []];
-// _planDays[i] = [{id:int, name:str}]
+// _planDays[i] = [{id:int, name:str, pct:float, locked:bool}]
+
+function _planDayToggleLock(dayIdx, mixIdx) {
+  const items = _planDays[dayIdx];
+  if (items[mixIdx].locked) {
+    items[mixIdx].locked = false;
+  } else {
+    const unlocked = items.filter(m => !m.locked).length;
+    if (unlocked <= 2) { showToast('Il faut au moins 2 mélanges déverrouillés pour redistribuer', 'warning'); return; }
+    items[mixIdx].locked = true;
+  }
+  _planRenderDayList(dayIdx);
+}
+
+/* ——— Rééquilibrage égal sur un jour (respecte les verrous) ——— */
+function _planDayRebalanceEqual(dayIdx) {
+  const unlocked = _planDays[dayIdx].filter(m => !m.locked);
+  if (unlocked.length === 0) return;
+  const lockedSum = _planDays[dayIdx].filter(m => m.locked).reduce((s, m) => s + m.pct, 0);
+  const available = parseFloat((100 - lockedSum).toFixed(2));
+  const n = unlocked.length;
+  const share = parseFloat((available / n).toFixed(2));
+  const last  = parseFloat((available - share * (n - 1)).toFixed(2));
+  unlocked.forEach((m, i) => { m.pct = i === n - 1 ? last : share; });
+}
+
+/* ——— Max dynamique pour un mélange dans un jour ——— */
+function _planDayMaxForMix(dayIdx, mixIdx) {
+  const items = _planDays[dayIdx];
+  const lockedSum = items.filter(m => m.locked).reduce((s, m) => s + m.pct, 0);
+  const otherUnlocked = items.filter((m, i) => i !== mixIdx && !m.locked).length;
+  return Math.max(0, parseFloat((100 - lockedSum - otherUnlocked).toFixed(2)));
+}
+
+/* ——— Redistribution proportionnelle (respecte les verrous + plafond dynamique) ——— */
+function _planDayApplyChange(dayIdx, mixIdx, rawVal) {
+  const maxAllowed = _planDayMaxForMix(dayIdx, mixIdx);
+  const newPct = Math.min(maxAllowed, Math.max(0, parseFloat(rawVal) || 0));
+  const oldPct = _planDays[dayIdx][mixIdx].pct;
+  const activeOthers = _planDays[dayIdx].filter((m, i) => i !== mixIdx && m.pct > 0 && !m.locked);
+
+  _planDays[dayIdx][mixIdx].pct = newPct;
+
+  if (activeOthers.length === 0) return;
+
+  if (Math.abs(oldPct - 100) < 0.001) {
+    const share = (100 - newPct) / activeOthers.length;
+    activeOthers.forEach(o => { o.pct = Math.max(0, share); });
+  } else {
+    const oldOthersSum = 100 - oldPct;
+    const newOthersSum = 100 - newPct;
+    if (Math.abs(oldOthersSum) > 0.001) {
+      activeOthers.forEach(o => { o.pct = Math.max(0, (o.pct * newOthersSum) / oldOthersSum); });
+    }
+  }
+
+  _planDays[dayIdx].forEach(m => { m.pct = Math.min(100, Math.max(0, m.pct)); });
+  _planDays[dayIdx].forEach(m => { m.pct = parseFloat(m.pct.toFixed(2)); });
+  const sum = _planDays[dayIdx].reduce((s, m) => s + m.pct, 0);
+  const residual = parseFloat((100 - sum).toFixed(2));
+  if (Math.abs(residual) >= 0.01) {
+    _planDays[dayIdx][mixIdx].pct = parseFloat((_planDays[dayIdx][mixIdx].pct + residual).toFixed(2));
+  }
+}
+
+/* ——— Mise à jour DOM sliders/inputs sans re-render complet ——— */
+function _planUpdateDayDOM(dayIdx) {
+  _planDays[dayIdx].forEach((m, i) => {
+    const slider = document.querySelector(`.plan-mix-slider[data-day="${dayIdx}"][data-idx="${i}"]`);
+    const input  = document.querySelector(`.plan-mix-input[data-day="${dayIdx}"][data-idx="${i}"]`);
+    if (!m.locked) {
+      const maxVal = _planDayMaxForMix(dayIdx, i);
+      if (slider) { slider.max = maxVal; slider.value = m.pct; }
+      if (input)  { input.max  = maxVal; input.value  = m.pct; }
+    } else {
+      if (slider) slider.value = m.pct;
+      if (input)  input.value  = m.pct;
+    }
+  });
+  const totalEl = document.getElementById(`plan-day-total-${dayIdx}`);
+  if (totalEl) {
+    const total = _planDays[dayIdx].reduce((s, m) => s + m.pct, 0);
+    const ok = Math.abs(total - 100) < 0.05;
+    totalEl.textContent = `Total : ${total.toFixed(2)}%`;
+    totalEl.style.color = ok ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--warning)');
+    totalEl.style.fontWeight = '600';
+  }
+}
 
 async function _loadPlansTab() {
   const el = document.getElementById('tab-plans');
@@ -680,18 +804,33 @@ async function _loadPlansTab() {
         : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
             ${list.map(p => {
               const weekRows = _DAY_NAMES.map((day, i) => {
-                let names = [];
+                let mixes = [];
                 const raw = p[day];
                 if (raw) {
                   try {
                     const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) names = parsed.map(id => mixMap[id]?.name || `Mél.#${id}`);
-                    else names = [String(raw).slice(0, 60)];
-                  } catch { names = [String(raw).slice(0, 60)]; }
+                    if (Array.isArray(parsed)) {
+                      mixes = parsed.map(item => {
+                        const id  = typeof item === 'object' ? item.id  : item;
+                        const pct = typeof item === 'object' ? item.pct : null;
+                        const mix = mixMap[id];
+                        return mix ? { ...mix, pct } : null;
+                      }).filter(Boolean);
+                    } else mixes = [{ name: String(raw).slice(0, 80), description: null, pct: null }];
+                  } catch { mixes = [{ name: String(raw).slice(0, 80), description: null, pct: null }]; }
                 }
-                return names.length
-                  ? `<tr><td style="font-size:0.78rem;font-weight:600;padding:2px 6px;white-space:nowrap;">${_DAY_LABELS[i]}</td><td style="font-size:0.77rem;padding:2px 6px;">${names.join(', ')}</td></tr>`
-                  : '';
+                if (!mixes.length) return '';
+                const mixLines = mixes.map(m =>
+                  `<div style="display:flex;align-items:baseline;gap:5px;line-height:1.4;">
+                    <span style="font-size:0.77rem;font-weight:600;white-space:nowrap;">▸ ${m.name}</span>
+                    ${m.pct != null ? `<span style="font-size:0.75rem;font-weight:700;color:var(--accent);">${m.pct}%</span>` : ''}
+                    ${m.description ? `<span style="font-size:0.71rem;color:var(--text-light);font-style:italic;">${m.description}</span>` : ''}
+                  </div>`
+                ).join('');
+                return `<tr style="border-top:1px solid var(--border);">
+                  <td style="font-size:0.78rem;font-weight:700;padding:5px 6px;white-space:nowrap;vertical-align:top;color:var(--accent);">${_DAY_LABELS[i]}</td>
+                  <td style="padding:5px 6px;">${mixLines}</td>
+                </tr>`;
               }).filter(Boolean).join('');
               return `
               <div class="card" style="padding:16px;">
@@ -753,9 +892,11 @@ async function openPlanModal(planId = null) {
       try {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          _planDays[i] = parsed
-            .map(id => mixById[id] ? { id, name: mixById[id].name } : null)
-            .filter(Boolean);
+          _planDays[i] = parsed.map(item => {
+            const id  = typeof item === 'object' ? item.id  : item;
+            const pct = typeof item === 'object' ? (item.pct ?? 50) : 50;
+            return mixById[id] ? { id, name: mixById[id].name, pct, locked: false } : null;
+          }).filter(Boolean);
         }
       } catch { /* texte libre, pas de mélanges */ }
     });
@@ -801,7 +942,8 @@ async function openPlanModal(planId = null) {
           <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px;background:var(--bg-secondary);border-radius:8px;">
             <div style="min-width:78px;font-weight:600;font-size:0.88rem;padding-top:6px;">${label}</div>
             <div style="flex:1;">
-              <div id="plan-day-tags-${idx}" style="display:flex;flex-wrap:wrap;gap:4px;min-height:26px;margin-bottom:5px;"></div>
+              <div id="plan-day-tags-${idx}" style="margin-bottom:6px;"></div>
+              <div id="plan-day-total-${idx}" style="font-size:0.82rem;margin-bottom:5px;"></div>
               <div style="display:flex;gap:6px;">
                 <select class="form-control form-control-sm plan-day-sel" data-day="${idx}" style="flex:1;">
                   <option value="">— Ajouter un mélange —</option>
@@ -831,11 +973,13 @@ async function openPlanModal(planId = null) {
       const opt = sel.options[sel.selectedIndex];
       if (!opt.value) return;
       const id = parseInt(opt.value), name = opt.dataset.name;
-      if (!_planDays[day].find(m => m.id === id)) {
-        _planDays[day].push({ id, name });
-        _planRenderDayTags(day);
-        _planRenderSummary();
+      if (_planDays[day].find(m => m.id === id)) {
+        showToast('Ce mélange est déjà dans ce jour', 'warning'); return;
       }
+      _planDays[day].push({ id, name, pct: 0, locked: false });
+      _planDayRebalanceEqual(day);
+      _planRenderDayList(day);
+      _planRenderSummary();
       sel.value = '';
     });
   });
@@ -843,9 +987,17 @@ async function openPlanModal(planId = null) {
   document.getElementById('form-plan').addEventListener('submit', async (e) => {
     e.preventDefault();
     const data = parseFormData(e.target, [], ['name']);
+    for (let i = 0; i < _planDays.length; i++) {
+      if (_planDays[i].length === 0) continue;
+      const total = _planDays[i].reduce((s, m) => s + m.pct, 0);
+      if (Math.abs(total - 100) > 0.5) {
+        showToast(`${_DAY_LABELS[i]} : total des mélanges doit être 100% (actuellement ${total.toFixed(2)}%)`, 'warning');
+        return;
+      }
+    }
     _DAY_NAMES.forEach((day, i) => {
-      const ids = _planDays[i].map(m => m.id);
-      data[day] = ids.length > 0 ? JSON.stringify(ids) : null;
+      const items = _planDays[i].map(m => ({ id: m.id, pct: m.pct }));
+      data[day] = items.length > 0 ? JSON.stringify(items) : null;
     });
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
@@ -867,27 +1019,78 @@ async function openPlanModal(planId = null) {
   });
 }
 
-function _planRenderDayTags(dayIdx) {
-  const container = document.getElementById(`plan-day-tags-${dayIdx}`);
-  if (!container) return;
+function _planRenderDayList(dayIdx) {
+  const el = document.getElementById(`plan-day-tags-${dayIdx}`);
+  if (!el) return;
+
   if (_planDays[dayIdx].length === 0) {
-    container.innerHTML = '<span style="font-size:0.77rem;color:var(--text-light);font-style:italic;">Aucun mélange — jeûne / eau</span>';
+    el.innerHTML = '<div style="font-size:0.77rem;color:var(--text-light);font-style:italic;padding:2px 0;">Aucun mélange — jeûne / eau</div>';
+    const totalEl = document.getElementById(`plan-day-total-${dayIdx}`);
+    if (totalEl) totalEl.textContent = '';
     return;
   }
-  container.innerHTML = _planDays[dayIdx].map((m, i) =>
-    `<span style="background:var(--accent);color:#fff;border-radius:12px;padding:2px 8px;font-size:0.78rem;display:inline-flex;align-items:center;gap:4px;">
-      🔀 ${m.name}
-      <button type="button" onclick="_planRemoveDayMix(${dayIdx},${i})"
-        style="background:none;border:none;color:#fff;cursor:pointer;padding:0;font-size:0.75rem;line-height:1;">✕</button>
-    </span>`
-  ).join('');
+
+  const unlockedCount = _planDays[dayIdx].filter(m => !m.locked).length;
+  el.innerHTML = _planDays[dayIdx].map((m, i) => {
+    const canLock    = !m.locked && unlockedCount > 2;
+    const lockDisabled = !m.locked && !canLock ? 'disabled title="2 mélanges déverrouillés minimum"' : '';
+    const maxVal     = m.locked ? 100 : _planDayMaxForMix(dayIdx, i);
+    return `
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap;${m.locked ? 'opacity:0.75;' : ''}">
+      <button type="button" class="btn btn-sm btn-icon plan-mix-lock"
+        data-day="${dayIdx}" data-idx="${i}" ${lockDisabled}
+        style="font-size:1rem;padding:2px 5px;${m.locked ? 'color:var(--accent);' : 'color:var(--text-light);'}"
+        title="${m.locked ? 'Déverrouiller' : 'Verrouiller'}">${m.locked ? '🔒' : '🔓'}</button>
+      <span style="min-width:90px;font-size:0.83rem;">🔀 ${m.name}</span>
+      <input type="range" min="0" max="${maxVal}" step="0.01" value="${m.pct}"
+        class="plan-mix-slider" data-day="${dayIdx}" data-idx="${i}"
+        style="flex:2;min-width:80px;accent-color:var(--accent);" ${m.locked ? 'disabled' : ''}>
+      <input type="number" min="0" max="${maxVal}" step="0.01" value="${m.pct}"
+        class="form-control plan-mix-input" style="width:74px;" data-day="${dayIdx}" data-idx="${i}" ${m.locked ? 'disabled' : ''}>
+      <span style="font-size:0.78rem;color:var(--text-light);width:12px;">%</span>
+      <button type="button" class="btn btn-sm btn-icon plan-mix-remove"
+        data-day="${dayIdx}" data-idx="${i}">🗑️</button>
+    </div>`;
+  }).join('');
+
+  _planUpdateDayDOM(dayIdx);
+
+  el.querySelectorAll('.plan-mix-slider').forEach(slider => {
+    slider.addEventListener('input', (e) => {
+      _planDayApplyChange(parseInt(e.target.dataset.day), parseInt(e.target.dataset.idx), e.target.value);
+      _planUpdateDayDOM(parseInt(e.target.dataset.day));
+    });
+    slider.addEventListener('change', () => _planRenderDayList(parseInt(slider.dataset.day)));
+  });
+
+  el.querySelectorAll('.plan-mix-input').forEach(input => {
+    input.addEventListener('change', (e) => {
+      _planDayApplyChange(parseInt(e.target.dataset.day), parseInt(e.target.dataset.idx), e.target.value);
+      _planRenderDayList(parseInt(e.target.dataset.day));
+    });
+  });
+
+  el.querySelectorAll('.plan-mix-remove').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const b   = e.target.closest('button');
+      const day = parseInt(b.dataset.day);
+      const idx = parseInt(b.dataset.idx);
+      _planDays[day].splice(idx, 1);
+      if (_planDays[day].length > 0) _planDayRebalanceEqual(day);
+      _planRenderDayList(day);
+      _planRenderSummary();
+    });
+  });
+  el.querySelectorAll('.plan-mix-lock').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const b   = e.target.closest('button');
+      _planDayToggleLock(parseInt(b.dataset.day), parseInt(b.dataset.idx));
+    });
+  });
 }
 
-function _planRemoveDayMix(dayIdx, mixIdx) {
-  _planDays[dayIdx].splice(mixIdx, 1);
-  _planRenderDayTags(dayIdx);
-  _planRenderSummary();
-}
+// alias pour l'appel initial dans openPlanModal
+function _planRenderDayTags(dayIdx) { _planRenderDayList(dayIdx); }
 
 function _planRenderSummary() {
   const el = document.getElementById('plan-week-summary');
@@ -901,7 +1104,15 @@ function _planRenderSummary() {
           <tr>
             <td style="font-weight:600;padding:3px 8px;white-space:nowrap;">${label}</td>
             <td style="padding:3px 8px;">${_planDays[i].length
-              ? _planDays[i].map(m => `<span class="badge badge-info" style="font-size:0.72rem;">${m.name}</span>`).join(' ')
+              ? _planDays[i].map(m => {
+                  const total = _planDays[i].reduce((s,x) => s + x.pct, 0);
+                  const ok = Math.abs(total - 100) < 0.05;
+                  return `<span class="badge badge-info" style="font-size:0.72rem;">${m.name} <strong>${m.pct}%</strong></span>`;
+                }).join(' ') + (() => {
+                  const total = _planDays[i].reduce((s,m) => s + m.pct, 0);
+                  const color = Math.abs(total-100)<0.05 ? 'var(--success)' : total>100 ? 'var(--danger)' : 'var(--warning)';
+                  return `<span style="font-size:0.72rem;font-weight:700;color:${color};margin-left:4px;">= ${total.toFixed(0)}%</span>`;
+                })()
               : '<span style="color:var(--text-light);font-style:italic;">—</span>'}</td>
           </tr>`).join('')}
       </tbody>

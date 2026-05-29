@@ -118,6 +118,11 @@ class FeedIngredientBase(BaseModel):
     name: str
     category: Optional[str] = None
     description: Optional[str] = None
+    proteines_pct: Optional[float] = None
+    lipides_pct: Optional[float] = None
+    glucides_pct: Optional[float] = None
+    energie_kcal: Optional[float] = None
+    notes_eleveurs: Optional[str] = None
 
 
 class FeedIngredientCreate(FeedIngredientBase):
@@ -129,6 +134,11 @@ class FeedIngredientUpdate(BaseModel):
     name: Optional[str] = None
     category: Optional[str] = None
     description: Optional[str] = None
+    proteines_pct: Optional[float] = None
+    lipides_pct: Optional[float] = None
+    glucides_pct: Optional[float] = None
+    energie_kcal: Optional[float] = None
+    notes_eleveurs: Optional[str] = None
 
 
 class FeedIngredientResponse(FeedIngredientBase):

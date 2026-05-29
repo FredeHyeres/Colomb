@@ -84,6 +84,11 @@ class FeedIngredient(Base):
     name = Column(String(100), nullable=False, unique=True)
     category = Column(SAEnum(IngredientCategory), nullable=True)
     description = Column(Text, nullable=True)
+    proteines_pct = Column(Float, nullable=True)
+    lipides_pct = Column(Float, nullable=True)
+    glucides_pct = Column(Float, nullable=True)
+    energie_kcal = Column(Float, nullable=True)
+    notes_eleveurs = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
@@ -106,13 +111,13 @@ class NutritionPlan(Base):
     description = Column(Text, nullable=True)
     composition = Column(Text, nullable=True)  # JSON: [{"ingredient_id": 1, "ingredient_name": "Blé", "percentage": 60}, ...]
     mix_id = Column(Integer, ForeignKey("feed_mixes.id"), nullable=True)
-    lundi = Column(String(200), nullable=True)
-    mardi = Column(String(200), nullable=True)
-    mercredi = Column(String(200), nullable=True)
-    jeudi = Column(String(200), nullable=True)
-    vendredi = Column(String(200), nullable=True)
-    samedi = Column(String(200), nullable=True)
-    dimanche = Column(String(200), nullable=True)
+    lundi = Column(Text, nullable=True)      # JSON: [mix_id, mix_id, ...]
+    mardi = Column(Text, nullable=True)
+    mercredi = Column(Text, nullable=True)
+    jeudi = Column(Text, nullable=True)
+    vendredi = Column(Text, nullable=True)
+    samedi = Column(Text, nullable=True)
+    dimanche = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     mix = relationship("FeedMix")
 
