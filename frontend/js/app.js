@@ -18,8 +18,10 @@ async function apiFetch(endpoint, options = {}) {
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     const msg = error.detail || 'Erreur API';
-    showNotification(msg, 'danger');
-    throw new Error(msg);
+    const err = new Error(msg);
+    err.status = response.status;
+    if (response.status !== 409) showNotification(msg, 'danger');
+    throw err;
   }
   if (response.status === 204) return null;
   return await response.json();

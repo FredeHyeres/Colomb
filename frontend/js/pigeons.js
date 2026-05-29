@@ -620,14 +620,59 @@ async function savePigeon(id = '') {
 
 // ===== SUPPRIMER =====
 async function deletePigeon(id, matricule) {
-  if (!confirm(`Supprimer le pigeon "${matricule}" ?`)) return;
+  if (!confirm(`Supprimer définitivement le pigeon "${matricule}" ?\nCette action est irréversible.`)) return;
   try {
     await apiFetch(`/pigeons/${id}`, { method: 'DELETE' });
     showNotification(`Pigeon "${matricule}" supprimé`);
     loadPigeons();
   } catch (err) {
-    console.error(err);
+    if (err.status === 409 || (err.message && err.message.includes('affectations nutritionnelles'))) {
+      _showPigeonBlockedDialog(id, matricule, err.message);
+    } else {
+      showNotification(err.message || 'Erreur lors de la suppression', 'error');
+      console.error(err);
+    }
   }
+}
+
+function _showPigeonBlockedDialog(id, matricule) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <div style="font-size:2rem;text-align:center;margin-bottom:12px;">⚠️</div>
+      <h3 style="font-size:1.05rem;font-weight:700;text-align:center;margin-bottom:10px;">Suppression impossible</h3>
+      <p style="font-size:0.88rem;color:#555;line-height:1.5;margin-bottom:6px;">
+        Le pigeon <strong>${matricule}</strong> possède des affectations nutritionnelles actives.
+      </p>
+      <p style="font-size:0.88rem;color:#555;line-height:1.5;margin-bottom:20px;">
+        Pour le retirer du suivi tout en conservant l'historique, marquez-le comme <strong>Perdu</strong>.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button id="dlg-cancel"  style="padding:8px 18px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;font-size:0.88rem;">Annuler</button>
+        <button id="dlg-perdu"   style="padding:8px 18px;border:none;border-radius:6px;background:#E67E22;color:#fff;cursor:pointer;font-size:0.88rem;font-weight:600;">Marquer comme Perdu</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const close = () => document.body.removeChild(overlay);
+
+  overlay.querySelector('#dlg-cancel').addEventListener('click', close);
+
+  overlay.querySelector('#dlg-perdu').addEventListener('click', async () => {
+    try {
+      await apiFetch(`/pigeons/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ statut: 'perdu' }),
+      });
+      showNotification(`Pigeon "${matricule}" marqué comme Perdu`);
+      loadPigeons();
+    } catch (err2) {
+      showNotification(err2.message || 'Erreur lors de la mise à jour', 'error');
+    } finally {
+      close();
+    }
+  });
 }
 
 // ===== PERFORMANCES =====

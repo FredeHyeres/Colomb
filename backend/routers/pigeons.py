@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
 from database import get_db
 from models import Pigeon
 from models.pigeon import Sexe
+from models.sport import NutritionAssignment
 from schemas import PigeonCreate, PigeonUpdate, PigeonResponse, PigeonDetail
 from typing import List
 import uuid
@@ -94,6 +95,16 @@ async def delete_pigeon(pigeon_id: str, db: AsyncSession = Depends(get_db)):
     db_pigeon = result.scalar_one_or_none()
     if not db_pigeon:
         raise HTTPException(status_code=404, detail="Pigeon non trouvé")
+
+    aff_count = await db.execute(
+        select(func.count()).where(NutritionAssignment.pigeon_id == pigeon_id)
+    )
+    if aff_count.scalar() > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Ce pigeon possède des affectations nutritionnelles actives. Marquez-le comme « Perdu » pour le retirer du suivi tout en conservant l'historique.",
+        )
+
     await db.delete(db_pigeon)
     await db.commit()
 

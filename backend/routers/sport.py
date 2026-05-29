@@ -16,7 +16,7 @@ from schemas.sport import (
     FeedMixCreate, FeedMixUpdate, FeedMixResponse,
     NutritionPlanCreate, NutritionPlanUpdate, NutritionPlanResponse,
     NutritionAssignmentCreate, NutritionAssignmentResponse,
-    NutritionAssignmentBulkCreate, NutritionCalendarRow,
+    NutritionAssignmentBulkCreate, NutritionCalendarRow, CalendarMixEntry,
     SupplementCreate, SupplementUpdate, SupplementResponse,
     SportDashboardResponse,
 )
@@ -439,9 +439,9 @@ async def get_affectations_calendrier(
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Retourne pour chaque pigeon actif le planning résolu pour la semaine ISO donnée.
-    Priorité : affectation individuelle (is_individual=True) > groupe.
-    Exclut les pigeons statut perdu et decede.
+    Retourne le planning de la semaine ISO :
+    - Une ligne par GROUPE pour les affectations de groupe
+    - Une ligne par PIGEON pour les affectations individuelles
     """
     try:
         year_str, week_str = semaine.split("-W")
@@ -450,28 +450,43 @@ async def get_affectations_calendrier(
         raise HTTPException(status_code=400, detail="Format semaine invalide. Attendu: YYYY-Www")
     week_end = week_start + timedelta(days=6)
 
-    # Charger les mélanges pour résolution des noms
+    day_names = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+
+    # Mélanges (id → {name, description})
     mixes_res = await db.execute(select(FeedMix))
-    mix_map = {m.id: m.name for m in mixes_res.scalars().all()}
+    mix_map = {m.id: {"name": m.name, "description": m.description} for m in mixes_res.scalars().all()}
 
-    # Pigeons actifs (exclure perdu et decede)
-    pigeons_res = await db.execute(
-        select(Pigeon).where(
-            Pigeon.statut.notin_([Statut.perdu, Statut.decede])
-        ).order_by(Pigeon.matricule)
-    )
-    pigeons = pigeons_res.scalars().all()
-    if not pigeons:
-        return []
+    def resolve_plan_days(plan) -> dict:
+        """Retourne {day: [CalendarMixEntry]} pour un plan."""
+        result = {}
+        for day in day_names:
+            entries: List[CalendarMixEntry] = []
+            day_json = getattr(plan, day, None)
+            if day_json:
+                try:
+                    parsed = json.loads(day_json)
+                    if isinstance(parsed, list):
+                        for item in parsed:
+                            mid = item.get("id") if isinstance(item, dict) else item
+                            pct = item.get("pct") if isinstance(item, dict) else None
+                            mix_info = mix_map.get(mid, {})
+                            entries.append(CalendarMixEntry(
+                                name=mix_info.get("name", f"Mél.#{mid}"),
+                                pct=pct,
+                                description=mix_info.get("description"),
+                            ))
+                    else:
+                        entries = [CalendarMixEntry(name=str(day_json)[:60])]
+                except (json.JSONDecodeError, TypeError, ValueError):
+                    entries = [CalendarMixEntry(name=day_json[:60].rstrip())]
+            result[day] = entries
+        return result
 
-    pigeon_ids = [p.id for p in pigeons]
-
-    # Charger toutes les affectations qui chevauchent la semaine
+    # Toutes les affectations actives sur la semaine (tous pigeons)
     aff_res = await db.execute(
         select(NutritionAssignment)
         .options(selectinload(NutritionAssignment.plan))
         .where(
-            NutritionAssignment.pigeon_id.in_(pigeon_ids),
             NutritionAssignment.date_debut <= week_end,
             or_(
                 NutritionAssignment.date_fin == None,  # noqa: E711
@@ -481,41 +496,61 @@ async def get_affectations_calendrier(
     )
     all_aff = aff_res.scalars().all()
 
-    # Indexer par pigeon
-    aff_by_pigeon: dict = {}
-    for a in all_aff:
-        aff_by_pigeon.setdefault(a.pigeon_id, []).append(a)
-
-    day_names = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
     rows = []
-    for pigeon in pigeons:
-        assignments = aff_by_pigeon.get(pigeon.id, [])
-        # Priorité individuel > groupe
-        indiv_plan = next((a.plan for a in assignments if a.is_individual), None)
-        group_plan = next((a.plan for a in assignments if not a.is_individual), None)
-        active_plan = indiv_plan or group_plan
+    seen_groups: set = set()
+    seen_pigeons: set = set()
 
+    # ── 1. Lignes GROUPE (is_individual=False) ─────────────────────────────────
+    for aff in all_aff:
+        if aff.is_individual or not aff.groupe or aff.groupe in seen_groups:
+            continue
+        seen_groups.add(aff.groupe)
+        if not aff.plan:
+            continue
+        day_data = resolve_plan_days(aff.plan)
         row = NutritionCalendarRow(
-            pigeon_id=pigeon.id,
-            bague=pigeon.matricule,
-            nom=None,
+            row_id=f"group_{aff.groupe}",
+            label=aff.groupe.capitalize(),
+            is_group=True,
+            **day_data,
         )
-        for day in day_names:
-            names: List[str] = []
-            if active_plan:
-                day_json = getattr(active_plan, day, None)
-                if day_json:
-                    try:
-                        parsed = json.loads(day_json)
-                        if isinstance(parsed, list):
-                            names = [mix_map.get(mid, f"Mél.#{mid}") for mid in parsed]
-                        else:
-                            names = [str(day_json)[:60]]
-                    except (json.JSONDecodeError, TypeError, ValueError):
-                        # Texte brut (plans seed) → afficher directement
-                        names = [day_json[:60].rstrip()]
-            setattr(row, day, names)
         rows.append(row)
+
+    # Trier les lignes groupe par label
+    rows.sort(key=lambda r: r.label)
+
+    # ── 2. Lignes PIGEON individuel (is_individual=True) ───────────────────────
+    # Charger les pigeons concernés
+    indiv_pigeon_ids = list({a.pigeon_id for a in all_aff if a.is_individual})
+    if indiv_pigeon_ids:
+        pig_res = await db.execute(
+            select(Pigeon)
+            .where(
+                Pigeon.id.in_(indiv_pigeon_ids),
+                Pigeon.statut.notin_([Statut.perdu, Statut.decede]),
+            )
+            .order_by(Pigeon.matricule)
+        )
+        pigeons_by_id = {p.id: p for p in pig_res.scalars().all()}
+
+        for aff in sorted(all_aff, key=lambda a: a.pigeon_id):
+            if not aff.is_individual or aff.pigeon_id in seen_pigeons:
+                continue
+            seen_pigeons.add(aff.pigeon_id)
+            if not aff.plan:
+                continue
+            pigeon = pigeons_by_id.get(aff.pigeon_id)
+            if not pigeon:
+                continue
+            day_data = resolve_plan_days(aff.plan)
+            row = NutritionCalendarRow(
+                row_id=aff.pigeon_id,
+                label=pigeon.matricule,
+                sous_label=getattr(pigeon, "nom", None),
+                is_group=False,
+                **day_data,
+            )
+            rows.append(row)
 
     return rows
 

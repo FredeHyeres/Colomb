@@ -279,17 +279,24 @@ class NutritionAssignmentBulkCreate(BaseModel):
 
 # ── NutritionCalendar ─────────────────────────────────────────────────────────
 
+class CalendarMixEntry(BaseModel):
+    name: str
+    pct: Optional[float] = None
+    description: Optional[str] = None
+
+
 class NutritionCalendarRow(BaseModel):
-    pigeon_id: str
-    bague: str
-    nom: Optional[str] = None
-    lundi: List[str] = []
-    mardi: List[str] = []
-    mercredi: List[str] = []
-    jeudi: List[str] = []
-    vendredi: List[str] = []
-    samedi: List[str] = []
-    dimanche: List[str] = []
+    row_id: str                        # pigeon_id ou nom du groupe
+    label: str                         # bague pigeon ou nom du groupe
+    sous_label: Optional[str] = None   # nom pigeon (mode individuel)
+    is_group: bool = False
+    lundi: List[CalendarMixEntry] = []
+    mardi: List[CalendarMixEntry] = []
+    mercredi: List[CalendarMixEntry] = []
+    jeudi: List[CalendarMixEntry] = []
+    vendredi: List[CalendarMixEntry] = []
+    samedi: List[CalendarMixEntry] = []
+    dimanche: List[CalendarMixEntry] = []
 
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────

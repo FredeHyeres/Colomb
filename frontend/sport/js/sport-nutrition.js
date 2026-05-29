@@ -72,6 +72,7 @@ async function loadMixesTab() {
                   </div>
                   <div style="display:flex;gap:6px;">
                     <button class="btn btn-sm btn-icon" onclick="openMixModal(${m.id})" title="Modifier">✏️</button>
+                    <button class="btn btn-sm btn-icon" onclick="duplicateMix(${m.id})" title="Dupliquer">📋</button>
                     <button class="btn btn-sm btn-icon" onclick="deleteMixItem(${m.id})" title="Supprimer">🗑️</button>
                   </div>
                 </div>
@@ -102,6 +103,21 @@ function _renderMixCompositionPreview(compositionJson) {
       : '';
     return `<div style="font-size:0.75rem;color:var(--text-light);margin-top:6px;">${ingHtml}${supHtml}</div>`;
   } catch { return ''; }
+}
+
+async function duplicateMix(mixId) {
+  try {
+    const src = await SportAPI.getMix(mixId);
+    const copy = {
+      name:        `${src.name} (copie)`,
+      usage:       src.usage       || null,
+      description: src.description || null,
+      composition: src.composition || null,
+    };
+    await SportAPI.createMix(copy);
+    showToast('Mélange dupliqué !', 'success');
+    loadMixesTab();
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function deleteMixItem(mixId) {
@@ -841,6 +857,7 @@ async function _loadPlansTab() {
                   </div>
                   <div style="display:flex;gap:6px;">
                     <button class="btn btn-sm btn-icon" onclick="openPlanModal(${p.id})" title="Modifier">✏️</button>
+                    <button class="btn btn-sm btn-icon" onclick="duplicatePlan(${p.id})" title="Dupliquer">📋</button>
                     <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
                   </div>
                 </div>
@@ -855,6 +872,22 @@ async function _loadPlansTab() {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
     showToast(err.message, 'error');
   }
+}
+
+async function duplicatePlan(planId) {
+  try {
+    const src = await SportAPI.getPlan(planId);
+    const DAY_KEYS = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+    const copy = {
+      name:        `${src.name} (copie)`,
+      goal:        src.goal        || null,
+      description: src.description || null,
+    };
+    DAY_KEYS.forEach(d => { copy[d] = src[d] || null; });
+    await SportAPI.createPlan(copy);
+    showToast('Plan alimentaire dupliqué !', 'success');
+    _loadPlansTab();
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function deletePlan(planId) {
@@ -1128,7 +1161,8 @@ function loadNutritionPlans() {
    ONGLET AFFECTATION
    ============================================================ */
 
-let _affAllPigeons = [];
+let _affAllPigeons = [];      // pigeons actifs uniquement (sélection)
+let _affAllPigeonsLookup = []; // tous pigeons (résolution des noms dans la liste)
 let _affSelectedIds = new Set();
 let _affPlan = null;
 let _affPlanMap = {};
@@ -1144,7 +1178,10 @@ async function _loadAffectationTab() {
       SportAPI.getMixes().catch(() => []),
       SportAPI.getAffectations({}).catch(() => []),
     ]);
-    _affAllPigeons = Array.isArray(allPigeons) ? allPigeons : [];
+    const rawPigeons = Array.isArray(allPigeons) ? allPigeons : [];
+    _affAllPigeonsLookup = rawPigeons;
+    _affAllPigeons = rawPigeons
+      .filter(p => !['perdu', 'decede'].includes((p.statut || '').toLowerCase()));
     const planList = Array.isArray(plans) ? plans : [];
     _affPlanMap = Object.fromEntries(planList.map(p => [p.id, p]));
     _affMixMap  = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m.name]));
@@ -1159,8 +1196,6 @@ async function _loadAffectationTab() {
       { value: 'reproducteur', label: 'Reproducteur' },
       { value: 'concours',     label: 'Concours' },
       { value: 'retraite',     label: 'Retraite' },
-      { value: 'perdu',        label: 'Perdu' },
-      { value: 'decede',       label: 'Décédé' },
     ];
 
     el.innerHTML = `
@@ -1236,7 +1271,7 @@ async function _loadAffectationTab() {
       <div style="border-top:1px solid var(--border);padding-top:16px;">
         <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">📋 Affectations enregistrées</div>
         <div id="aff-list">
-          ${_renderAffectationsList(Array.isArray(existingAff) ? existingAff : [], _affPlanMap, _affAllPigeons)}
+          ${_renderAffectationsList(Array.isArray(existingAff) ? existingAff : [], _affPlanMap, _affAllPigeonsLookup)}
         </div>
       </div>
     `;
@@ -1347,7 +1382,12 @@ function _affRenderPlanPreview() {
       <tbody><tr>
         ${_DAY_NAMES.map(day => {
           let names = [];
-          try { if (p[day]) names = JSON.parse(p[day]).map(id => _affMixMap[id] || `Mél.#${id}`); } catch {}
+          try {
+            if (p[day]) names = JSON.parse(p[day]).map(item => {
+              const id = typeof item === 'object' ? item.id : item;
+              return _affMixMap[id] || `Mél.#${id}`;
+            });
+          } catch {}
           return `<td style="padding:4px 5px;text-align:center;vertical-align:top;">
             ${names.length
               ? names.map(n => `<div style="background:var(--bg-secondary);border-radius:3px;padding:1px 4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;">${n}</div>`).join('')
@@ -1468,7 +1508,14 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
             const plan   = a.plan || planMap[a.plan_id];
             return `
               <tr>
-                <td>${pigeon ? pigeon.matricule : a.pigeon_id}</td>
+                <td>${pigeon
+                  ? pigeon.matricule + (() => {
+                      const s = (pigeon.statut || '').toLowerCase();
+                      if (s === 'perdu')  return ' <span class="badge" style="background:#E67E22;color:#fff;font-size:0.68rem;">Perdu</span>';
+                      if (s === 'decede') return ' <span class="badge" style="background:#7F8C8D;color:#fff;font-size:0.68rem;">Décédé</span>';
+                      return '';
+                    })()
+                  : `<span style="color:var(--danger);font-size:0.78rem;">${a.pigeon_id}</span>`}</td>
                 <td>${plan ? plan.name : 'Plan #' + a.plan_id}</td>
                 <td>${formatDate(a.date_debut)}</td>
                 <td>${a.date_fin ? formatDate(a.date_fin) : '♾️'}</td>
@@ -1600,16 +1647,29 @@ function _cal2RenderTable(rows) {
         </thead>
         <tbody>
           ${rows.map(row => `
-            <tr>
-              <td style="font-weight:600;font-size:0.88rem;position:sticky;left:0;background:var(--bg-card);">
-                ${row.bague}
-                ${row.nom ? `<br><span style="font-weight:400;font-size:0.76rem;color:var(--text-light);">${row.nom}</span>` : ''}
+            <tr style="${row.is_group ? 'background:var(--bg-secondary);' : ''}">
+              <td style="font-weight:600;font-size:0.88rem;position:sticky;left:0;${row.is_group ? 'background:var(--bg-secondary);' : 'background:var(--bg-card);'}">
+                ${row.is_group
+                  ? `<span style="display:inline-flex;align-items:center;gap:5px;">
+                       <span style="font-size:0.9rem;">👥</span>
+                       <span style="color:var(--accent);">${row.label}</span>
+                     </span>`
+                  : `<span style="font-size:0.8rem;">🕊️ ${row.label}</span>
+                     ${row.sous_label ? `<br><span style="font-weight:400;font-size:0.74rem;color:var(--text-light);">${row.sous_label}</span>` : ''}`
+                }
               </td>
               ${dayKeys.map(day => {
                 const mixes = row[day] || [];
-                return `<td style="font-size:0.78rem;text-align:center;vertical-align:top;padding:6px 4px;">
+                return `<td style="font-size:0.78rem;vertical-align:top;padding:5px 4px;">
                   ${mixes.length
-                    ? mixes.map(m => `<div style="background:var(--accent);color:#fff;border-radius:4px;padding:2px 5px;margin-bottom:2px;white-space:nowrap;font-size:0.72rem;">${m}</div>`).join('')
+                    ? mixes.map(m => `
+                        <div style="margin-bottom:4px;line-height:1.35;">
+                          <div style="display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;">
+                            <span style="font-weight:600;font-size:0.75rem;">▸ ${m.name}</span>
+                            ${m.pct != null ? `<span style="font-size:0.73rem;font-weight:700;color:var(--accent);">${m.pct}%</span>` : ''}
+                          </div>
+                          ${m.description ? `<div style="font-size:0.68rem;color:var(--text-light);font-style:italic;margin-left:8px;">${m.description}</div>` : ''}
+                        </div>`).join('')
                     : '<span style="color:var(--text-light);">—</span>'}
                 </td>`;
               }).join('')}
