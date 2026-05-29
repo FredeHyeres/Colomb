@@ -8,21 +8,13 @@
 
 ---
 
-> ## Statut du projet
->
-> **Branche `main`** : V3 stable — XAI Engine finalisé, boucle feedback, ELEVEUR_RULES
-> **Branche `v2`** : archive — Élevage + Sport + XAI expérimental
-> **Tag `v3.0.0`** · **Tag `v2.0.0`** · **Tag `v1.0.0`**
+## Versions
 
----
-
-## 🗺️ Versions
-
-| Tag | Contenu | Statut |
-|---|---|---|
-| `v1.0.0` | Élevage (pigeons, pedigree, couples, santé, performances) | ✅ Archive |
-| `v2.0.0` | V1 + Sport (séances, analytics, nutrition) + XAI expérimental | ✅ Archive |
-| `v3.0.0` | XAI Engine finalisé · boucle feedback · ELEVEUR_RULES · robustesse UI | ✅ Stable |
+| Version | Branche | Tag | Statut |
+|---------|---------|-----|--------|
+| V3 (actuelle) | `main` | [v3.0.0](../../releases/tag/v3.0.0) | ✅ Production |
+| V2 | `v2` | [v2.0.0](../../releases/tag/v2.0.0) | 🔒 Archivée |
+| V1 | `v1` | [v1.0.0](../../releases/tag/v1.0.0) | 🔒 Archivée |
 
 ---
 
