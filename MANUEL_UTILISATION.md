@@ -1,7 +1,7 @@
 # Manuel d'utilisation — Colomb
 
 **Application de gestion d'élevage colombophile**
-Version 1.0 — Mai 2026
+Version 3.0 — Mai 2026
 
 **Développeur :** F. Tourneur — [fredtour86@gmail.com](mailto:fredtour86@gmail.com)
 
