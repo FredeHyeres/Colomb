@@ -84,6 +84,13 @@ async function loadSessions() {
   }
 }
 
+/* ——— Formatage distance : stockée en km dans la DB, affichée en mètres ——— */
+function fmtDistance(distKm) {
+  if (distKm == null) return '—';
+  const m = Math.round(distKm * 1000);
+  return m.toLocaleString('fr-FR') + ' m';
+}
+
 /* ——— Rendu tableau séances ——— */
 function renderSessionsTable(list) {
   if (list.length === 0) {
@@ -113,19 +120,26 @@ function renderSessionsTable(list) {
         ${list.map(s => {
           const nbResults = (s.results || []).length || s.result_count || 0;
           const avgRec = computeAvgRecovery(s);
+          const isConcours = s.session_type === 'race';
           return `
-            <tr data-session-id="${s.id}" class="session-row">
+            <tr data-session-id="${s.id}" class="session-row" style="${isConcours ? 'opacity:0.85;' : ''}">
               <td>${formatDate(s.date)}</td>
-              <td>${sessionTypeBadge(s.session_type)}</td>
-              <td>${s.distance_km != null ? s.distance_km + ' km' : '—'}</td>
+              <td>
+                ${sessionTypeBadge(s.session_type)}
+                ${isConcours ? '<br><span style="font-size:11px;color:var(--text-light);">via Concours Colomb</span>' : ''}
+              </td>
+              <td>${fmtDistance(s.distance_km)}</td>
               <td>${s.weather || '—'}</td>
               <td>${s.temperature_c != null ? s.temperature_c + '°C' : '—'}</td>
               <td>${s.wind || '—'}</td>
               <td><span class="badge badge-secondary">${nbResults}</span></td>
               <td>${avgRec != null ? renderScoreBar(avgRec) : '<span style="color:var(--text-light)">—</span>'}</td>
               <td>
-                <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openSessionDetail(${s.id})">Détail</button>
-                <button class="btn btn-sm btn-icon" title="Supprimer" onclick="event.stopPropagation();deleteSession(${s.id})">🗑️</button>
+                ${isConcours
+                  ? `<a href="../index.html#concours" class="btn btn-sm btn-secondary" title="Géré dans Colomb">🏠 Colomb</a>`
+                  : `<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openSessionDetail(${s.id})">Détail</button>
+                     <button class="btn btn-sm btn-icon" title="Supprimer" onclick="event.stopPropagation();deleteSession(${s.id})">🗑️</button>`
+                }
               </td>
             </tr>`;
         }).join('')}
@@ -172,6 +186,10 @@ function openCreateSessionModal() {
 
   const today = new Date().toISOString().split('T')[0];
   body.innerHTML = `
+    <div style="background:#EBF5FB;border:1px solid #AED6F1;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#1A5276;">
+      🏆 Les séances de <strong>Concours</strong> sont gérées depuis l'accueil <strong>Colomb</strong>
+      (module Concours). Elles apparaissent ici automatiquement en lecture seule.
+    </div>
     <form id="form-session">
       <div class="form-row">
         <div class="form-group">
@@ -183,14 +201,13 @@ function openCreateSessionModal() {
           <select class="form-control" name="session_type" required>
             <option value="loft">Loft</option>
             <option value="toss">Lancer</option>
-            <option value="race">Concours</option>
           </select>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Distance (km)</label>
-          <input type="number" class="form-control" name="distance_km" step="0.1" min="0" placeholder="ex: 50">
+          <label class="form-label">Distance (m)</label>
+          <input type="number" class="form-control" name="distance_m" step="100" min="0" placeholder="ex: 50000">
         </div>
         <div class="form-group">
           <label class="form-label">Météo</label>
@@ -243,9 +260,11 @@ function openCreateSessionModal() {
     const fd = new FormData(e.target);
     const data = Object.fromEntries(fd.entries());
 
-    // Nettoyage types
-    if (data.distance_km) data.distance_km = parseFloat(data.distance_km);
-    else delete data.distance_km;
+    // Convertir distance m → km (DB stocke en km)
+    if (data.distance_m) {
+      data.distance_km = parseFloat(data.distance_m) / 1000;
+    }
+    delete data.distance_m;
     if (data.temperature) data.temperature = parseFloat(data.temperature);
     else delete data.temperature;
     if (!data.weather) delete data.weather;
@@ -305,13 +324,23 @@ async function openSessionDetail(sessionId) {
 
     title.textContent = `Séance du ${formatDate(session.date)} — ${sessionTypeBadge(session.session_type)}`;
 
+    const bannerConcours = session.session_type === 'race' ? `
+      <div style="background:#EBF5FB;border:1px solid #AED6F1;border-radius:8px;padding:10px 14px;
+                  margin-bottom:16px;font-size:13px;color:#1A5276;display:flex;align-items:center;gap:8px;">
+        🏆 Cette séance est un <strong>concours</strong> géré depuis l'accueil Colomb.
+        <a href="../index.html#concours" style="margin-left:auto;font-weight:600;color:#2980B9;">
+          Aller aux Concours →
+        </a>
+      </div>` : '';
+
     body.innerHTML = `
+      ${bannerConcours}
       <!-- Infos générales -->
       <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
         ${session.distance_km != null ? `<div class="stat-card stat-blue" style="flex:1;min-width:120px;">
           <div class="stat-icon">📏</div>
-          <div class="stat-value">${session.distance_km}</div>
-          <div class="stat-label">km</div>
+          <div class="stat-value">${Math.round(session.distance_km * 1000).toLocaleString('fr-FR')}</div>
+          <div class="stat-label">m</div>
         </div>` : ''}
         ${session.temperature != null ? `<div class="stat-card stat-orange" style="flex:1;min-width:120px;">
           <div class="stat-icon">🌡️</div>
