@@ -1934,11 +1934,11 @@ function _cal2RenderTable(rows) {
 
   return `
     <div style="overflow-x:auto;">
-      <table class="table-modern" style="min-width:680px;width:100%;">
+      <table class="table-modern" style="width:100%;">
         <thead>
           <tr>
-            <th style="min-width:130px;position:sticky;left:0;background:var(--bg-secondary);color:var(--text);">Pigeon</th>
-            ${dayLabels.map(d => `<th style="text-align:center;min-width:80px;">${d}</th>`).join('')}
+            <th style="min-width:160px;position:sticky;left:0;background:var(--bg-secondary);color:var(--text);">Pigeon / Groupe</th>
+            <th>Plan alimentaire</th>
           </tr>
         </thead>
         <tbody>
@@ -1954,20 +1954,28 @@ function _cal2RenderTable(rows) {
                      ${row.sous_label ? `<br><span style="font-weight:400;font-size:0.74rem;color:var(--text-light);">${row.sous_label}</span>` : ''}`
                 }
               </td>
-              ${dayKeys.map(day => {
+              ${dayKeys.map((day, di) => {
                 const mixes = row[day] || [];
-                return `<td style="font-size:0.78rem;vertical-align:top;padding:5px 4px;">
-                  ${mixes.length
-                    ? mixes.map(m => `
-                        <div style="margin-bottom:4px;line-height:1.35;">
-                          <div style="display:flex;align-items:baseline;gap:4px;flex-wrap:wrap;">
-                            <span style="font-weight:600;font-size:0.75rem;">▸ ${m.name}</span>
-                            ${m.pct != null ? `<span style="font-size:0.73rem;font-weight:700;color:var(--accent);">${m.pct}%</span>` : ''}
-                          </div>
-                          ${m.description ? `<div style="font-size:0.68rem;color:var(--text-light);font-style:italic;margin-left:8px;">${m.description}</div>` : ''}
-                        </div>`).join('')
-                    : '<span style="color:var(--text-light);">—</span>'}
-                </td>`;
+                // Afficher uniquement la première cellule du lundi avec nom plan + bouton détail
+                // Les autres jours : point coloré si plan actif, tiret sinon
+                if (di === 0) {
+                  // Colonne Lundi = nom du plan + bouton Voir détail (s'étend visuellement)
+                  return `<td colspan="7" style="font-size:0.82rem;vertical-align:middle;padding:6px 8px;">
+                    ${row.plan_name
+                      ? `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                           <span style="font-weight:600;">📋 ${row.plan_name}</span>
+                           ${row.plan_id
+                             ? `<button class="btn btn-sm btn-secondary"
+                                  style="padding:2px 10px;font-size:0.75rem;"
+                                  onclick="_planOuvrirDetailComplet(${row.plan_id})">
+                                  🔍 Voir détail
+                                </button>`
+                             : ''}
+                         </div>`
+                      : '<span style="color:var(--text-light);">—</span>'}
+                  </td>`;
+                }
+                return ''; // Les autres colonnes sont absorbées par le colspan
               }).join('')}
             </tr>`).join('')}
         </tbody>

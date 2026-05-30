@@ -512,6 +512,8 @@ async def get_affectations_calendrier(
             row_id=f"group_{aff.groupe}",
             label=aff.groupe.capitalize(),
             is_group=True,
+            plan_id=aff.plan.id if aff.plan else None,
+            plan_name=aff.plan.name if aff.plan else None,
             **day_data,
         )
         rows.append(row)
@@ -548,6 +550,8 @@ async def get_affectations_calendrier(
                 label=pigeon.matricule,
                 sous_label=getattr(pigeon, "nom", None),
                 is_group=False,
+                plan_id=aff.plan.id if aff.plan else None,
+                plan_name=aff.plan.name if aff.plan else None,
                 **day_data,
             )
             rows.append(row)

@@ -290,6 +290,8 @@ class NutritionCalendarRow(BaseModel):
     label: str                         # bague pigeon ou nom du groupe
     sous_label: Optional[str] = None   # nom pigeon (mode individuel)
     is_group: bool = False
+    plan_id: Optional[int] = None      # id du plan (pour ouvrir le modal détail)
+    plan_name: Optional[str] = None    # nom du plan affiché dans le calendrier
     lundi: List[CalendarMixEntry] = []
     mardi: List[CalendarMixEntry] = []
     mercredi: List[CalendarMixEntry] = []
