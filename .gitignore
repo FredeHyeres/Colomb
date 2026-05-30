@@ -41,3 +41,6 @@ Thumbs.db
 .claude/
 .claire/
 .clone/
+
+# Scripts de données de test — usage local uniquement, ne pas pousser
+backend/seed_test.py
