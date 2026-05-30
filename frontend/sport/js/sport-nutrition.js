@@ -1712,35 +1712,116 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
   if (!affList.length) {
     return '<div style="font-size:0.85rem;color:var(--text-light);">Aucune affectation enregistrée.</div>';
   }
+
   const pigeonMap = Object.fromEntries(pigeonList.map(p => [p.id, p]));
-  return `
+
+  // Séparer individuelles et groupes
+  const individuelles = affList.filter(a => a.is_individual);
+  const parGroupe = affList.filter(a => !a.is_individual);
+
+  // Regrouper les affectations groupe par clé groupe+plan_id
+  const groupesMap = {};
+  parGroupe.forEach(a => {
+    const key = `${a.groupe || '—'}||${a.plan_id}`;
+    if (!groupesMap[key]) {
+      groupesMap[key] = {
+        groupe: a.groupe || '—',
+        plan: a.plan || planMap[a.plan_id],
+        plan_id: a.plan_id,
+        date_debut: a.date_debut,
+        date_fin: a.date_fin,
+        pigeons: [],
+        ids: [],           // ids des affectations (pour suppression)
+      };
+    }
+    const p = pigeonMap[a.pigeon_id];
+    groupesMap[key].pigeons.push(p ? p.matricule : a.pigeon_id);
+    groupesMap[key].ids.push(a.id);
+  });
+
+  // ── Bloc GROUPES ───────────────────────────────────────────────────────────
+  const blocGroupe = Object.values(groupesMap).length === 0 ? '' : `
+    <div style="font-weight:600;font-size:0.85rem;color:var(--text-light);
+      text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">
+      👥 Affectations par groupe
+    </div>
+    <div style="overflow-x:auto;margin-bottom:20px;">
+      <table class="table-modern" style="font-size:0.82rem;">
+        <thead>
+          <tr><th>Groupe</th><th>Plan</th><th>Pigeons</th><th>Début</th><th>Fin</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${Object.values(groupesMap).map(g => `
+            <tr>
+              <td><strong>${g.groupe}</strong></td>
+              <td>${g.plan ? g.plan.name : 'Plan #' + g.plan_id}</td>
+              <td>
+                <span class="badge badge-secondary" style="cursor:pointer;"
+                  title="${g.pigeons.join(', ')}">${g.pigeons.length} pigeon${g.pigeons.length > 1 ? 's' : ''}
+                </span>
+                <span style="font-size:0.75rem;color:var(--text-light);margin-left:4px;">
+                  ${g.pigeons.slice(0, 3).join(', ')}${g.pigeons.length > 3 ? '…' : ''}
+                </span>
+              </td>
+              <td>${formatDate(g.date_debut)}</td>
+              <td>${g.date_fin ? formatDate(g.date_fin) : '♾️'}</td>
+              <td>
+                <button class="btn btn-sm btn-icon"
+                  onclick="deleteAffectationsGroupe([${g.ids.join(',')}])"
+                  title="Supprimer le groupe">🗑️</button>
+              </td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  // ── Bloc INDIVIDUELLES ─────────────────────────────────────────────────────
+  const blocIndiv = individuelles.length === 0 ? '' : `
+    <div style="font-weight:600;font-size:0.85rem;color:var(--text-light);
+      text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">
+      👤 Affectations individuelles
+    </div>
     <div style="overflow-x:auto;">
       <table class="table-modern" style="font-size:0.82rem;">
-        <thead><tr><th>Pigeon</th><th>Plan</th><th>Début</th><th>Fin</th><th>Type</th><th></th></tr></thead>
+        <thead>
+          <tr><th>Pigeon</th><th>Plan</th><th>Début</th><th>Fin</th><th></th></tr>
+        </thead>
         <tbody>
-          ${affList.map(a => {
+          ${individuelles.map(a => {
             const pigeon = pigeonMap[a.pigeon_id];
             const plan   = a.plan || planMap[a.plan_id];
+            const statutBadge = (() => {
+              const s = (pigeon?.statut || '').toLowerCase();
+              if (s === 'perdu')  return ' <span class="badge" style="background:#E67E22;color:#fff;font-size:0.68rem;">Perdu</span>';
+              if (s === 'decede') return ' <span class="badge" style="background:#7F8C8D;color:#fff;font-size:0.68rem;">Décédé</span>';
+              return '';
+            })();
             return `
               <tr>
-                <td>${pigeon
-                  ? pigeon.matricule + (() => {
-                      const s = (pigeon.statut || '').toLowerCase();
-                      if (s === 'perdu')  return ' <span class="badge" style="background:#E67E22;color:#fff;font-size:0.68rem;">Perdu</span>';
-                      if (s === 'decede') return ' <span class="badge" style="background:#7F8C8D;color:#fff;font-size:0.68rem;">Décédé</span>';
-                      return '';
-                    })()
+                <td>${pigeon ? pigeon.matricule + statutBadge
                   : `<span style="color:var(--danger);font-size:0.78rem;">${a.pigeon_id}</span>`}</td>
                 <td>${plan ? plan.name : 'Plan #' + a.plan_id}</td>
                 <td>${formatDate(a.date_debut)}</td>
                 <td>${a.date_fin ? formatDate(a.date_fin) : '♾️'}</td>
-                <td><span class="badge ${a.is_individual ? 'badge-info' : 'badge-secondary'}" style="font-size:0.72rem;">${a.is_individual ? '👤 Individuel' : '👥 Groupe'}</span></td>
                 <td><button class="btn btn-sm btn-icon" onclick="deleteAffectation(${a.id})" title="Supprimer">🗑️</button></td>
               </tr>`;
           }).join('')}
         </tbody>
       </table>
     </div>`;
+
+  return (blocGroupe || blocIndiv)
+    ? blocGroupe + blocIndiv
+    : '<div style="font-size:0.85rem;color:var(--text-light);">Aucune affectation enregistrée.</div>';
+}
+
+async function deleteAffectationsGroupe(ids) {
+  if (!confirm(`Supprimer le groupe (${ids.length} affectation${ids.length > 1 ? 's' : ''}) ?`)) return;
+  try {
+    await Promise.all(ids.map(id => SportAPI.deleteAffectation(id)));
+    showToast('Groupe supprimé.', 'success');
+    _loadAffectationTab();
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function deleteAffectation(id) {
