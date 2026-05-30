@@ -179,8 +179,28 @@ function handleGlobalSearch(query) {
   });
 }
 
+/* ——— Mode sombre — synchronisé avec l'app principale via localStorage ——— */
+function initThemeSport() {
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+
+  const btn = document.getElementById('btn-theme-sport');
+  if (!btn) return;
+
+  btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+
+  btn.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+  });
+}
+
 /* ——— Init au chargement DOM ——— */
 document.addEventListener('DOMContentLoaded', () => {
+  initThemeSport();
   initNavigation();
 
   // Vérifier si une page est dans l'URL hash

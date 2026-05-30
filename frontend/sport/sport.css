@@ -874,3 +874,71 @@ body { display: flex; min-height: 100vh; }
 @keyframes fadeIn  { from { opacity:0 } to { opacity:1 } }
 @keyframes slideUp { from { transform:translateY(20px);opacity:0 } to { transform:translateY(0);opacity:1 } }
 
+/* ——— Mode sombre ——— */
+[data-theme="dark"] {
+  --bg:      #0f1923;
+  --bg-card: #1a2535;
+  --text:    #e8edf2;
+  --text-light: #8fa3b8;
+  --border:  #2d3f52;
+  --shadow:  0 2px 12px rgba(0,0,0,0.35);
+
+  /* Sidebar reste foncée — juste légèrement plus sombre */
+  --sidebar-bg:   #111d2b;
+  --sidebar-hover:#1e2f42;
+
+  /* Inputs & contrôles */
+  --input-bg: #1e2f42;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: var(--input-bg, #1e2f42);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #1e2f42;
+  border-color: var(--border);
+  color: var(--text);
+}
+[data-theme="dark"] .btn-secondary:hover { background: #253a50; }
+
+[data-theme="dark"] .btn-icon {
+  background: #1e2f42;
+  border-color: var(--border);
+  color: var(--text-light);
+}
+[data-theme="dark"] .btn-icon:hover { background: #253a50; color: var(--text); }
+
+[data-theme="dark"] .topbar { background: var(--bg-card); border-color: var(--border); }
+
+[data-theme="dark"] .search-input { background: #1e2f42; border-color: var(--border); color: var(--text); }
+
+[data-theme="dark"] table thead th { background: #1e2f42; color: var(--text-light); border-color: var(--border); }
+[data-theme="dark"] table td        { border-color: var(--border); color: var(--text); }
+[data-theme="dark"] table tbody tr:hover { background: #1e2f42; }
+
+[data-theme="dark"] .modal { background: var(--bg-card); }
+[data-theme="dark"] .modal-header { border-color: var(--border); }
+
+[data-theme="dark"] .stat-card { background: var(--bg-card); }
+
+[data-theme="dark"] .session-card,
+[data-theme="dark"] .history-card { background: var(--bg-card); border-color: var(--border); }
+
+/* Bouton thème dans la topbar sport */
+#btn-theme-sport {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text);
+  transition: background 0.2s;
+}
+#btn-theme-sport:hover { background: var(--bg); }
+
