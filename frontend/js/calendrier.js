@@ -7,21 +7,25 @@ let calState = {
   concours: [],
 };
 
+const SESSION_TYPE_LABELS = {
+  loft:  '🏠 Loft',
+  toss:  '🚀 Lancer',
+  race:  '🏆 Concours',
+};
+
 async function loadCalendrier() {
   const content = document.getElementById('content');
   content.innerHTML = '<div class="loading">Chargement...</div>';
 
-  try {
-    const [sessions, performances] = await Promise.all([
-      apiFetch('/sessions').catch(() => []),
-      apiFetch('/performances/').catch(() => []),
-    ]);
-    calState.sessions = sessions;
-    calState.concours = performances;
-  } catch (e) {
-    calState.sessions = [];
-    calState.concours = [];
-  }
+  const [sessions, concours] = await Promise.all([
+    apiFetch('/sport/sessions').catch(() => []),
+    apiFetch('/concours/').catch(() => []),
+  ]);
+
+  // Les séances race sont portées par les Concours — on exclut les doublons
+  calState.sessions = (Array.isArray(sessions) ? sessions : [])
+    .filter(s => s.session_type !== 'race');   // race = géré via concours
+  calState.concours = Array.isArray(concours) ? concours : [];
 
   renderCalendrier();
 }
@@ -38,17 +42,20 @@ function renderCalendrier() {
   const evParDate = {};
 
   calState.sessions.forEach(s => {
-    const d = (s.date_seance || s.date || '').slice(0, 10);
+    const d = (s.date || '').slice(0, 10);
     if (!d) return;
     if (!evParDate[d]) evParDate[d] = [];
-    evParDate[d].push({ type: 'seance', label: s.type_seance || 'Séance', detail: s });
+    const label = SESSION_TYPE_LABELS[s.session_type] || 'Séance';
+    const dist = s.distance_km ? ` — ${Math.round(s.distance_km * 1000).toLocaleString('fr-FR')} m` : '';
+    evParDate[d].push({ type: 'seance', label: label + dist, detail: s });
   });
 
-  calState.concours.forEach(p => {
-    const d = (p.date || '').slice(0, 10);
+  calState.concours.forEach(c => {
+    const d = (c.date || '').slice(0, 10);
     if (!d) return;
     if (!evParDate[d]) evParDate[d] = [];
-    evParDate[d].push({ type: 'concours', label: p.nom_concours, detail: p });
+    const dist = c.distance_m ? ` — ${(c.distance_m / 1000).toFixed(0)} km` : '';
+    evParDate[d].push({ type: 'concours', label: c.nom + dist, detail: c });
   });
 
   // Calcul grille
@@ -177,12 +184,15 @@ function calChangerMois(delta) {
 function calAfficherJour(dateStr) {
   const evs = [];
   calState.sessions.forEach(s => {
-    const d = (s.date_seance || s.date || '').slice(0, 10);
-    if (d === dateStr) evs.push({ type: 'seance', label: s.type_seance || 'Séance', detail: s });
+    const d = (s.date || '').slice(0, 10);
+    if (d === dateStr) {
+      const label = SESSION_TYPE_LABELS[s.session_type] || 'Séance';
+      evs.push({ type: 'seance', label, detail: s });
+    }
   });
-  calState.concours.forEach(p => {
-    const d = (p.date || '').slice(0, 10);
-    if (d === dateStr) evs.push({ type: 'concours', label: p.nom_concours, detail: p });
+  calState.concours.forEach(c => {
+    const d = (c.date || '').slice(0, 10);
+    if (d === dateStr) evs.push({ type: 'concours', label: c.nom, detail: c });
   });
   if (!evs.length) return;
 
@@ -197,9 +207,13 @@ function calAfficherJour(dateStr) {
         <div style="font-weight:600; margin-bottom:4px;">
           ${ev.type === 'seance' ? '🏃 ' : '🏆 '}${ev.label}
         </div>
-        ${ev.type === 'concours' && ev.detail.distance_km
-          ? `<div style="font-size:13px; color:var(--text-light);">${ev.detail.distance_km} km</div>` : ''}
-        ${ev.type === 'seance' && ev.detail.notes
+        ${ev.type === 'concours' && ev.detail.lieu_lacher
+          ? `<div style="font-size:13px; color:var(--text-light);">📍 ${ev.detail.lieu_lacher}${ev.detail.distance_m ? ' — ' + (ev.detail.distance_m/1000).toFixed(0) + ' km' : ''}</div>` : ''}
+        ${ev.type === 'seance' && ev.detail.distance_km
+          ? `<div style="font-size:13px; color:var(--text-light);">📏 ${Math.round(ev.detail.distance_km * 1000).toLocaleString('fr-FR')} m</div>` : ''}
+        ${ev.detail.weather
+          ? `<div style="font-size:13px; color:var(--text-light);">🌤️ ${ev.detail.weather}</div>` : ''}
+        ${ev.detail.notes && !ev.detail.notes.includes('[SEED')
           ? `<div style="font-size:13px; color:var(--text-light);">${ev.detail.notes}</div>` : ''}
       </div>`).join('')}
     <div style="text-align:right; margin-top:16px;">
