@@ -1074,6 +1074,7 @@ function _planOuvrirDetailComplet(planId) {
 
     <div style="text-align:right;margin-top:16px;">
       <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-secondary" onclick="_planExporterPDF(${p.id})">🖨️ Exporter PDF</button>
       <button class="btn btn-primary" onclick="closeModal(); openPlanModal(${p.id})">✏️ Modifier</button>
     </div>`;
 
@@ -1084,6 +1085,178 @@ function _planOuvrirDetailComplet(planId) {
   overlay.style.display = 'flex';
   document.getElementById('modal-close').onclick = closeModal;
   overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+}
+
+/* ——— Export PDF d'un plan alimentaire ——— */
+async function _planExporterPDF(planId) {
+  const p = _plansList.find(x => x.id === planId);
+  if (!p) return;
+
+  // Récupérer les infos de l'élevage
+  let eleveur = {};
+  try { eleveur = await apiFetch('/eleveur/') || {}; } catch { /* éleveur optionnel */ }
+
+  const usageLabels = {
+    recuperation: 'Récupération', entrainement: 'Entraînement',
+    pre_panier: 'Pré-panier',    enlogement:   'Enlogement',
+  };
+
+  const joursHtml = _DAY_NAMES.map((day, i) => {
+    const raw = p[day];
+    if (!raw) return `
+      <tr>
+        <td class="day-cell">${_DAY_LABELS[i]}</td>
+        <td class="empty-cell">—</td>
+      </tr>`;
+
+    let mixItems = [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        mixItems = parsed.map(item => {
+          const id  = typeof item === 'object' ? item.id  : item;
+          const pct = typeof item === 'object' ? item.pct : null;
+          const mix = _plansMixMap[id];
+          return mix ? { ...mix, pct } : null;
+        }).filter(Boolean);
+      }
+    } catch { /* ignore */ }
+
+    const mixHtml = mixItems.map(m => {
+      let compHtml = '';
+      if (m.composition) {
+        try {
+          const comp = JSON.parse(m.composition);
+          const ings = comp.filter(c => c.type !== 'supplement');
+          const sups = comp.filter(c => c.type === 'supplement');
+          if (ings.length) {
+            compHtml += `<div class="composition">
+              ${ings.map(c => `<span class="chip-ing">🌾 ${c.name} <strong>${parseFloat(c.pct).toFixed(1)}%</strong></span>`).join('')}
+            </div>`;
+          }
+          if (sups.length) {
+            compHtml += `<div class="composition">
+              ${sups.map(c => `<span class="chip-sup">💊 ${c.name}${c.quantity ? ' — ' + c.quantity + (c.unit ? ' ' + c.unit : '') : ''}</span>`).join('')}
+            </div>`;
+          }
+        } catch { /* ignore */ }
+      }
+      return `
+        <div class="mix-block">
+          <div class="mix-header">
+            <span class="mix-name">🔀 ${m.name}</span>
+            ${m.pct != null ? `<span class="mix-pct">${m.pct}%</span>` : ''}
+            ${m.usage ? `<span class="badge-usage">${usageLabels[m.usage] || m.usage}</span>` : ''}
+          </div>
+          ${m.description ? `<div class="mix-desc">${m.description}</div>` : ''}
+          ${compHtml}
+        </div>`;
+    }).join('');
+
+    return `
+      <tr>
+        <td class="day-cell">${_DAY_LABELS[i]}</td>
+        <td>${mixHtml}</td>
+      </tr>`;
+  }).join('');
+
+  const dateGen = new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Plan alimentaire — ${p.name}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #1a1a1a; padding: 20mm 18mm; }
+    /* ── En-tête élevage (même structure que carteDeVisite dans eleveur.js) ── */
+    .elevage-header { border:1px solid #d0d5dd; border-radius:8px;
+      padding:14px 16px; margin-bottom:18px; border-left:4px solid #1565c0; }
+    .elevage-inner { display:flex; gap:14px; align-items:flex-start; }
+    .elevage-photo { width:52px; height:52px; object-fit:cover;
+      border-radius:6px; flex-shrink:0; border:1px solid #d0d5dd; }
+    .elevage-photo-placeholder { width:52px; height:52px; background:#f0f4f8;
+      border-radius:6px; display:flex; align-items:center; justify-content:center;
+      font-size:26px; flex-shrink:0; border:1px solid #d0d5dd; }
+    .elevage-nom { font-family:'Georgia',serif; font-weight:700;
+      font-size:14pt; color:#1a1a1a; line-height:1.2; }
+    .elevage-colombier { font-weight:600; font-size:10.5pt; margin-top:2px; color:#1a1a1a; }
+    .elevage-localite { color:#666; font-size:9pt; margin-top:2px; }
+    .elevage-contact { color:#666; font-size:9pt; margin-top:2px; }
+    .elevage-licence { font-size:8.5pt; color:#666; margin-top:4px; }
+    .elevage-licence strong { color:#1a1a1a; }
+    /* ── Plan ── */
+    h1 { font-size: 14pt; font-weight: 700; margin-bottom: 2px; }
+    .subtitle { font-size: 9pt; color: #555; margin-bottom: 14px; }
+    .goal-badge { display:inline-block; background:#e8f5e9; color:#2e7d32; border:1px solid #a5d6a7;
+      border-radius:12px; padding:3px 10px; font-size:9pt; font-weight:600; margin-bottom:10px; }
+    .description { background:#f7f9fc; border-left:3px solid #1565c0; border-radius:0 6px 6px 0;
+      padding:10px 14px; font-size:9.5pt; line-height:1.6; color:#333; white-space:pre-line; margin-bottom:18px; }
+    table { width:100%; border-collapse:collapse; margin-top:4px; }
+    th { background:#1565c0; color:#fff; font-size:9.5pt; font-weight:600; padding:7px 10px; text-align:left; }
+    td { vertical-align:top; padding:7px 10px; border-bottom:1px solid #e0e0e0; }
+    .day-cell { font-weight:700; font-size:10pt; white-space:nowrap; width:90px; color:#1565c0; }
+    .empty-cell { color:#999; font-style:italic; }
+    .mix-block { border:1px solid #e0e0e0; border-radius:5px; padding:7px 10px; margin-bottom:6px; border-left:3px solid #1565c0; }
+    .mix-header { display:flex; align-items:center; gap:8px; margin-bottom:3px; flex-wrap:wrap; }
+    .mix-name { font-weight:700; font-size:10pt; }
+    .mix-pct { font-weight:800; font-size:10.5pt; color:#1565c0; }
+    .badge-usage { background:#e3f2fd; color:#1565c0; border:1px solid #90caf9;
+      border-radius:10px; padding:1px 7px; font-size:8pt; font-weight:600; }
+    .mix-desc { font-size:8.5pt; color:#666; font-style:italic; margin-bottom:4px; }
+    .composition { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+    .chip-ing { background:#f1f8e9; border:1px solid #aed581; border-radius:3px; padding:1px 6px; font-size:8pt; }
+    .chip-sup { background:#e8f4fd; border:1px solid #90caf9; border-radius:3px; padding:1px 6px; font-size:8pt; }
+    .footer { margin-top:18px; font-size:7.5pt; color:#aaa; text-align:right; border-top:1px solid #e0e0e0; padding-top:6px; }
+    @media print {
+      body { padding: 12mm 12mm; }
+      @page { margin: 10mm; }
+    }
+  </style>
+</head>
+<body>
+  <h1>📋 ${p.name}</h1>
+  <div class="subtitle">Plan alimentaire — généré le ${dateGen}</div>
+  ${p.goal ? `<div class="goal-badge">${p.goal}</div>` : ''}
+  ${p.description ? `<div class="description">${p.description}</div>` : ''}
+  <table>
+    <thead><tr><th style="width:90px;">Jour</th><th>Mélanges</th></tr></thead>
+    <tbody>${joursHtml}</tbody>
+  </table>
+  <div class="footer">Colomb — Gestion de colombier · ${p.name}</div>
+  <script>window.onload = () => { window.print(); };<\/script>
+</body>
+</html>`;
+
+  // Construire l'en-tête élevage — même structure que carteDeVisite() dans eleveur.js
+  const nomEleveur  = [eleveur.prenom, eleveur.nom].filter(Boolean).join(' ');
+  const localite    = [eleveur.code_postal, eleveur.ville].filter(Boolean).join(' ');
+  const contact     = [eleveur.telephone, eleveur.email].filter(Boolean).join(' | ');
+  const photoHtml   = eleveur.photo_colombier
+    ? `<img class="elevage-photo" src="http://localhost:8001${eleveur.photo_colombier}" alt="colombier">`
+    : `<div class="elevage-photo-placeholder">🏠</div>`;
+
+  const elevageHeaderHtml = (nomEleveur || eleveur.nom_colombier) ? `
+    <div class="elevage-header">
+      <div class="elevage-inner">
+        ${photoHtml}
+        <div>
+          ${nomEleveur      ? `<div class="elevage-nom">${nomEleveur}</div>` : ''}
+          ${eleveur.nom_colombier ? `<div class="elevage-colombier">${eleveur.nom_colombier}</div>` : ''}
+          ${localite        ? `<div class="elevage-localite">${localite}</div>` : ''}
+          ${contact         ? `<div class="elevage-contact">${contact}</div>` : ''}
+          ${eleveur.numero_licence ? `<div class="elevage-licence">Licence : <strong>${eleveur.numero_licence}</strong></div>` : ''}
+        </div>
+      </div>
+    </div>` : '';
+
+  const htmlWithHeader = html.replace('<body>', `<body>${elevageHeaderHtml}`);
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  if (!win) { showToast('Veuillez autoriser les popups pour exporter en PDF', 'warning'); return; }
+  win.document.write(htmlWithHeader);
+  win.document.close();
 }
 
 async function duplicatePlan(planId) {
