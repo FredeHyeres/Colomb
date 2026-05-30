@@ -23,6 +23,7 @@
   --radius: 10px;
   --shadow: 0 2px 12px rgba(0,0,0,0.08);
   --sidebar-width: 260px;
+  --bg-secondary: #E8ECF0;        /* fond légèrement teinté pour sections/encadrés */
 
   /* Palette sport */
   --sport-green: #27AE60;
@@ -886,6 +887,7 @@ body { display: flex; min-height: 100vh; }
   /* Sidebar reste foncée — juste légèrement plus sombre */
   --sidebar-bg:   #111d2b;
   --sidebar-hover:#1e2f42;
+  --bg-secondary: #1e2f42;        /* encadrés sections en mode sombre */
 
   /* Inputs & contrôles */
   --input-bg: #1e2f42;

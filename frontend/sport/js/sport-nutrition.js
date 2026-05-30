@@ -1425,7 +1425,7 @@ async function _loadAffectationTab() {
         <div id="aff-group-section">
           <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
             ${statuts.map(s => `
-              <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:4px 12px;background:#fff;border:1px solid var(--border);border-radius:20px;font-size:0.84rem;">
+              <label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:4px 12px;background:var(--bg-card);color:var(--text);border:1px solid var(--border);border-radius:20px;font-size:0.84rem;">
                 <input type="checkbox" class="aff-group-cb" value="${s.value}" style="margin:0;">
                 ${s.label}
               </label>`).join('')}
@@ -1436,7 +1436,7 @@ async function _loadAffectationTab() {
         <div id="aff-individual-section" style="display:none;">
           <input type="search" id="aff-indiv-search" class="form-control form-control-sm"
             placeholder="Filtrer par bague ou nom..." style="margin-bottom:8px;">
-          <div id="aff-indiv-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;background:#fff;"></div>
+          <div id="aff-indiv-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;background:var(--bg-card);color:var(--text);"></div>
           <div id="aff-indiv-count" style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">0 pigeon sélectionné</div>
         </div>
       </div>
@@ -1590,7 +1590,7 @@ function _affRenderPlanPreview() {
   if (!_affPlan) { el.innerHTML = ''; return; }
   const p = _affPlan;
   el.innerHTML = `
-    <table style="width:100%;font-size:0.75rem;border-collapse:collapse;margin-top:4px;background:#fff;border-radius:6px;overflow:hidden;border:1px solid var(--border);">
+    <table style="width:100%;font-size:0.75rem;border-collapse:collapse;margin-top:4px;background:var(--bg-card);color:var(--text);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
       <thead><tr style="background:var(--bg-secondary);">
         ${_DAY_LABELS.map(d => `<th style="padding:4px 5px;text-align:center;font-size:0.72rem;font-weight:600;">${d.substring(0, 3)}.</th>`).join('')}
       </tr></thead>
