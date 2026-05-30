@@ -209,7 +209,7 @@ async function sauvegarderConcours(id = '') {
     date,
     lieu_lacher: document.getElementById('f-c-lieu').value.trim() || null,
     distance_m: parseInt(document.getElementById('f-c-distance').value) || null,
-    heure_lacher: heure ? heure + ':00' : null,
+    heure_lacher: heure ? heure.substring(0, 8).padEnd(8, ':00') : null,
     ref_fede: document.getElementById('f-c-ref').value.trim() || null,
     notes: document.getElementById('f-c-notes').value.trim() || null,
   };
@@ -621,7 +621,7 @@ async function enregistrerArrivee(concoursId, engId) {
   try {
     await apiFetch(`/concours/${concoursId}/engagements/${engId}/arrivee`, {
       method: 'PATCH',
-      body: JSON.stringify({ heure_arrivee: heure + ':00', correction_horloge_sec: corr }),
+      body: JSON.stringify({ heure_arrivee: heure.substring(0, 8).padEnd(8, ':00'), correction_horloge_sec: corr }),
     });
     showNotification('Arrivée enregistrée ✅');
     const updated = await apiFetch(`/concours/${concoursId}`);
