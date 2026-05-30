@@ -11,3 +11,4 @@ from .sport import (
     SessionType, IngredientCategory, MixUsage, SupplementType,
 )
 from .ai_model import AIRecommendation, AISnapshot, SportEvent
+from .concours import Concours, ConcoursEngagement, StatutConcours, CategorieConcours, StatutEngagement

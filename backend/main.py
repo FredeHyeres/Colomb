@@ -18,6 +18,7 @@ from routers import (
     ai_router,
 )
 from routers.concours_feedback import router as feedback_router
+from routers.concours import router as concours_router
 
 # Créer les tables au démarrage
 @asynccontextmanager
@@ -86,6 +87,7 @@ app.include_router(eleveur_router, prefix="/api")
 app.include_router(sport_router, prefix="/api", tags=["sport"])
 app.include_router(ai_router, prefix="/api", tags=["ai"])
 app.include_router(feedback_router, prefix="/api", tags=["AI Feedback"])
+app.include_router(concours_router, prefix="/api/concours", tags=["Concours"])
 
 
 @app.get("/")

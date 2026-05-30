@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Text, ForeignKey, Enum, DateTime
+from sqlalchemy import Column, String, Integer, Text, ForeignKey, Enum, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime, timezone
 import uuid
@@ -37,6 +37,7 @@ class Pigeon(Base):
     photo = Column(String(255))            # chemin vers le fichier
     colombier_case = Column(String(50))
     notes = Column(Text)
+    titre_propriete = Column(Boolean, default=True)     # FCF : titre de propriété requis
 
     # Clés étrangères
     lignee_id = Column(String, ForeignKey("lignees.id"), nullable=True)

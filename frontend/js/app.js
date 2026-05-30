@@ -99,6 +99,11 @@ const pages = {
     title: 'Calendrier',
     load: () => loadCalendrier(),
     addLabel: null
+  },
+  concours: {
+    title: 'Concours',
+    load: () => loadConcours(),
+    addLabel: '+ Nouveau concours'
   }
 };
 
@@ -146,6 +151,7 @@ document.getElementById('btn-add').addEventListener('click', () => {
   if (currentPage === 'performances') openAddPerformance();
   if (currentPage === 'sante') openAddSante();
   if (currentPage === 'couples') openAddCouple();
+  if (currentPage === 'concours') ouvrirNouveauConcours();
 });
 
 // ===== BADGES STATUT =====
