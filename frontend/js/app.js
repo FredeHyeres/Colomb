@@ -94,6 +94,11 @@ const pages = {
     title: 'Mon Élevage',
     load: () => loadEleveur(),
     addLabel: null
+  },
+  calendrier: {
+    title: 'Calendrier',
+    load: () => loadCalendrier(),
+    addLabel: null
   }
 };
 
@@ -188,12 +193,116 @@ function getPageFromHash() {
   return pages[hash] ? hash : null;
 }
 
+function show404() {
+  const hash = window.location.hash || '#';
+  document.getElementById('page-title').textContent = 'Page introuvable';
+  document.getElementById('btn-add').style.display = 'none';
+  document.getElementById('content').innerHTML = `
+    <div style="text-align:center; padding:80px 20px;">
+      <div style="font-size:64px; margin-bottom:16px;">🔍</div>
+      <h2 style="font-family:'Playfair Display',serif; font-size:28px; margin-bottom:12px;">Page introuvable</h2>
+      <p style="color:var(--text-light); margin-bottom:32px;">La section <code>${hash}</code> n'existe pas.</p>
+      <button class="btn btn-primary" onclick="navigateTo('dashboard')">← Retour au tableau de bord</button>
+    </div>`;
+}
+
 function handleHash() {
   const page = getPageFromHash();
-  navigateTo(page || 'dashboard');
+  if (!page && window.location.hash && window.location.hash !== '#') {
+    show404();
+  } else {
+    navigateTo(page || 'dashboard');
+  }
 }
 
 window.addEventListener('hashchange', handleHash);
+
+// ===== CONFIRMATION MODALE =====
+function confirmAction(titre, message, btnLabel, btnClass, onConfirm) {
+  openModal(titre, `
+    <div style="text-align:center; padding:8px 0 20px;">
+      <div style="font-size:48px; margin-bottom:16px;">⚠️</div>
+      <div style="font-size:15px; color:var(--text); line-height:1.5;">${message}</div>
+    </div>
+    <div style="display:flex; justify-content:flex-end; gap:12px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn ${btnClass}" id="btn-confirm-action">${btnLabel}</button>
+    </div>
+  `);
+  document.getElementById('btn-confirm-action').addEventListener('click', () => {
+    closeModal();
+    onConfirm();
+  });
+}
+
+function confirmDelete(message, onConfirm) {
+  confirmAction('Confirmer la suppression', message, 'Supprimer définitivement', 'btn-danger', onConfirm);
+}
+
+// ===== MODE SOMBRE =====
+(function initTheme() {
+  const saved = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', saved);
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+      btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    });
+  }
+})();
+
+// ===== HAMBURGER MOBILE =====
+function closeSidebarMobile() {
+  document.getElementById('sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('visible');
+}
+
+(function initMobile() {
+  const hamburger = document.getElementById('hamburger');
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  if (hamburger) {
+    hamburger.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('visible');
+    });
+  }
+  if (overlay) overlay.addEventListener('click', closeSidebarMobile);
+
+  // Fermer sidebar au clic sur un item nav (mobile)
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', closeSidebarMobile);
+  });
+})();
+
+// ===== RECHERCHE =====
+(function initSearch() {
+  const searchInput = document.getElementById('search-input');
+  if (!searchInput) return;
+  searchInput.addEventListener('input', () => {
+    const q = searchInput.value.toLowerCase().trim();
+    // Filtrer lignes de tableau
+    document.querySelectorAll('table tbody tr').forEach(row => {
+      row.style.display = q === '' || row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+    // Filtrer les cards pigeon
+    document.querySelectorAll('.pigeon-card, .pigeon-mini-card').forEach(card => {
+      card.style.display = q === '' || card.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+  // Réinitialiser le filtre à chaque changement de page
+  const origNavigateTo = navigateTo;
+  window.navigateTo = function(page) {
+    searchInput.value = '';
+    origNavigateTo(page);
+  };
+})();
 
 // ===== DÉMARRAGE =====
 // Délai 500ms pour laisser l'API finir son démarrage avant le premier appel

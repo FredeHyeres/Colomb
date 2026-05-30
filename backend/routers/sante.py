@@ -1,10 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from database import get_db
 from models import Sante
+from models.pigeon import Pigeon
 from schemas import SanteCreate, SanteUpdate, SanteResponse
 from typing import List, Optional
+import csv
+import io
 
 router = APIRouter(prefix="/sante", tags=["Santé"])
 
@@ -24,6 +29,35 @@ async def get_evenements_pigeon(pigeon_id: str, db: AsyncSession = Depends(get_d
         select(Sante).where(Sante.pigeon_id == pigeon_id)
     )
     return result.scalars().all()
+
+
+@router.get("/export/csv")
+async def export_sante_csv(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Sante)
+        .options(selectinload(Sante.pigeon))
+        .order_by(Sante.date.desc())
+    )
+    events = result.scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["date", "pigeon_matricule", "type", "description", "produit"])
+    for e in events:
+        writer.writerow([
+            str(e.date),
+            e.pigeon.matricule if e.pigeon else "",
+            e.type.value if e.type else "",
+            (e.description or "").replace("\n", " "),
+            e.produit or "",
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8-sig",
+        headers={"Content-Disposition": "attachment; filename=sante.csv"},
+    )
 
 
 @router.get("/{sante_id}", response_model=SanteResponse)

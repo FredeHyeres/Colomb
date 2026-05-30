@@ -1,9 +1,11 @@
-// ===== ÉTAT PIGEONS (filtres + tri persistants) =====
+// ===== ÉTAT PIGEONS (filtres + tri + pagination) =====
 const pigeonState = {
   tous: [],
   lignees: [],
   filtres: { lignee_id: '', statut: '', sexe: '', annee: '' },
   tri: { colonne: 'date_creation', direction: 'asc' },
+  page: 0,
+  pageSize: 50,
 };
 
 async function loadPigeons() {
@@ -18,10 +20,14 @@ async function loadPigeons() {
 
   if (pigeons.length === 0) {
     content.innerHTML = `
+      <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+        <button class="btn btn-secondary" onclick="ouvrirImportPigeons()"
+          style="white-space:nowrap;">⬆️ Importer CSV</button>
+      </div>
       <div class="empty-state">
         <div class="empty-state-icon">🕊️</div>
         <div class="empty-state-text">Aucun pigeon enregistré</div>
-        <div class="empty-state-sub">Commencez par ajouter vos premiers pigeons</div>
+        <div class="empty-state-sub">Commencez par ajouter vos premiers pigeons ou importez une liste CSV</div>
       </div>`;
     return;
   }
@@ -75,6 +81,12 @@ async function loadPigeons() {
       </select>
       <button class="btn btn-secondary" onclick="reinitialiserFiltres()"
         style="white-space:nowrap;">✕ Réinitialiser</button>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button class="btn btn-secondary" onclick="ouvrirImportPigeons()"
+          style="white-space:nowrap;">⬆️ Importer CSV</button>
+        <button class="btn btn-secondary" onclick="exporterCSVPigeons()"
+          style="white-space:nowrap;">⬇️ Exporter CSV</button>
+      </div>
     </div>
 
     <!-- COMPTEUR -->
@@ -105,6 +117,8 @@ async function loadPigeons() {
           <tbody id="pigeons-tbody"></tbody>
         </table>
       </div>
+      <div id="pigeons-pagination" style="display:flex; justify-content:center; align-items:center;
+        gap:12px; padding:16px 0; border-top:1px solid var(--border); margin-top:8px;"></div>
     </div>`;
 
   // Restaure l'état des selects si on revient sur la page
@@ -149,15 +163,21 @@ function appliquerFiltresEtTri() {
     });
   }
 
-  // 3. Compteur
+  // 3. Compteur + pagination
   const total    = pigeonState.tous.length;
   const affiches = result.length;
   const cpt = document.getElementById('pigeons-compteur');
   if (cpt) {
     cpt.textContent = affiches === total
       ? `${total} pigeon${total > 1 ? 's' : ''}`
-      : `Affichage de ${affiches} pigeon${affiches > 1 ? 's' : ''} sur ${total}`;
+      : `${affiches} pigeon${affiches > 1 ? 's' : ''} sur ${total}`;
   }
+
+  const { page, pageSize } = pigeonState;
+  const totalPages = Math.max(1, Math.ceil(affiches / pageSize));
+  if (pigeonState.page >= totalPages) pigeonState.page = totalPages - 1;
+  const debut = pigeonState.page * pageSize;
+  result = result.slice(debut, debut + pageSize);
 
   // 4. Indicateurs d'entête
   const LABELS = {
@@ -172,7 +192,26 @@ function appliquerFiltresEtTri() {
     th.textContent = LABELS[col] + (actif ? (tri.direction === 'asc' ? ' ↑' : ' ↓') : '');
   });
 
-  // 5. Rendu tbody
+  // 5. Rendu pagination
+  const paginationEl = document.getElementById('pigeons-pagination');
+  if (paginationEl) {
+    const currentPage = pigeonState.page;
+    const totalPagesNow = Math.max(1, Math.ceil(affiches / pigeonState.pageSize));
+    if (totalPagesNow <= 1) {
+      paginationEl.innerHTML = '';
+    } else {
+      paginationEl.innerHTML = `
+        <button class="btn btn-secondary" onclick="pigeonChangerPage(${currentPage - 1})"
+          ${currentPage === 0 ? 'disabled' : ''} style="padding:6px 14px;">← Précédent</button>
+        <span style="font-size:13px; color:var(--text-light);">
+          Page ${currentPage + 1} / ${totalPagesNow}
+        </span>
+        <button class="btn btn-secondary" onclick="pigeonChangerPage(${currentPage + 1})"
+          ${currentPage >= totalPagesNow - 1 ? 'disabled' : ''} style="padding:6px 14px;">Suivant →</button>`;
+    }
+  }
+
+  // 6. Rendu tbody
   const tbody = document.getElementById('pigeons-tbody');
   if (!tbody) return;
   tbody.innerHTML = result.map(p => {
@@ -210,7 +249,118 @@ function appliquerFiltresEtTri() {
   }).join('');
 }
 
+// ===== IMPORT CSV =====
+function ouvrirImportPigeons() {
+  openModal('Importer des pigeons (CSV)', `
+    <p style="font-size:14px; margin-bottom:12px; color:var(--text-light);">
+      Le fichier CSV doit utiliser <strong>;</strong> comme séparateur avec les colonnes :<br>
+      <code style="font-size:12px;">matricule ; annee_naissance ; sexe ; couleur_plumage ; statut ; colombier_case ; notes</code>
+    </p>
+    <p style="font-size:13px; margin-bottom:16px; color:var(--text-light);">
+      Valeurs sexe : <code>male</code> / <code>femelle</code><br>
+      Valeurs statut : <code>actif</code> · <code>reproducteur</code> · <code>concours</code> · <code>retraite</code> · <code>perdu</code> · <code>decede</code>
+    </p>
+    <div class="form-group">
+      <label class="form-label">Fichier CSV</label>
+      <input type="file" accept=".csv,.txt" class="form-control" id="csv-pigeons-file">
+    </div>
+    <div id="import-result" style="margin-top:12px;"></div>
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="executerImportPigeons()">Importer</button>
+    </div>
+  `);
+}
+
+async function executerImportPigeons() {
+  const input = document.getElementById('csv-pigeons-file');
+  if (!input || !input.files[0]) {
+    showNotification('Sélectionnez un fichier CSV', 'danger'); return;
+  }
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  try {
+    const res = await fetch(`${API_URL}/pigeons/import/csv`, { method: 'POST', body: formData });
+    const data = await res.json();
+    const resultEl = document.getElementById('import-result');
+    resultEl.innerHTML = `
+      <div style="background:var(--bg); border-radius:8px; padding:12px;">
+        <div style="color:var(--success); font-weight:600; margin-bottom:8px;">
+          ✅ ${data.importes} pigeon${data.importes > 1 ? 's' : ''} importé${data.importes > 1 ? 's' : ''}
+        </div>
+        ${data.erreurs.length ? `
+          <div style="color:var(--danger); font-size:13px;">
+            <div style="font-weight:600; margin-bottom:4px;">⚠️ ${data.erreurs.length} ligne${data.erreurs.length > 1 ? 's' : ''} ignorée${data.erreurs.length > 1 ? 's' : ''} :</div>
+            ${data.erreurs.map(e => `<div style="margin-left:12px;">• ${e}</div>`).join('')}
+          </div>` : ''}
+      </div>`;
+    if (data.importes > 0) { showNotification(`${data.importes} pigeon(s) importé(s) ✅`); loadPigeons(); }
+  } catch (err) {
+    showNotification('Erreur lors de l\'import', 'danger');
+  }
+}
+
+function ouvrirImportPerformances() {
+  openModal('Importer des performances (CSV)', `
+    <p style="font-size:14px; margin-bottom:12px; color:var(--text-light);">
+      Colonnes requises (séparateur <strong>;</strong>) :<br>
+      <code style="font-size:12px;">date ; pigeon_matricule ; nom_concours ; distance_km ; classement ; nb_pigeons_engages ; vitesse_m_min ; notes</code>
+    </p>
+    <p style="font-size:13px; margin-bottom:16px; color:var(--text-light);">
+      Format date : <code>YYYY-MM-DD</code> (ex: 2024-05-12)
+    </p>
+    <div class="form-group">
+      <label class="form-label">Fichier CSV</label>
+      <input type="file" accept=".csv,.txt" class="form-control" id="csv-perfs-file">
+    </div>
+    <div id="import-perf-result" style="margin-top:12px;"></div>
+    <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-primary" onclick="executerImportPerformances()">Importer</button>
+    </div>
+  `);
+}
+
+async function executerImportPerformances() {
+  const input = document.getElementById('csv-perfs-file');
+  if (!input || !input.files[0]) {
+    showNotification('Sélectionnez un fichier CSV', 'danger'); return;
+  }
+  const formData = new FormData();
+  formData.append('file', input.files[0]);
+  try {
+    const res = await fetch(`${API_URL}/performances/import/csv`, { method: 'POST', body: formData });
+    const data = await res.json();
+    const resultEl = document.getElementById('import-perf-result');
+    resultEl.innerHTML = `
+      <div style="background:var(--bg); border-radius:8px; padding:12px;">
+        <div style="color:var(--success); font-weight:600; margin-bottom:8px;">
+          ✅ ${data.importes} performance${data.importes > 1 ? 's' : ''} importée${data.importes > 1 ? 's' : ''}
+        </div>
+        ${data.erreurs.length ? `
+          <div style="color:var(--danger); font-size:13px;">
+            <div style="font-weight:600; margin-bottom:4px;">⚠️ ${data.erreurs.length} ligne${data.erreurs.length > 1 ? 's' : ''} ignorée${data.erreurs.length > 1 ? 's' : ''} :</div>
+            ${data.erreurs.map(e => `<div style="margin-left:12px;">• ${e}</div>`).join('')}
+          </div>` : ''}
+      </div>`;
+    if (data.importes > 0) { showNotification(`${data.importes} performance(s) importée(s) ✅`); loadPerformances(); }
+  } catch (err) {
+    showNotification('Erreur lors de l\'import', 'danger');
+  }
+}
+
+function pigeonChangerPage(page) {
+  pigeonState.page = page;
+  appliquerFiltresEtTri();
+  document.querySelector('.card')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function exporterCSVPigeons() {
+  window.location.href = `${API_URL}/pigeons/export/csv`;
+}
+
 function changerFiltre(cle, valeur) {
+  pigeonState.page = 0;
   pigeonState.filtres[cle] = valeur;
   appliquerFiltresEtTri();
 }
@@ -232,6 +382,7 @@ function changerTri(colonne) {
 }
 
 function reinitialiserFiltres() {
+  pigeonState.page = 0;
   pigeonState.filtres = { lignee_id: '', statut: '', sexe: '', annee: '' };
   ['f-lignee-filtre', 'f-statut-filtre', 'f-sexe-filtre', 'f-annee-filtre'].forEach(id => {
     const el = document.getElementById(id);
@@ -422,6 +573,9 @@ async function openDetailPigeon(id) {
         onclick="closeModal(); setTimeout(()=>{ document.getElementById('modal').style.width='560px'; openPedigree('${p.id}'); },150);">
         🌳 Pedigree
       </button>
+      <button class="btn btn-secondary" onclick="openTimeline('${p.id}', '${p.matricule}')">
+        📋 Historique
+      </button>
       <button class="btn btn-primary" onclick="openEditPigeon('${p.id}')">
         ✏️ Modifier
       </button>
@@ -429,6 +583,69 @@ async function openDetailPigeon(id) {
 
   openModal(`🕊️ ${p.matricule}`, html);
   document.getElementById('modal').style.width = '750px';
+}
+
+// ===== TIMELINE PIGEON =====
+async function openTimeline(id, matricule) {
+  closeModal();
+  const [perfs, sante] = await Promise.all([
+    apiFetch(`/performances/pigeon/${id}`),
+    apiFetch(`/sante/pigeon/${id}`),
+  ]);
+
+  const evenements = [
+    ...perfs.map(p => ({
+      date: p.date,
+      type: 'concours',
+      icone: '🏆',
+      titre: p.nom_concours,
+      detail: [
+        p.distance_km ? `${p.distance_km} km` : null,
+        p.classement ? `${p.classement}e` : null,
+        p.vitesse_m_min ? `${p.vitesse_m_min.toFixed(1)} m/min` : null,
+      ].filter(Boolean).join(' · '),
+    })),
+    ...sante.map(s => ({
+      date: s.date,
+      type: 'sante',
+      icone: '🏥',
+      titre: s.type.replace('_', ' '),
+      detail: [s.description, s.produit].filter(Boolean).join(' — '),
+    })),
+  ].sort((a, b) => b.date.localeCompare(a.date));
+
+  const couleurs = { concours: '#C4963A', sante: '#27AE60' };
+
+  const html = evenements.length === 0
+    ? `<p style="color:var(--text-light); text-align:center; padding:32px 0;">Aucun événement enregistré.</p>`
+    : `<div style="position:relative; padding-left:24px;">
+        <div style="position:absolute; left:8px; top:0; bottom:0; width:2px;
+          background:var(--border);"></div>
+        ${evenements.map(ev => `
+          <div style="position:relative; margin-bottom:16px;">
+            <div style="position:absolute; left:-20px; top:4px; width:12px; height:12px;
+              border-radius:50%; background:${couleurs[ev.type]};
+              border:2px solid var(--bg-card);"></div>
+            <div style="font-size:11px; color:var(--text-light); margin-bottom:4px;">
+              ${fmtDate(ev.date)}
+            </div>
+            <div style="background:var(--bg); border-radius:8px; padding:10px 14px;
+              border-left:3px solid ${couleurs[ev.type]};">
+              <div style="font-weight:600; font-size:14px;">
+                ${ev.icone} ${ev.titre}
+              </div>
+              ${ev.detail ? `<div style="font-size:13px; color:var(--text-light); margin-top:4px;">${ev.detail}</div>` : ''}
+            </div>
+          </div>`).join('')}
+      </div>
+      <div style="text-align:right; margin-top:16px;">
+        <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      </div>`;
+
+  setTimeout(() => {
+    openModal(`📋 Historique — ${matricule}`, html);
+    document.getElementById('modal').style.width = '600px';
+  }, 150);
 }
 
 // ===== UPLOAD PHOTO =====
@@ -619,8 +836,8 @@ async function savePigeon(id = '') {
 }
 
 // ===== SUPPRIMER =====
-async function deletePigeon(id, matricule) {
-  if (!confirm(`Supprimer définitivement le pigeon "${matricule}" ?\nCette action est irréversible.`)) return;
+function deletePigeon(id, matricule) {
+  confirmDelete(`Supprimer définitivement le pigeon <strong>${matricule}</strong> ?`, async () => {
   try {
     await apiFetch(`/pigeons/${id}`, { method: 'DELETE' });
     showNotification(`Pigeon "${matricule}" supprimé`);
@@ -633,6 +850,7 @@ async function deletePigeon(id, matricule) {
       console.error(err);
     }
   }
+  });
 }
 
 function _showPigeonBlockedDialog(id, matricule) {
@@ -708,15 +926,26 @@ async function loadPerformances() {
 
   if (sorted.length === 0) {
     content.innerHTML = `
+      <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+        <button class="btn btn-secondary" onclick="ouvrirImportPerformances()"
+          style="white-space:nowrap;">⬆️ Importer CSV</button>
+      </div>
       <div class="empty-state">
         <div class="empty-state-icon">🏆</div>
         <div class="empty-state-text">Aucune performance enregistrée</div>
-        <div class="empty-state-sub">Ajoutez les résultats de concours de vos pigeons</div>
+        <div class="empty-state-sub">Ajoutez des résultats de concours ou importez une liste CSV</div>
       </div>`;
     return;
   }
 
   content.innerHTML = `
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:12px;">
+      <button class="btn btn-secondary" onclick="ouvrirImportPerformances()"
+        style="white-space:nowrap;">⬆️ Importer CSV</button>
+      <button class="btn btn-secondary"
+        onclick="window.location.href='${API_URL}/performances/export/csv'"
+        style="white-space:nowrap;">⬇️ Exporter CSV</button>
+    </div>
     <div class="card">
       <div class="table-container">
         <table>
@@ -844,15 +1073,16 @@ async function savePerformance() {
   }
 }
 
-async function deletePerformance(id, nom) {
-  if (!confirm(`Supprimer la performance "${nom}" ?`)) return;
-  try {
-    await apiFetch(`/performances/${id}`, { method: 'DELETE' });
-    showNotification('Performance supprimée');
-    loadPerformances();
-  } catch (err) {
-    console.error(err);
-  }
+function deletePerformance(id, nom) {
+  confirmDelete(`Supprimer la performance <strong>${nom}</strong> ?`, async () => {
+    try {
+      await apiFetch(`/performances/${id}`, { method: 'DELETE' });
+      showNotification('Performance supprimée');
+      loadPerformances();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 
 // ===== SANTÉ =====
@@ -890,6 +1120,11 @@ async function loadSante() {
   }
 
   content.innerHTML = `
+    <div style="text-align:right; margin-bottom:12px;">
+      <button class="btn btn-secondary"
+        onclick="window.location.href='${API_URL}/sante/export/csv'"
+        style="white-space:nowrap;">⬇️ Exporter CSV</button>
+    </div>
     <div class="card">
       <div class="table-container">
         <table>
@@ -1002,13 +1237,14 @@ async function saveSante() {
   }
 }
 
-async function deleteSante(id) {
-  if (!confirm('Supprimer cet événement santé ?')) return;
-  try {
-    await apiFetch(`/sante/${id}`, { method: 'DELETE' });
-    showNotification('Événement supprimé');
-    loadSante();
-  } catch (err) {
-    console.error(err);
-  }
+function deleteSante(id) {
+  confirmDelete('Supprimer cet événement santé ?', async () => {
+    try {
+      await apiFetch(`/sante/${id}`, { method: 'DELETE' });
+      showNotification('Événement supprimé');
+      loadSante();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }

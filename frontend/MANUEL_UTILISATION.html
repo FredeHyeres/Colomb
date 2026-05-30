@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manuel d'utilisation — Colomb</title>
+  <style>
+    :root {
+      --accent: #2980B9;
+      --accent-dark: #1a5276;
+      --bg: #f4f6f9;
+      --bg-sidebar: #1e2a38;
+      --text: #2c3e50;
+      --text-light: #7f8c8d;
+      --border: #dce1e7;
+      --success: #27ae60;
+      --warning: #e67e22;
+      --danger: #e74c3c;
+      --sidebar-width: 270px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      font-size: 15px;
+      color: var(--text);
+      background: var(--bg);
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      width: var(--sidebar-width);
+      background: var(--bg-sidebar);
+      color: #ecf0f1;
+      height: 100vh;
+      position: fixed;
+      top: 0; left: 0;
+      overflow-y: auto;
+      padding-bottom: 32px;
+    }
+
+    #sidebar-logo {
+      padding: 24px 20px 16px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #sidebar-logo .version {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: #95a5a6;
+      margin-left: auto;
+    }
+
+    #sidebar nav a {
+      display: block;
+      padding: 9px 20px;
+      color: #bdc3c9;
+      text-decoration: none;
+      font-size: 0.82rem;
+      line-height: 1.4;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    #sidebar nav a:hover {
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      border-left-color: var(--accent);
+    }
+
+    #sidebar nav a.section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #7f8c8d;
+      padding-top: 18px;
+      pointer-events: none;
+      cursor: default;
+    }
+
+    #sidebar nav a.sub {
+      padding-left: 34px;
+      font-size: 0.78rem;
+    }
+
+    /* ── CONTENU ── */
+    #main {
+      margin-left: var(--sidebar-width);
+      padding: 40px 60px 80px 60px;
+      max-width: 960px;
+      width: 100%;
+    }
+
+    /* ── HEADER ── */
+    .doc-header {
+      background: linear-gradient(135deg, var(--bg-sidebar) 0%, var(--accent-dark) 100%);
+      color: #fff;
+      border-radius: 14px;
+      padding: 36px 40px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+
+    .doc-header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .doc-header .subtitle {
+      font-size: 1.05rem;
+      opacity: 0.85;
+      margin-bottom: 16px;
+    }
+
+    .doc-header .meta {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+      opacity: 0.75;
+    }
+
+    .doc-header .meta span { display: flex; align-items: center; gap: 6px; }
+
+    /* ── TITRES ── */
+    h2 {
+      font-size: 1.45rem;
+      color: var(--accent-dark);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 8px;
+      margin: 48px 0 20px;
+    }
+
+    h3 {
+      font-size: 1.1rem;
+      color: var(--text);
+      margin: 30px 0 12px;
+      padding-left: 10px;
+      border-left: 4px solid var(--accent);
+    }
+
+    h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text);
+      margin: 22px 0 10px;
+      background: var(--bg);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    /* ── PARAGRAPHES & LISTES ── */
+    p { line-height: 1.7; margin-bottom: 12px; }
+
+    ul, ol {
+      margin: 10px 0 14px 22px;
+      line-height: 1.8;
+    }
+
+    ul li::marker { color: var(--accent); }
+
+    /* ── TABLEAUX ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0 20px;
+      font-size: 0.88rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    thead tr { background: var(--accent-dark); color: #fff; }
+    thead th { padding: 10px 14px; text-align: left; font-weight: 600; font-size: 0.83rem; }
+    tbody tr:nth-child(even) { background: #f0f4f8; }
+    tbody tr:hover { background: #e8f0fb; }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+
+    /* ── BADGES ── */
+    .badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #fff;
+    }
+    .badge-actif       { background: #27ae60; }
+    .badge-reproducteur{ background: #2980b9; }
+    .badge-concours    { background: #f39c12; }
+    .badge-retraite    { background: #8e44ad; }
+    .badge-perdu       { background: #e67e22; }
+    .badge-decede      { background: #7f8c8d; }
+    .badge-ok          { background: #27ae60; }
+    .badge-warn        { background: #e67e22; }
+    .badge-err         { background: #e74c3c; }
+
+    /* ── BOÎTES INFO ── */
+    .info-box {
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      border-left: 4px solid;
+    }
+    .info-box.tip    { background: #eafaf1; border-color: var(--success); }
+    .info-box.warn   { background: #fef9e7; border-color: var(--warning); }
+    .info-box.danger { background: #fdedec; border-color: var(--danger); }
+    .info-box strong { display: block; margin-bottom: 4px; }
+
+    /* ── CODE INLINE ── */
+    code {
+      background: #eaf0fb;
+      color: var(--accent-dark);
+      padding: 1px 6px;
+      border-radius: 4px;
+      font-size: 0.87em;
+      font-family: 'Courier New', monospace;
+    }
+
+    /* ── HR ── */
+    hr { border: none; border-top: 1px solid var(--border); margin: 36px 0; }
+
+    /* ── LICENCE ── */
+    .licence-box {
+      background: var(--bg-sidebar);
+      color: #ecf0f1;
+      border-radius: 10px;
+      padding: 24px 28px;
+      margin-top: 48px;
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    .licence-box h2 { color: #ecf0f1; border-bottom-color: rgba(255,255,255,0.2); margin-top: 0; }
+    .licence-box a  { color: #85c1e9; }
+
+    /* ── ANCRES INVISIBLES ── */
+    .anchor { display: block; height: 72px; margin-top: -72px; pointer-events: none; }
+
+    /* ── RESPONSIVE ── */
+    @media print {
+      #sidebar { display: none; }
+      #main { margin-left: 0; padding: 20px 30px; }
+      h2 { page-break-before: always; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════ SIDEBAR ════════════════════ -->
+<aside id="sidebar">
+  <div id="sidebar-logo">
+    🕊️ Colomb
+    <span class="version">v3.0</span>
+  </div>
+  <nav>
+    <a href="#presentation" class="section-title">Général</a>
+    <a href="#presentation">1. Présentation générale</a>
+    <a href="#demarrage">2. Démarrage</a>
+    <a href="#dashboard">3. Tableau de bord</a>
+
+    <a href="#pigeons" class="section-title">Élevage</a>
+    <a href="#pigeons">4. Pigeons</a>
+    <a href="#lignees">5. Lignées</a>
+    <a href="#performances">6. Performances</a>
+    <a href="#sante">7. Santé</a>
+    <a href="#couples">8. Couples &amp; Reproduction</a>
+    <a href="#eleveur">9. Mon Élevage</a>
+
+    <a href="#sport" class="section-title">Sport &amp; IA</a>
+    <a href="#sport">10. Module Sport &amp; IA</a>
+    <a href="#s-dashboard" class="sub">10.1 Dashboard Sport</a>
+    <a href="#s-seances" class="sub">10.2 Séances</a>
+    <a href="#s-historique" class="sub">10.3 Historique pigeon</a>
+    <a href="#s-nutrition" class="sub">10.4 Nutrition</a>
+    <a href="#s-analytics" class="sub">10.5 Analytics</a>
+    <a href="#s-ia" class="sub">10.6 Recommandations IA</a>
+    <a href="#s-condition" class="sub">10.7 Condition sportive</a>
+    <a href="#s-colonie" class="sub">10.8 Monitoring colonie</a>
+
+    <a href="#conventions" class="section-title">Référence</a>
+    <a href="#conventions">11. Conventions métier</a>
+    <a href="#erreurs">12. Messages d'erreur</a>
+    <a href="#licence">Mentions légales</a>
+  </nav>
+</aside>
+
+<!-- ════════════════════ CONTENU ════════════════════ -->
+<main id="main">
+
+  <!-- EN-TÊTE -->
+  <div class="doc-header">
+    <h1>🕊️ Manuel d'utilisation — Colomb</h1>
+    <div class="subtitle">Application de gestion d'élevage colombophile</div>
+    <div class="meta">
+      <span>📅 Version 3.0 — Mai 2026</span>
+      <span>👨‍💻 Développeur : F. Tourneur</span>
+      <span>✉️ <a href="mailto:fredtour86@gmail.com" style="color:#85c1e9;">fredtour86@gmail.com</a></span>
+    </div>
+  </div>
+
+  <!-- ─── 1. PRÉSENTATION ─── -->
+  <span class="anchor" id="presentation"></span>
+  <h2>1. Présentation générale</h2>
+  <p>Colomb est une application web de gestion d'élevage de pigeons voyageurs. Elle se compose de deux espaces distincts accessibles depuis la barre de navigation latérale :</p>
+  <ul>
+    <li><strong>Colomb — Gestion d'élevage</strong> (<code>/</code>) : suivi des pigeons, lignées, performances, santé, couples et profil éleveur.</li>
+    <li><strong>Colomb Sport</strong> (<code>/sport/</code>) : entraînements, nutrition, analyses statistiques et recommandations par intelligence artificielle.</li>
+  </ul>
+  <p>Les deux espaces communiquent avec le même serveur backend. Le lien <strong>🏃 Sport &amp; IA</strong> en bas de la barre de navigation de l'espace élevage permet de basculer vers le module sport.</p>
+
+  <!-- ─── 2. DÉMARRAGE ─── -->
+  <span class="anchor" id="demarrage"></span>
+  <h2>2. Démarrage</h2>
+  <p>L'application nécessite que le serveur backend soit démarré avant toute utilisation. Au premier chargement, le tableau de bord tente de contacter l'API jusqu'à <strong>5 fois</strong> (une tentative par seconde). Si l'API reste inaccessible, le message <em>"Impossible de contacter l'API"</em> s'affiche avec un bouton <strong>Réessayer</strong>.</p>
+  <div class="info-box tip">
+    <strong>Adresse par défaut</strong>
+    Frontend : <code>http://localhost</code> (port 80) — API : <code>http://localhost:8001</code>
+  </div>
+
+  <!-- ─── 3. TABLEAU DE BORD ─── -->
+  <span class="anchor" id="dashboard"></span>
+  <h2>3. Tableau de bord</h2>
+  <p>Page d'accueil de l'espace élevage. Elle affiche une synthèse en temps réel de la colonie.</p>
+
+  <h3>Compteurs en haut de page</h3>
+  <table>
+    <thead><tr><th>Indicateur</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Total pigeons</td><td>Tous statuts confondus</td></tr>
+      <tr><td>Actifs</td><td>Pigeons avec le statut <span class="badge badge-actif">Actif</span></td></tr>
+      <tr><td>Reproducteurs</td><td>Pigeons avec le statut <span class="badge badge-reproducteur">Reproducteur</span></td></tr>
+      <tr><td>En concours</td><td>Pigeons avec le statut <span class="badge badge-concours">Concours</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Autres sections</h3>
+  <ul>
+    <li><strong>Répartition par lignée</strong> : nombre et pourcentage de pigeons par lignée (dont "Sans lignée").</li>
+    <li><strong>Répartition par statut</strong> : barres de progression visuelles pour Actifs, Reproducteurs, En concours, Perdus.</li>
+    <li><strong>Derniers pigeons enregistrés</strong> : les 5 derniers ajoutés. Cliquer sur une ligne navigue vers la page Pigeons.</li>
+  </ul>
+
+  <!-- ─── 4. PIGEONS ─── -->
+  <span class="anchor" id="pigeons"></span>
+  <h2>4. Pigeons</h2>
+
+  <h3>Liste des pigeons</h3>
+  <p>Affiche tous les pigeons dans l'ordre de création. Colonnes : Photo, Matricule, Année, Sexe, Lignée, Case colombier, Statut, Actions (👁️ ✏️ 🗑️ 🌳).</p>
+
+  <h3>Filtres et tri</h3>
+  <p><strong>Filtres cumulables :</strong> Lignée, Statut, Sexe, Année. Le bouton <strong>✕ Réinitialiser</strong> efface tous les filtres.</p>
+  <p><strong>Tri des colonnes :</strong> cliquer sur l'en-tête Matricule, Année, Sexe, Lignée ou Statut. 1er clic = croissant (↑), 2e = décroissant (↓), 3e = retour à l'ordre de création. Un compteur indique le nombre de pigeons affichés sur le total.</p>
+
+  <h3>Statuts disponibles</h3>
+  <table>
+    <thead><tr><th>Statut</th><th>Usage</th></tr></thead>
+    <tbody>
+      <tr><td><span class="badge badge-actif">Actif</span></td><td>Pigeon en activité normale</td></tr>
+      <tr><td><span class="badge badge-reproducteur">Reproducteur</span></td><td>Affecté à la reproduction (attribué automatiquement à la création d'un couple)</td></tr>
+      <tr><td><span class="badge badge-concours">Concours</span></td><td>Engagé en compétition</td></tr>
+      <tr><td><span class="badge badge-retraite">Retraité</span></td><td>Retiré de la compétition</td></tr>
+      <tr><td><span class="badge badge-perdu">Perdu</span></td><td>Perdu, conservé dans l'historique</td></tr>
+      <tr><td><span class="badge badge-decede">Décédé</span></td><td>Décédé, conservé dans l'historique</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Ajouter / Modifier un pigeon</h3>
+  <p>Cliquer sur <strong>+ Ajouter un pigeon</strong> ou ✏️. Champs du formulaire :</p>
+  <table>
+    <thead><tr><th>Champ</th><th>Obligatoire</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Matricule</td><td>✅</td><td>Identifiant unique — ex : <code>166548-24-F</code></td></tr>
+      <tr><td>Année de naissance</td><td>✅</td><td>Entier 2000–2099</td></tr>
+      <tr><td>Sexe</td><td>✅</td><td>♂️ Mâle ou ♀️ Femelle</td></tr>
+      <tr><td>Statut</td><td></td><td>Défaut : Actif</td></tr>
+      <tr><td>Couleur du plumage</td><td></td><td>Texte libre — ex : <code>Bleu barré</code></td></tr>
+      <tr><td>Case colombier</td><td></td><td>Texte libre — ex : <code>Case 12</code></td></tr>
+      <tr><td>Lignée</td><td></td><td>Choisir parmi les lignées existantes</td></tr>
+      <tr><td>Père ♂️</td><td></td><td>Choisir parmi les mâles existants</td></tr>
+      <tr><td>Mère ♀️</td><td></td><td>Choisir parmi les femelles existantes</td></tr>
+      <tr><td>Notes</td><td></td><td>Zone de texte libre</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Fiche détaillée (👁️)</h3>
+  <p>Affiche en une seule vue : photo, informations principales, notes, généalogie (père et mère cliquables), historique des performances, historique santé.</p>
+  <p>Boutons en bas : <strong>Fermer</strong> — <strong>🖨️ Imprimer</strong> (PDF) — <strong>🌳 Pedigree</strong> — <strong>✏️ Modifier</strong>.</p>
+
+  <h3>Photo</h3>
+  <p>Dans la fiche détaillée, cliquer sur <strong>📷 Photo</strong> pour sélectionner une image. Formats acceptés : JPG, JPEG, PNG, WEBP.</p>
+
+  <h3>Pedigree (🌳)</h3>
+  <p>Arbre généalogique sur 4 générations. Chaque ancêtre indique matricule, sexe, couleur de plumage et lignée. Bouton <strong>🖨️ PDF Pedigree</strong> disponible.</p>
+
+  <h3>Supprimer un pigeon (🗑️)</h3>
+  <p>Confirmation requise. <strong>Cas bloquant :</strong> si le pigeon a des affectations nutritionnelles actives, la suppression est refusée. Une fenêtre propose :</p>
+  <ul>
+    <li><strong>Annuler</strong> : aucune modification.</li>
+    <li><strong>Marquer comme Perdu</strong> : change le statut en Perdu, retire le pigeon du suivi actif, conserve l'historique.</li>
+  </ul>
+
+  <!-- ─── 5. LIGNÉES ─── -->
+  <span class="anchor" id="lignees"></span>
+  <h2>5. Lignées</h2>
+  <p>Regroupement de pigeons par origine commune. Chaque lignée est identifiée par une couleur utilisée dans toutes les listes (badges, fonds de ligne).</p>
+  <table>
+    <thead><tr><th>Champ</th><th>Obligatoire</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Nom</td><td>✅</td><td>Ex : <code>Janssen</code></td></tr>
+      <tr><td>Origine</td><td></td><td>Pays ou région — ex : <code>Belgique</code></td></tr>
+      <tr><td>Description</td><td></td><td>Texte libre</td></tr>
+      <tr><td>Couleur d'identification</td><td></td><td>Sélecteur de couleur. Défaut : bleu (#2980B9)</td></tr>
+    </tbody>
+  </table>
+  <div class="info-box tip">La suppression d'une lignée ne supprime pas les pigeons qui lui sont rattachés.</div>
+
+  <!-- ─── 6. PERFORMANCES ─── -->
+  <span class="anchor" id="performances"></span>
+  <h2>6. Performances</h2>
+  <p>Suivi des résultats de concours. Tableau trié par date décroissante : Pigeon, Concours, Date, Distance, Classement (badge coloré : or/argent/bronze/gris), Vitesse (m/min), Pigeons engagés.</p>
+
+  <h3>Ajouter une performance</h3>
+  <table>
+    <thead><tr><th>Champ</th><th>Obligatoire</th></tr></thead>
+    <tbody>
+      <tr><td>Pigeon</td><td>✅</td></tr>
+      <tr><td>Nom du concours</td><td>✅</td></tr>
+      <tr><td>Date</td><td>✅</td></tr>
+      <tr><td>Distance (km)</td><td></td></tr>
+      <tr><td>Classement</td><td></td></tr>
+      <tr><td>Vitesse (m/min)</td><td></td></tr>
+      <tr><td>Pigeons engagés</td><td></td></tr>
+      <tr><td>Notes</td><td></td></tr>
+    </tbody>
+  </table>
+
+  <!-- ─── 7. SANTÉ ─── -->
+  <span class="anchor" id="sante"></span>
+  <h2>7. Santé</h2>
+  <p>Suivi des événements sanitaires. Tableau trié par date décroissante.</p>
+
+  <h3>Types d'événements</h3>
+  <table>
+    <thead><tr><th>Type</th><th>Couleur badge</th></tr></thead>
+    <tbody>
+      <tr><td>💉 Vaccination</td><td>Vert</td></tr>
+      <tr><td>💊 Traitement</td><td>Orange</td></tr>
+      <tr><td>🩺 Visite vétérinaire</td><td>Bleu</td></tr>
+      <tr><td>👁️ Observation</td><td>Gris</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Ajouter un événement</h3>
+  <p>Champs : Pigeon (obligatoire), Type (obligatoire), Date (obligatoire), Description, Produit utilisé.</p>
+
+  <!-- ─── 8. COUPLES ─── -->
+  <span class="anchor" id="couples"></span>
+  <h2>8. Couples &amp; Reproduction</h2>
+  <p>Gestion des couples reproducteurs et de leurs nichées. Deux sections : <strong>Couples actifs</strong> (toujours visibles) et <strong>Historique</strong> (masqué par défaut, affichable via ▼ Afficher).</p>
+
+  <h3>Créer un couple</h3>
+  <p>Champs : Mâle (obligatoire), Femelle (obligatoire), Case colombier, Année (obligatoire), Notes.</p>
+  <div class="info-box tip">À la création, les deux pigeons passent automatiquement au statut <strong>Reproducteur</strong>.</div>
+
+  <h3>Fiche détaillée d'un couple (👁️)</h3>
+  <p>Affiche encadrés mâle/femelle, case, année, statut, notes, tableau des nichées. Si le couple est actif : bouton <strong>+ Ajouter une nichée</strong>.</p>
+  <p>Actions par nichée : ✏️ Modifier — 🐣 Créer un jeune — 🗑️ Supprimer.</p>
+
+  <h3>Créer un jeune pigeon depuis une nichée (🐣)</h3>
+  <p>Le formulaire pré-remplit père, mère et année. Champs à compléter : Matricule (obligatoire), Sexe (obligatoire), Année, Statut, Lignée, Case, Couleur, Notes.</p>
+
+  <h3>Dissoudre un couple (🔓)</h3>
+  <p>Après confirmation, les deux pigeons repassent en statut <strong>Actif</strong>. Le couple est conservé dans l'historique.</p>
+
+  <h3>Supprimer un couple (🗑️)</h3>
+  <div class="info-box danger"><strong>Attention :</strong> la suppression est définitive et entraîne la suppression de toutes les nichées associées.</div>
+
+  <!-- ─── 9. MON ÉLEVAGE ─── -->
+  <span class="anchor" id="eleveur"></span>
+  <h2>9. Mon Élevage</h2>
+  <p>Profil de l'éleveur utilisé dans l'en-tête des exports PDF (fiche pigeon, pedigree).</p>
+  <ul>
+    <li><strong>Identité :</strong> prénom, nom, association, numéro d'éleveur.</li>
+    <li><strong>Colombier :</strong> adresse, téléphone, email.</li>
+    <li><strong>Photo du colombier :</strong> bouton <strong>📷 Changer la photo</strong>.</li>
+    <li><strong>Aperçu en-tête PDF :</strong> visualisation en temps réel de la carte de visite PDF.</li>
+  </ul>
+  <p>Enregistrer via le bouton <strong>💾 Enregistrer</strong>.</p>
+
+  <!-- ─── 10. SPORT ─── -->
+  <span class="anchor" id="sport"></span>
+  <h2>10. Module Sport &amp; IA</h2>
+  <p>Accessible via <strong>🏃 Sport &amp; IA</strong> dans la navigation de l'espace élevage, ou directement à <code>/sport/</code>. Le lien <strong>← Retour Élevage</strong> revient à l'espace principal. Navigation par barre latérale (menu hamburger sur mobile).</p>
+
+  <!-- 10.1 -->
+  <span class="anchor" id="s-dashboard"></span>
+  <h3>10.1 Dashboard Sport</h3>
+  <p>Page d'accueil du module Sport. Affiche les indicateurs clés : nombre total de séances, récupération globale moyenne, nombre de concours et autres métriques agrégées.</p>
+
+  <!-- 10.2 -->
+  <span class="anchor" id="s-seances"></span>
+  <h3>10.2 Séances d'entraînement</h3>
+  <p>Tableau de toutes les séances avec filtres en temps réel : <strong>Type</strong> (Loft / Lancer / Concours), <strong>Date de</strong> / <strong>Date à</strong>, bouton <strong>Réinitialiser</strong>.</p>
+  <table>
+    <thead><tr><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>Loft</td><td>Vol en rond au colombier</td></tr>
+      <tr><td>Lancer</td><td>Vol depuis un point de lâcher</td></tr>
+      <tr><td>Concours</td><td>Participation à un concours officiel</td></tr>
+    </tbody>
+  </table>
+  <p><strong>+ Nouvelle séance :</strong> type, date, conditions météo (température, vent), résultats individuels par pigeon (récupération, notes).</p>
+
+  <!-- 10.3 -->
+  <span class="anchor" id="s-historique"></span>
+  <h3>10.3 Historique pigeon</h3>
+  <p>Sélectionner un pigeon puis cliquer sur <strong>Charger l'historique</strong>. Affiche l'évolution chronologique de la récupération, des vitesses et des classements.</p>
+
+  <!-- 10.4 -->
+  <span class="anchor" id="s-nutrition"></span>
+  <h3>10.4 Nutrition</h3>
+  <p>Module de gestion alimentaire organisé en <strong>6 onglets</strong>.</p>
+
+  <h4>Onglet Mélanges (🔀)</h4>
+  <p>Bibliothèque de formules personnalisées. Grille de cartes affichant nom, usage, description et composition (ingrédients + pourcentages).</p>
+  <p><strong>Usages disponibles :</strong> Récupération, Entraînement, Pré-panier, Enlogement.</p>
+  <p><strong>Actions par carte :</strong> ✏️ Modifier — 📋 Dupliquer (préfixe <em>"Copie de"</em>) — 🗑️ Supprimer.</p>
+
+  <p><strong>Gestion des pourcentages d'ingrédients :</strong><br>
+  Chaque ingrédient dispose d'un curseur et d'un champ numérique. La somme doit rester égale à 100%. Modifier un pourcentage redistribue automatiquement les autres ingrédients <em>non verrouillés</em> de façon proportionnelle.</p>
+
+  <div class="info-box tip">
+    <strong>Système de verrouillage 🔒/🔓</strong>
+    Cliquer sur le cadenas d'un ingrédient pour figer son pourcentage. Les redistributions ne touchent que les items déverrouillés.<br>
+    <strong>Règle n-2 :</strong> on ne peut verrouiller au maximum <em>n − 2</em> items (au moins 2 restent toujours libres).<br>
+    <strong>Plafond dynamique :</strong> le maximum d'un curseur non verrouillé est calculé automatiquement : <code>100 − somme verrouillés − (nombre autres non verrouillés × 1%)</code>.
+  </div>
+
+  <h4>Onglet Ingrédients (🌾)</h4>
+  <p>Catalogue des matières premières. Colonnes : Nom, Catégorie, Protéines (%), Lipides (%), Glucides (%), Énergie (kcal/kg), Notes éleveurs. Boutons ✏️ et 🗑️ par ligne.</p>
+
+  <h4>Onglet Suppléments (💊)</h4>
+  <p>Catalogue des suppléments (vitamines, minéraux…). Champs : Nom, Type, Description.</p>
+
+  <h4>Onglet Plan alimentaire (📋)</h4>
+  <p>Un plan définit une ration hebdomadaire : pour chaque jour (Lun–Dim), un ou plusieurs mélanges avec leurs pourcentages.</p>
+  <p>La <strong>même logique de verrouillage et de redistribution proportionnelle</strong> que pour les ingrédients s'applique ici aux mélanges de chaque jour.</p>
+  <p><strong>Actions :</strong> ✏️ Modifier — 📋 Dupliquer — 🗑️ Supprimer.</p>
+
+  <h4>Onglet Affectation (🎯)</h4>
+  <p>Associe un plan à des pigeons ou à des groupes.</p>
+  <table>
+    <thead><tr><th>Mode</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>🕊️ Individuel</td><td>Plan affecté à un ou plusieurs pigeons précis</td></tr>
+      <tr><td>👥 Groupe</td><td>Plan affecté à tous les pigeons d'un statut</td></tr>
+    </tbody>
+  </table>
+  <p><strong>Groupes disponibles :</strong> Actif, Reproducteur, Concours, Retraité. <em>(Perdu et Décédé exclus de la sélection.)</em></p>
+  <p>Dans la liste des affectations, les pigeons <span class="badge badge-perdu">Perdu</span> ou <span class="badge badge-decede">Décédé</span> conservent leur affectation historique avec un badge informatif.</p>
+
+  <h4>Onglet Calendrier (📅)</h4>
+  <p>Vue hebdomadaire du planning alimentaire. Navigation par sélecteur de semaine ISO (YYYY-Www) et boutons ◀ ▶.</p>
+  <table>
+    <thead><tr><th>Ligne</th><th>Condition</th><th>Contenu</th></tr></thead>
+    <tbody>
+      <tr><td>👥 Groupe</td><td>Affectation en mode groupe</td><td>Une ligne par groupe, mélanges du plan sur chaque jour</td></tr>
+      <tr><td>🕊️ Pigeon</td><td>Affectation individuelle</td><td>Une ligne par pigeon (Perdu et Décédé exclus)</td></tr>
+    </tbody>
+  </table>
+  <p>Chaque cellule affiche les mélanges du jour sous forme de liste multiligne : nom + pourcentage.</p>
+
+  <!-- 10.5 -->
+  <span class="anchor" id="s-analytics"></span>
+  <h3>10.5 Analytics</h3>
+  <p>Tableau de bord avec 4 graphiques calculés à partir des séances :</p>
+  <ol>
+    <li><strong>Tendance de récupération</strong> : évolution de l'indice de récupération moyen dans le temps.</li>
+    <li><strong>Charge hebdomadaire</strong> : nombre de séances et intensité par semaine.</li>
+    <li><strong>Température vs Récupération</strong> : corrélation météo / récupération (nuage de points).</li>
+    <li><strong>Régularité</strong> : régularité d'entraînement des 5 pigeons les plus actifs.</li>
+  </ol>
+  <p>KPI affichés en haut : total des séances, récupération globale moyenne, nombre de concours.</p>
+
+  <!-- 10.6 -->
+  <span class="anchor" id="s-ia"></span>
+  <h3>10.6 Recommandations IA</h3>
+  <p>Analyse individuelle d'un pigeon par intelligence artificielle.</p>
+  <ol>
+    <li>Sélectionner un pigeon dans la liste déroulante.</li>
+    <li>Cliquer sur <strong>Charger l'analyse</strong> pour afficher les recommandations existantes.</li>
+    <li>Cliquer sur <strong>⚡ Analyser maintenant</strong> pour lancer une nouvelle analyse complète.</li>
+  </ol>
+  <p>L'IA prend en compte : historique des séances, condition sportive (récupération, charge), profil génétique (lignée), catégorie d'âge. Les recommandations s'affichent en fiches colorées avec domaine, priorité et commentaire explicatif.</p>
+
+  <!-- 10.7 -->
+  <span class="anchor" id="s-condition"></span>
+  <h3>10.7 Condition sportive</h3>
+  <p>Sélectionner un pigeon puis cliquer sur <strong>Analyser</strong>. Affiche :</p>
+  <ul>
+    <li>Indices circulaires de condition (forme physique, récupération, régularité).</li>
+    <li>Tendances sur les dernières séances.</li>
+    <li>Alertes si des indicateurs sont dégradés.</li>
+    <li>Intégration des événements santé récents.</li>
+  </ul>
+
+  <!-- 10.8 -->
+  <span class="anchor" id="s-colonie"></span>
+  <h3>10.8 Monitoring colonie</h3>
+  <p>Vue d'ensemble de toute la colonie (pigeons décédés exclus). Carte individuelle par pigeon avec son dernier snapshot sportif, catégorisation visuelle par niveau de forme, et graphique en anneau (doughnut) de la répartition.</p>
+
+  <hr>
+
+  <!-- ─── 11. CONVENTIONS ─── -->
+  <span class="anchor" id="conventions"></span>
+  <h2>11. Conventions et règles métier</h2>
+
+  <h3>Matricules</h3>
+  <p>Identifiant principal d'un pigeon, <strong>obligatoire et unique</strong>. Format libre — exemple courant : <code>FR-2024-123456</code>.</p>
+
+  <h3>Statuts Perdu et Décédé</h3>
+  <ul>
+    <li>Exclus des sélections d'affectation nutritionnelle.</li>
+    <li>Exclus du calendrier nutrition.</li>
+    <li>Exclus du monitoring colonie (Décédé uniquement).</li>
+    <li>Visibles dans la liste des affectations avec badge informatif.</li>
+    <li>Non supprimables si des affectations nutritionnelles existent.</li>
+  </ul>
+
+  <h3>Pourcentages (mélanges et plans)</h3>
+  <ul>
+    <li>La somme doit toujours totaliser exactement <strong>100 %</strong>.</li>
+    <li>La redistribution est automatique et proportionnelle.</li>
+    <li>Au moins 2 items doivent rester déverrouillés.</li>
+    <li>Les curseurs sont plafonnés dynamiquement pour éviter tout dépassement.</li>
+  </ul>
+
+  <h3>Couples et statuts</h3>
+  <ul>
+    <li>Création d'un couple → les deux pigeons passent automatiquement en <strong>Reproducteur</strong>.</li>
+    <li>Dissolution → les deux pigeons repassent en <strong>Actif</strong>.</li>
+  </ul>
+
+  <h3>Exports PDF</h3>
+  <p>Les exports utilisent l'en-tête configurée dans <strong>Mon Élevage</strong>. Si le profil n'est pas renseigné, l'en-tête est vide.</p>
+
+  <!-- ─── 12. ERREURS ─── -->
+  <span class="anchor" id="erreurs"></span>
+  <h2>12. Messages d'erreur fréquents</h2>
+  <table>
+    <thead><tr><th>Message</th><th>Cause</th><th>Solution</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><em>"Impossible de contacter l'API"</em></td>
+        <td>Backend non démarré</td>
+        <td>Démarrer le serveur puis cliquer sur <strong>Réessayer</strong></td>
+      </tr>
+      <tr>
+        <td><em>"Le matricule est obligatoire"</em></td>
+        <td>Champ Matricule vide</td>
+        <td>Renseigner un matricule</td>
+      </tr>
+      <tr>
+        <td><em>"Ce pigeon possède des affectations nutritionnelles actives"</em></td>
+        <td>Tentative de suppression d'un pigeon avec affectations</td>
+        <td>Marquer le pigeon comme <strong>Perdu</strong> à la place</td>
+      </tr>
+      <tr>
+        <td><em>"Le père doit être un mâle"</em></td>
+        <td>Femelle sélectionnée dans le champ Père</td>
+        <td>Choisir un pigeon de sexe mâle</td>
+      </tr>
+      <tr>
+        <td><em>"La mère doit être une femelle"</em></td>
+        <td>Mâle sélectionné dans le champ Mère</td>
+        <td>Choisir un pigeon de sexe femelle</td>
+      </tr>
+      <tr>
+        <td><em>"Choisissez un pigeon"</em></td>
+        <td>Formulaire soumis sans pigeon sélectionné</td>
+        <td>Sélectionner un pigeon dans la liste</td>
+      </tr>
+      <tr>
+        <td><em>"Erreur API"</em></td>
+        <td>Erreur serveur générique</td>
+        <td>Consulter les logs du backend</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <hr>
+
+  <!-- ─── MENTIONS LÉGALES ─── -->
+  <span class="anchor" id="licence"></span>
+  <div class="licence-box">
+    <h2>Mentions légales &amp; Licence</h2>
+    <p><strong>Développeur :</strong> F. Tourneur<br>
+    <strong>Contact :</strong> <a href="mailto:fredtour86@gmail.com">fredtour86@gmail.com</a></p>
+    <br>
+    <p><strong>Licence — Libre d'utilisation et de distribution</strong></p>
+    <p>Ce logiciel est mis à disposition librement pour un usage personnel et professionnel non commercial.<br>
+    Toute utilisation commerciale, revente ou redistribution à titre onéreux est strictement interdite.<br>
+    La modification du logiciel est autorisée à condition de conserver la mention du développeur original.</p>
+    <br>
+    <p style="opacity:0.6;font-size:0.8rem;">© 2026 F. Tourneur — Tous droits réservés sur le code source.</p>
+  </div>
+
+</main>
+
+<script>
+  // Surligne le lien actif dans la sidebar au scroll
+  const anchors = document.querySelectorAll('.anchor');
+  const links = document.querySelectorAll('#sidebar nav a[href^="#"]');
+
+  function setActive() {
+    let current = '';
+    anchors.forEach(a => {
+      if (window.scrollY >= a.offsetTop - 100) current = a.id;
+    });
+    links.forEach(l => {
+      const href = l.getAttribute('href').replace('#', '');
+      l.style.color = href === current ? '#fff' : '';
+      l.style.borderLeftColor = href === current ? 'var(--accent)' : '';
+      l.style.background = href === current ? 'rgba(255,255,255,0.1)' : '';
+    });
+  }
+
+  window.addEventListener('scroll', setActive, { passive: true });
+  setActive();
+</script>
+
+</body>
+</html>

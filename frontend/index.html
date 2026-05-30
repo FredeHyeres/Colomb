@@ -14,49 +14,60 @@
 
 <body>
 
+  <!-- Overlay mobile -->
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
   <!-- SIDEBAR -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">
       <span class="logo-icon">🕊️</span>
       <span class="logo-text">Colomb</span>
     </div>
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Navigation principale">
       <a href="#" class="nav-item active" data-page="dashboard">
-        <span class="nav-icon">🏠</span>
+        <span class="nav-icon" aria-hidden="true">🏠</span>
         <span>Tableau de bord</span>
       </a>
       <a href="#" class="nav-item" data-page="pigeons">
-        <span class="nav-icon">🕊️</span>
+        <span class="nav-icon" aria-hidden="true">🕊️</span>
         <span>Pigeons</span>
       </a>
       <a href="#" class="nav-item" data-page="lignees">
-        <span class="nav-icon">🌳</span>
+        <span class="nav-icon" aria-hidden="true">🌳</span>
         <span>Lignées</span>
       </a>
       <a href="#" class="nav-item" data-page="performances">
-        <span class="nav-icon">🏆</span>
+        <span class="nav-icon" aria-hidden="true">🏆</span>
         <span>Performances</span>
       </a>
       <a href="#" class="nav-item" data-page="sante">
-        <span class="nav-icon">🏥</span>
+        <span class="nav-icon" aria-hidden="true">🏥</span>
         <span>Santé</span>
       </a>
       <a href="#" class="nav-item" data-page="couples">
-        <span class="nav-icon">💑</span>
+        <span class="nav-icon" aria-hidden="true">💑</span>
         <span>Couples</span>
       </a>
       <a href="#" class="nav-item" data-page="eleveur">
-        <span class="nav-icon">⚙️</span>
+        <span class="nav-icon" aria-hidden="true">⚙️</span>
         <span>Mon Élevage</span>
+      </a>
+      <a href="#" class="nav-item" data-page="calendrier">
+        <span class="nav-icon" aria-hidden="true">📅</span>
+        <span>Calendrier</span>
       </a>
       <div style="border-top:1px solid rgba(255,255,255,0.1);margin:8px 0;"></div>
       <a href="/sport/" class="nav-item" style="background:rgba(41,128,185,0.2);">
-        <span class="nav-icon">🏃</span>
+        <span class="nav-icon" aria-hidden="true">🏃</span>
         <span>Sport & IA</span>
       </a>
     </nav>
     <div class="sidebar-footer">
-      <span>v1.0.0</span>
+      <a href="/MANUEL_UTILISATION.html" class="nav-item" target="_blank" style="opacity:0.7;font-size:13px;">
+        <span class="nav-icon">❓</span>
+        <span>Aide</span>
+      </a>
+      <span style="padding:8px 16px;font-size:12px;opacity:0.4;">v3.0.0</span>
     </div>
   </aside>
 
@@ -65,9 +76,16 @@
 
     <!-- TOPBAR -->
     <header class="topbar">
-      <h1 class="page-title" id="page-title">Tableau de bord</h1>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+        <h1 class="page-title" id="page-title">Tableau de bord</h1>
+      </div>
       <div class="topbar-actions">
         <input type="text" class="search-input" placeholder="Rechercher un pigeon..." id="search-input">
+        <button id="btn-theme" aria-label="Basculer le thème"
+          style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:8px;">🌙</button>
         <button class="btn btn-primary" id="btn-add">+ Ajouter</button>
       </div>
     </header>
@@ -84,13 +102,14 @@
     <div class="modal" id="modal">
       <div class="modal-header">
         <h2 class="modal-title" id="modal-title">Titre</h2>
-        <button class="modal-close" id="modal-close">✕</button>
+        <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
       </div>
       <div class="modal-body" id="modal-body">
       </div>
     </div>
   </div>
 
+  <script src="js/calendrier.js"></script>
   <script src="js/app.js"></script>
   <script src="js/dashboard.js"></script>
   <script src="js/lignees.js"></script>

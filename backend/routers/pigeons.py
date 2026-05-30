@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from sqlalchemy.orm import selectinload
@@ -11,6 +12,8 @@ from typing import List
 import uuid
 import os
 import shutil
+import csv
+import io
 
 router = APIRouter(prefix="/pigeons", tags=["Pigeons"])
 
@@ -42,6 +45,95 @@ async def get_pigeons(db: AsyncSession = Depends(get_db)):
         .order_by(Pigeon.date_creation.asc())
     )
     return result.scalars().all()
+
+
+@router.post("/import/csv")
+async def import_pigeons_csv(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
+    content = await file.read()
+    try:
+        text = content.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = content.decode("latin-1")
+
+    reader = csv.DictReader(io.StringIO(text), delimiter=";")
+    importes, erreurs = 0, []
+
+    for i, row in enumerate(reader, start=2):
+        matricule = (row.get("matricule") or "").strip()
+        annee = (row.get("annee_naissance") or "").strip()
+        sexe = (row.get("sexe") or "").strip().lower()
+
+        if not matricule:
+            erreurs.append(f"Ligne {i} : matricule manquant")
+            continue
+        if not annee or not annee.isdigit():
+            erreurs.append(f"Ligne {i} ({matricule}) : année invalide")
+            continue
+        if sexe not in ("male", "femelle"):
+            erreurs.append(f"Ligne {i} ({matricule}) : sexe invalide (male/femelle)")
+            continue
+
+        existing = await db.execute(select(Pigeon).where(Pigeon.matricule == matricule))
+        if existing.scalar_one_or_none():
+            erreurs.append(f"Ligne {i} ({matricule}) : matricule déjà existant, ignoré")
+            continue
+
+        statut_val = (row.get("statut") or "actif").strip()
+        from models.pigeon import Statut, Sexe as SexeModel
+        try:
+            statut_enum = Statut(statut_val)
+        except ValueError:
+            statut_enum = Statut.actif
+
+        db.add(Pigeon(
+            matricule=matricule,
+            annee_naissance=int(annee),
+            sexe=SexeModel(sexe),
+            couleur_plumage=(row.get("couleur_plumage") or "").strip() or None,
+            statut=statut_enum,
+            colombier_case=(row.get("colombier_case") or "").strip() or None,
+            notes=(row.get("notes") or "").strip() or None,
+        ))
+        importes += 1
+
+    await db.commit()
+    return {"importes": importes, "erreurs": erreurs}
+
+
+@router.get("/export/csv")
+async def export_pigeons_csv(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Pigeon)
+        .options(selectinload(Pigeon.lignee))
+        .order_by(Pigeon.annee_naissance.asc(), Pigeon.matricule.asc())
+    )
+    pigeons = result.scalars().all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";")
+    writer.writerow(["matricule", "annee_naissance", "sexe", "couleur_plumage",
+                     "statut", "lignee", "colombier_case", "notes"])
+    for p in pigeons:
+        writer.writerow([
+            p.matricule,
+            p.annee_naissance,
+            p.sexe.value if p.sexe else "",
+            p.couleur_plumage or "",
+            p.statut.value if p.statut else "",
+            p.lignee.nom if p.lignee else "",
+            p.colombier_case or "",
+            (p.notes or "").replace("\n", " "),
+        ])
+
+    output.seek(0)
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv; charset=utf-8-sig",
+        headers={"Content-Disposition": "attachment; filename=pigeons.csv"},
+    )
 
 
 @router.get("/{pigeon_id}", response_model=PigeonDetail)

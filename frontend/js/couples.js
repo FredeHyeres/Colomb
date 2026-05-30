@@ -590,38 +590,43 @@ async function saveNichee(coupleId) {
 
 // ── Actions CRUD ──────────────────────────────────────────────────────────────
 
-async function dissolveCouple(id, label) {
-  if (!confirm(`Dissoudre le couple ${label} ?\nLes deux pigeons repasseront en statut "actif".`)) return;
-  try {
-    await apiFetch(`/couples/${id}/dissoudre`, { method: 'PATCH' });
-    showNotification('Couple dissous');
-    closeModal();
-    loadCouples();
-  } catch (err) {
-    console.error(err);
-  }
+function dissolveCouple(id, label) {
+  confirmAction('Dissoudre le couple', `Dissoudre le couple <strong>${label}</strong> ?<br>
+    <span style="font-size:13px;color:var(--text-light);">Les deux pigeons repasseront en statut "actif".</span>`,
+    'Dissoudre', 'btn-danger', async () => {
+    try {
+      await apiFetch(`/couples/${id}/dissoudre`, { method: 'PATCH' });
+      showNotification('Couple dissous');
+      closeModal();
+      loadCouples();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 
-async function deleteCouple(id, label) {
-  if (!confirm(`Supprimer définitivement le couple ${label} et toutes ses nichées ?`)) return;
-  try {
-    await apiFetch(`/couples/${id}`, { method: 'DELETE' });
-    showNotification('Couple supprimé');
-    closeModal();
-    loadCouples();
-  } catch (err) {
-    console.error(err);
-  }
+function deleteCouple(id, label) {
+  confirmDelete(`Supprimer définitivement le couple <strong>${label}</strong> et toutes ses nichées ?`, async () => {
+    try {
+      await apiFetch(`/couples/${id}`, { method: 'DELETE' });
+      showNotification('Couple supprimé');
+      closeModal();
+      loadCouples();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 
-async function deleteNichee(nicheeId, coupleId) {
-  if (!confirm('Supprimer cette nichée ?')) return;
-  try {
-    await apiFetch(`/nichees/${nicheeId}`, { method: 'DELETE' });
-    showNotification('Nichée supprimée');
-    openDetailCouple(coupleId);
-  } catch (err) {
-    console.error(err);
-  }
+function deleteNichee(nicheeId, coupleId) {
+  confirmDelete('Supprimer cette nichée ?', async () => {
+    try {
+      await apiFetch(`/nichees/${nicheeId}`, { method: 'DELETE' });
+      showNotification('Nichée supprimée');
+      openDetailCouple(coupleId);
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }
 

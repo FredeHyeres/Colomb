@@ -45,8 +45,8 @@ services:
     depends_on:
       - db
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@colombo.fr
-      PGADMIN_DEFAULT_PASSWORD: admin2024
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
     ports:
       - "5052:80"
     volumes:

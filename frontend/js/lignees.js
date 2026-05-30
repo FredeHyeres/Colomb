@@ -148,13 +148,14 @@ async function saveLignee(id = '') {
 }
 
 // ===== SUPPRIMER =====
-async function deleteLignee(id, nom) {
-  if (!confirm(`Supprimer la lignée "${nom}" ?`)) return;
-  try {
-    await apiFetch(`/lignees/${id}`, { method: 'DELETE' });
-    showNotification(`Lignée "${nom}" supprimée`);
-    loadLignees();
-  } catch (err) {
-    console.error(err);
-  }
+function deleteLignee(id, nom) {
+  confirmDelete(`Supprimer la lignée <strong>${nom}</strong> ?`, async () => {
+    try {
+      await apiFetch(`/lignees/${id}`, { method: 'DELETE' });
+      showNotification(`Lignée "${nom}" supprimée`);
+      loadLignees();
+    } catch (err) {
+      console.error(err);
+    }
+  });
 }

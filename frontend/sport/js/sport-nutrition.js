@@ -795,6 +795,21 @@ function _planUpdateDayDOM(dayIdx) {
   }
 }
 
+/* ——— Groupe un plan selon son nom ——— */
+function _planGroupe(name, goal) {
+  // Priorité au champ goal s'il correspond exactement à une catégorie
+  const cats = ['🏋️ Concours', '🍂 Inter-Saison', '🐣 Élevage', '🕊️ Retraités'];
+  if (goal && cats.includes(goal)) return goal;
+  // Sinon déduction depuis le nom
+  if (/inter.sa[io]/i.test(name)) return '🍂 Inter-Saison';
+  if (/[eé]levage/i.test(name))   return '🐣 Élevage';
+  if (/retrait/i.test(name))      return '🕊️ Retraités';
+  return '🏋️ Concours';
+}
+
+let _plansList   = [];
+let _plansMixMap = {};
+
 async function _loadPlansTab() {
   const el = document.getElementById('tab-plans');
   if (!el) return;
@@ -803,100 +818,300 @@ async function _loadPlansTab() {
       SportAPI.getPlans(),
       SportAPI.getMixes().catch(() => []),
     ]);
-    const list    = Array.isArray(plans) ? plans : (plans.items || []);
-    const mixMap  = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m]));
+    _plansList   = Array.isArray(plans) ? plans : (plans.items || []);
+    _plansMixMap = Object.fromEntries((Array.isArray(mixes) ? mixes : []).map(m => [m.id, m]));
 
-    const month = new Date().getMonth() + 1;
-    const summerAlert = (month >= 6 && month <= 8)
-      ? `<div class="alert-card warning" style="margin-bottom:14px;"><span class="alert-icon">☀️</span><div class="alert-content"><div class="alert-title">Période estivale</div><div class="alert-text">Augmentez l'apport en électrolytes et l'hydratation.</div></div></div>`
-      : '';
+    if (_plansList.length === 0) {
+      el.innerHTML = `
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+          <button class="btn btn-primary btn-sm" onclick="openPlanModal()">+ Nouveau plan</button>
+        </div>
+        <div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun plan</h3>
+          <p>Créez votre premier plan alimentaire hebdomadaire.</p></div>`;
+      return;
+    }
 
-    el.innerHTML = summerAlert + `
-      <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
+    // Grouper par catégorie
+    const groupes = {};
+    _plansList.forEach(p => {
+      const g = _planGroupe(p.name || '', p.goal || '');
+      if (!groupes[g]) groupes[g] = [];
+      groupes[g].push(p);
+    });
+    const optGroups = Object.entries(groupes).map(([label, items]) =>
+      `<optgroup label="${label}">
+        ${items.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
+      </optgroup>`
+    ).join('');
+
+    el.innerHTML = `
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+        <select id="plan-selector" class="form-control"
+          style="flex:1;min-width:220px;font-size:0.92rem;max-width:540px;">
+          <option value="">— Choisir un programme —</option>
+          ${optGroups}
+        </select>
         <button class="btn btn-primary btn-sm" onclick="openPlanModal()">+ Nouveau plan</button>
-      </div>` +
-      (list.length === 0
-        ? `<div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun plan</h3><p>Créez votre premier plan alimentaire hebdomadaire.</p></div>`
-        : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;">
-            ${list.map(p => {
-              const weekRows = _DAY_NAMES.map((day, i) => {
-                let mixes = [];
-                const raw = p[day];
-                if (raw) {
-                  try {
-                    const parsed = JSON.parse(raw);
-                    if (Array.isArray(parsed)) {
-                      mixes = parsed.map(item => {
-                        const id  = typeof item === 'object' ? item.id  : item;
-                        const pct = typeof item === 'object' ? item.pct : null;
-                        const mix = mixMap[id];
-                        return mix ? { ...mix, pct } : null;
-                      }).filter(Boolean);
-                    } else mixes = [{ name: String(raw).slice(0, 80), description: null, pct: null }];
-                  } catch { mixes = [{ name: String(raw).slice(0, 80), description: null, pct: null }]; }
-                }
-                if (!mixes.length) return '';
-                const mixLines = mixes.map(m =>
-                  `<div style="display:flex;align-items:baseline;gap:5px;line-height:1.4;">
-                    <span style="font-size:0.77rem;font-weight:600;white-space:nowrap;">▸ ${m.name}</span>
-                    ${m.pct != null ? `<span style="font-size:0.75rem;font-weight:700;color:var(--accent);">${m.pct}%</span>` : ''}
-                    ${m.description ? `<span style="font-size:0.71rem;color:var(--text-light);font-style:italic;">${m.description}</span>` : ''}
-                  </div>`
-                ).join('');
-                return `<tr style="border-top:1px solid var(--border);">
-                  <td style="font-size:0.78rem;font-weight:700;padding:5px 6px;white-space:nowrap;vertical-align:top;color:var(--accent);">${_DAY_LABELS[i]}</td>
-                  <td style="padding:5px 6px;">${mixLines}</td>
-                </tr>`;
-              }).filter(Boolean).join('');
-              return `
-              <div class="card" style="padding:16px;">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-                  <div>
-                    <div style="font-weight:600;">${p.name||'—'}</div>
-                    ${p.goal ? `<span class="badge badge-success" style="margin-top:4px;font-size:0.72rem;">${p.goal}</span>` : ''}
-                  </div>
-                  <div style="display:flex;gap:6px;">
-                    <button class="btn btn-sm btn-icon" onclick="openPlanModal(${p.id})" title="Modifier">✏️</button>
-                    <button class="btn btn-sm btn-icon" onclick="duplicatePlan(${p.id})" title="Dupliquer">📋</button>
-                    <button class="btn btn-sm btn-icon" onclick="deletePlan(${p.id})" title="Supprimer">🗑️</button>
-                  </div>
-                </div>
-                ${p.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:6px;">${p.description}</p>` : ''}
-                ${weekRows
-                  ? `<table style="width:100%;border-collapse:collapse;margin-top:6px;">${weekRows}</table>`
-                  : '<div style="font-size:0.75rem;color:var(--text-light);">Aucun mélange planifié</div>'}
-              </div>`;
-            }).join('')}
-          </div>`);
+      </div>
+
+      <div id="plan-detail-panel" style="display:none;">
+        <!-- En-tête -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;
+          background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+          padding:16px 20px;margin-bottom:12px;">
+          <div style="flex:1;">
+            <div style="font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;
+              margin-bottom:6px;" id="plan-detail-name">—</div>
+            <span id="plan-detail-goal" class="badge badge-success"
+              style="font-size:0.75rem;display:none;"></span>
+          </div>
+          <div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px;">
+            <button class="btn btn-sm btn-secondary" id="plan-btn-detail" title="Voir le détail complet" style="font-size:0.8rem;padding:4px 10px;">🔍 Détail</button>
+            <button class="btn btn-sm btn-icon" id="plan-btn-edit"   title="Modifier">✏️</button>
+            <button class="btn btn-sm btn-icon" id="plan-btn-dup"    title="Dupliquer">📋</button>
+            <button class="btn btn-sm btn-icon" id="plan-btn-delete" title="Supprimer">🗑️</button>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div id="plan-detail-desc"
+          style="background:var(--bg);border-left:3px solid var(--accent);
+            border-radius:0 8px 8px 0;padding:12px 16px;font-size:0.83rem;
+            color:var(--text);line-height:1.65;margin-bottom:12px;
+            white-space:pre-line;display:none;"></div>
+
+        <!-- Planning semaine -->
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+          <div style="padding:11px 16px;border-bottom:1px solid var(--border);
+            font-weight:600;font-size:0.88rem;">📅 Planning hebdomadaire type</div>
+          <table style="width:100%;border-collapse:collapse;" id="plan-detail-week">
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="plan-empty-hint"
+        style="text-align:center;padding:48px 20px;color:var(--text-light);font-size:0.9rem;">
+        Sélectionnez un programme dans la liste ci-dessus pour afficher ses détails.
+      </div>`;
+
+    document.getElementById('plan-selector').addEventListener('change', e => {
+      _planAfficherDetail(parseInt(e.target.value) || null);
+    });
+
+    // Afficher le premier plan par défaut
+    if (_plansList[0]) {
+      document.getElementById('plan-selector').value = _plansList[0].id;
+      _planAfficherDetail(_plansList[0].id);
+    }
+
   } catch (err) {
     el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
     showToast(err.message, 'error');
   }
 }
 
+function _planAfficherDetail(planId) {
+  const panel = document.getElementById('plan-detail-panel');
+  const hint  = document.getElementById('plan-empty-hint');
+  if (!planId) { panel.style.display = 'none'; hint.style.display = ''; return; }
+
+  const p = _plansList.find(x => x.id === planId);
+  if (!p) return;
+  panel.style.display = '';
+  hint.style.display  = 'none';
+
+  document.getElementById('plan-detail-name').textContent = p.name || '—';
+  const goalEl = document.getElementById('plan-detail-goal');
+  if (p.goal) { goalEl.textContent = p.goal; goalEl.style.display = ''; }
+  else { goalEl.style.display = 'none'; }
+
+  const descEl = document.getElementById('plan-detail-desc');
+  if (p.description) { descEl.textContent = p.description; descEl.style.display = ''; }
+  else { descEl.style.display = 'none'; }
+
+  document.getElementById('plan-btn-detail').onclick = () => _planOuvrirDetailComplet(p.id);
+  document.getElementById('plan-btn-edit').onclick   = () => openPlanModal(p.id);
+  document.getElementById('plan-btn-dup').onclick    = () => duplicatePlan(p.id);
+  document.getElementById('plan-btn-delete').onclick = () => deletePlan(p.id);
+
+  const tbody = document.querySelector('#plan-detail-week tbody');
+  tbody.innerHTML = _DAY_NAMES.map((day, i) => {
+    const raw = p[day];
+    if (!raw) return `
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:9px 16px;font-weight:600;font-size:0.82rem;
+          color:var(--text-light);white-space:nowrap;width:90px;">${_DAY_LABELS[i]}</td>
+        <td style="padding:9px 16px;font-size:0.82rem;color:var(--text-light);font-style:italic;">—</td>
+      </tr>`;
+
+    let mixItems = [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        mixItems = parsed.map(item => {
+          const id  = typeof item === 'object' ? item.id  : item;
+          const pct = typeof item === 'object' ? item.pct : null;
+          const mix = _plansMixMap[id];
+          return mix ? { name: mix.name, pct } : null;
+        }).filter(Boolean);
+      }
+    } catch { mixItems = [{ name: String(raw).slice(0, 80), pct: null }]; }
+
+    const mixHtml = mixItems.map(m => {
+      const color = m.pct >= 60 ? 'var(--accent)' : m.pct >= 30 ? '#E67E22' : 'var(--text-light)';
+      return `<span style="display:inline-flex;align-items:center;gap:5px;
+        background:var(--bg);border-radius:20px;padding:3px 10px;margin:2px;
+        font-size:0.8rem;border:1px solid var(--border);">
+        <span style="font-weight:600;">${m.name}</span>
+        ${m.pct != null ? `<span style="font-weight:700;color:${color};">${m.pct}%</span>` : ''}
+      </span>`;
+    }).join('');
+
+    return `
+      <tr style="border-top:1px solid var(--border);">
+        <td style="padding:9px 16px;font-weight:700;font-size:0.82rem;
+          white-space:nowrap;width:90px;">${_DAY_LABELS[i]}</td>
+        <td style="padding:6px 12px;">${mixHtml}</td>
+      </tr>`;
+  }).join('');
+}
+
+/* ——— Modal détail complet d'un plan ——— */
+function _planOuvrirDetailComplet(planId) {
+  const p = _plansList.find(x => x.id === planId);
+  if (!p) return;
+
+  const usageLabels = {
+    recuperation: 'Récupération', entrainement: 'Entraînement',
+    pre_panier: 'Pré-panier',    enlogement:   'Enlogement',
+  };
+
+  const joursHtml = _DAY_NAMES.map((day, i) => {
+    const raw = p[day];
+    if (!raw) return '';
+
+    let mixItems = [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        mixItems = parsed.map(item => {
+          const id  = typeof item === 'object' ? item.id  : item;
+          const pct = typeof item === 'object' ? item.pct : null;
+          const mix = _plansMixMap[id];
+          return mix ? { ...mix, pct } : null;
+        }).filter(Boolean);
+      }
+    } catch { /* ignore */ }
+    if (!mixItems.length) return '';
+
+    const mixDetails = mixItems.map(m => {
+      const color = m.pct >= 60 ? 'var(--accent)' : m.pct >= 30 ? '#E67E22' : 'var(--text-light)';
+
+      // Composition ingrédients
+      let compHtml = '';
+      if (m.composition) {
+        try {
+          const comp = JSON.parse(m.composition);
+          const ings = comp.filter(c => c.type !== 'supplement');
+          const sups = comp.filter(c => c.type === 'supplement');
+          if (ings.length) {
+            compHtml += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;">
+              ${ings.map(c => `
+                <span style="background:var(--bg);border:1px solid var(--border);border-radius:4px;
+                  padding:2px 7px;font-size:0.75rem;">
+                  🌾 ${c.name} <strong>${parseFloat(c.pct).toFixed(1)}%</strong>
+                </span>`).join('')}
+            </div>`;
+          }
+          if (sups.length) {
+            compHtml += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
+              ${sups.map(c => `
+                <span style="background:#f0f8ff;border:1px solid #b8d8f0;border-radius:4px;
+                  padding:2px 7px;font-size:0.75rem;">
+                  💊 ${c.name}${c.quantity ? ' — ' + c.quantity + (c.unit ? ' ' + c.unit : '') : ''}
+                </span>`).join('')}
+            </div>`;
+          }
+        } catch { /* ignore */ }
+      }
+
+      return `
+        <div style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;
+          border-left:4px solid ${color};">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-weight:700;font-size:0.88rem;">🔀 ${m.name}</span>
+            ${m.pct != null ? `<span style="font-weight:800;font-size:0.9rem;color:${color};">${m.pct}%</span>` : ''}
+            ${m.usage ? `<span class="badge badge-info" style="font-size:0.7rem;">${usageLabels[m.usage] || m.usage}</span>` : ''}
+          </div>
+          ${m.description ? `<div style="font-size:0.79rem;color:var(--text-light);margin-bottom:4px;font-style:italic;">${m.description}</div>` : ''}
+          ${compHtml}
+        </div>`;
+    }).join('');
+
+    return `
+      <div style="margin-bottom:16px;">
+        <div style="font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.5px;
+          color:var(--accent);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
+          ${_DAY_LABELS[i]}
+        </div>
+        ${mixDetails}
+      </div>`;
+  }).filter(Boolean).join('');
+
+  const html = `
+    ${p.goal ? `<div style="margin-bottom:12px;"><span class="badge badge-success">${p.goal}</span></div>` : ''}
+
+    ${p.description ? `
+      <div style="background:var(--bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;
+        padding:12px 16px;font-size:0.83rem;color:var(--text);line-height:1.65;margin-bottom:20px;
+        white-space:pre-line;">${p.description}</div>` : ''}
+
+    <div style="font-weight:600;font-size:0.9rem;margin-bottom:14px;
+      border-bottom:2px solid var(--border);padding-bottom:8px;">📅 Détail par jour</div>
+
+    ${joursHtml || '<div style="color:var(--text-light);font-style:italic;">Aucun mélange planifié.</div>'}
+
+    <div style="text-align:right;margin-top:16px;">
+      <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-primary" onclick="closeModal(); openPlanModal(${p.id})">✏️ Modifier</button>
+    </div>`;
+
+  const overlay = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = `📋 ${p.name}`;
+  document.getElementById('modal').style.width = '700px';
+  document.getElementById('modal-body').innerHTML = html;
+  overlay.style.display = 'flex';
+  document.getElementById('modal-close').onclick = closeModal;
+  overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+}
+
 async function duplicatePlan(planId) {
   try {
     const src = await SportAPI.getPlan(planId);
     const DAY_KEYS = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
-    const copy = {
-      name:        `${src.name} (copie)`,
-      goal:        src.goal        || null,
-      description: src.description || null,
-    };
+    const copy = { name: `${src.name} (copie)`, goal: src.goal || null, description: src.description || null };
     DAY_KEYS.forEach(d => { copy[d] = src[d] || null; });
-    await SportAPI.createPlan(copy);
+    const created = await SportAPI.createPlan(copy);
     showToast('Plan alimentaire dupliqué !', 'success');
-    _loadPlansTab();
+    await _loadPlansTab();
+    if (created?.id) {
+      const sel = document.getElementById('plan-selector');
+      if (sel) { sel.value = created.id; _planAfficherDetail(created.id); }
+    }
   } catch (err) { showToast(err.message, 'error'); }
 }
 
-async function deletePlan(planId) {
-  if (!confirm('Supprimer ce plan alimentaire ? Cette action est irréversible.')) return;
-  try {
-    await SportAPI.deletePlan(planId);
-    showToast('Plan supprimé.', 'success');
-    _loadPlansTab();
-  } catch (err) { showToast(err.message, 'error'); }
+function deletePlan(planId) {
+  const plan = _plansList.find(p => p.id === planId);
+  const nom  = plan?.name || 'ce plan';
+  confirmDelete(`Supprimer définitivement <strong>${nom}</strong> ?`, async () => {
+    try {
+      await SportAPI.deletePlan(planId);
+      showToast('Plan supprimé.', 'success');
+      _loadPlansTab();
+    } catch (err) { showToast(err.message, 'error'); }
+  });
 }
 
 async function openPlanModal(planId = null) {
@@ -939,8 +1154,8 @@ async function openPlanModal(planId = null) {
     ? mixList.map(m => `<option value="${m.id}" data-name="${m.name}">${m.name}</option>`).join('')
     : '<option value="" disabled>Aucun mélange disponible</option>';
 
-  const goalOpts = ['', 'récupération', 'entraînement', 'pré-concours', 'dépuratif', 'énergie'];
-  const goalLabels = { '':'—', 'récupération':'Récupération', 'entraînement':'Entraînement', 'pré-concours':'Pré-concours', 'dépuratif':'Dépuratif', 'énergie':'Énergie' };
+  const goalOpts = ['', '🏋️ Concours', '🍂 Inter-Saison', '🐣 Élevage', '🕊️ Retraités'];
+  const goalLabels = { '':'—', '🏋️ Concours':'🏋️ Concours', '🍂 Inter-Saison':'🍂 Inter-Saison', '🐣 Élevage':'🐣 Élevage', '🕊️ Retraités':'🕊️ Retraités' };
   const currentGoal = existingPlan?.goal || '';
 
   document.getElementById('modal-body').innerHTML = `
