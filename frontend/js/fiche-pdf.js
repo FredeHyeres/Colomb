@@ -40,6 +40,8 @@ async function exportFichePDF(pigeonId) {
       ? imageToBase64(`http://localhost:8001${eleveur.photo_colombier}`)
           .then(b64 => { if (b64) photos.colombier = b64; })
       : Promise.resolve(),
+    imageToBase64('images/Logo_Colomb.png')
+      .then(b64 => { if (b64) photos.logo = b64; }),
   ]);
 
   const { jsPDF } = window.jspdf;
@@ -117,6 +119,11 @@ async function exportFichePDF(pigeonId) {
     doc.setFontSize(7);
     doc.setTextColor(127, 140, 141);
     doc.text(eleveur.ville, hx, hy);
+  }
+
+  // Logo en haut à droite
+  if (photos.logo) {
+    try { doc.addImage(photos.logo, 'JPEG', PW - MARGIN - 16, MARGIN, 16, 16); } catch (e) { /* ignorée */ }
   }
 
   // Droite : licence + association + date

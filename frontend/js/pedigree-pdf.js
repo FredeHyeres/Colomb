@@ -8,8 +8,11 @@ async function imageToBase64(url) {
       const canvas = document.createElement('canvas');
       canvas.width  = img.width;
       canvas.height = img.height;
-      canvas.getContext('2d').drawImage(img, 0, 0);
-      resolve(canvas.toDataURL('image/jpeg', 0.8));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL('image/jpeg', 0.9));
     };
     img.onerror = () => resolve(null);
     img.src = url + '?t=' + Date.now();
@@ -63,6 +66,8 @@ async function exportPedigreePDF(pigeonId) {
       ? imageToBase64(`http://localhost:8001${eleveur.photo_colombier}`)
           .then(b64 => { photosBase64['colombier'] = b64; })
       : Promise.resolve(),
+    imageToBase64('images/Logo_Colomb.png')
+      .then(b64 => { if (b64) photosBase64['logo'] = b64; }),
   ]);
 
   const { jsPDF } = window.jspdf;
@@ -124,10 +129,14 @@ async function exportPedigreePDF(pigeonId) {
     doc.text(`Licence : ${eleveur.numero_licence}`, eleveurX, ety);
   }
 
+  if (photosBase64['logo']) {
+    try { doc.addImage(photosBase64['logo'], 'JPEG', PW - MARGIN - 18, MARGIN, 18, 18); } catch (e) { /* ignorée */ }
+  }
+
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(127, 140, 141);
-  doc.text(dateStr, PW - MARGIN, MARGIN + 7, { align: 'right' });
+  doc.text(dateStr, PW - MARGIN - 22, MARGIN + 7, { align: 'right' });
 
   doc.setDrawColor(189, 195, 199);
   doc.setLineWidth(0.3);

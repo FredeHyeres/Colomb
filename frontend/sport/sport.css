@@ -67,15 +67,16 @@ body { display: flex; min-height: 100vh; }
 
 .sidebar-logo {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 20px 18px 12px;
+  gap: 8px;
+  padding: 24px 16px 20px;
   font-family: 'Playfair Display', serif;
   font-size: 1.1rem;
   font-weight: 600;
   border-bottom: 1px solid rgba(255,255,255,0.07);
 }
-.sidebar-logo .logo-icon { font-size: 1.4rem; }
+.sidebar-logo .logo-icon { width: 64px; height: 64px; display: block; }
 .sidebar-logo .logo-text { color: var(--sidebar-text); }
 
 .sidebar-back {

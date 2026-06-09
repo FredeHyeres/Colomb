@@ -1096,6 +1096,25 @@ async function _planExporterPDF(planId) {
   let eleveur = {};
   try { eleveur = await apiFetch('/eleveur/') || {}; } catch { /* éleveur optionnel */ }
 
+  // Charger le logo en base64 pour l'intégrer dans le HTML imprimé
+  let logoB64 = null;
+  try {
+    logoB64 = await new Promise(resolve => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const c = document.createElement('canvas');
+        c.width = img.width; c.height = img.height;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+        ctx.drawImage(img, 0, 0);
+        resolve(c.toDataURL('image/jpeg', 0.9));
+      };
+      img.onerror = () => resolve(null);
+      img.src = '../images/Logo_Colomb.png';
+    });
+  } catch { /* ignoré */ }
+
   const usageLabels = {
     recuperation: 'Récupération', entrainement: 'Entraînement',
     pre_panier: 'Pré-panier',    enlogement:   'Enlogement',
@@ -1209,6 +1228,7 @@ async function _planExporterPDF(planId) {
     .chip-ing { background:#f1f8e9; border:1px solid #aed581; border-radius:3px; padding:1px 6px; font-size:8pt; }
     .chip-sup { background:#e8f4fd; border:1px solid #90caf9; border-radius:3px; padding:1px 6px; font-size:8pt; }
     .footer { margin-top:18px; font-size:7.5pt; color:#aaa; text-align:right; border-top:1px solid #e0e0e0; padding-top:6px; }
+    .page-logo { display:block; margin:0 auto 22px; width:90px; height:90px; object-fit:contain; }
     @media print {
       body { padding: 12mm 12mm; }
       @page { margin: 10mm; }
@@ -1251,7 +1271,8 @@ async function _planExporterPDF(planId) {
       </div>
     </div>` : '';
 
-  const htmlWithHeader = html.replace('<body>', `<body>${elevageHeaderHtml}`);
+  const logoHtml = logoB64 ? `<img class="page-logo" src="${logoB64}" alt="Colomb">` : '';
+  const htmlWithHeader = html.replace('<body>', `<body>${logoHtml}${elevageHeaderHtml}`);
 
   const win = window.open('', '_blank', 'width=900,height=700');
   if (!win) { showToast('Veuillez autoriser les popups pour exporter en PDF', 'warning'); return; }
