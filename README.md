@@ -1,4 +1,9 @@
-# 🕊️ Colomb — Application Colombophile
+<div align="center">
+  <img src="frontend/images/Logo_Colomb.png" alt="Colomb" width="120">
+
+# Colomb — Application Colombophile
+
+</div>
 
 > Application web complète pour éleveurs de **pigeons voyageurs** — suivi des oiseaux, pedigrees, concours, santé, sport et intelligence artificielle. Déploiement via **Docker Desktop**.
 
