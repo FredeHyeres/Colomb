@@ -1,0 +1,1522 @@
+{
+  "common": {
+    "app_title": "Colomb - Gestion d'élevage",
+    "add": "+ Ajouter",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "loading": "Chargement...",
+    "back_dashboard": "← Retour au tableau de bord",
+    "confirm_delete_title": "Confirmer la suppression",
+    "delete_permanently": "Supprimer définitivement",
+    "retry": "🔄 Réessayer",
+    "edit": "✏️ Modifier",
+    "delete": "🗑️ Supprimer",
+    "save_edit": "💾 Modifier",
+    "create": "➕ Créer",
+    "save": "💾 Sauvegarder"
+  },
+  "gender": {
+    "male": "♂️ Mâle",
+    "female": "♀️ Femelle"
+  },
+  "lignee": {
+    "unknown": "Inconnue",
+    "none": "Sans lignée"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "pigeons": "Pigeons",
+    "lignees": "Lignées",
+    "performances": "Performances",
+    "sante": "Santé",
+    "couples": "Couples",
+    "eleveur": "Mon Élevage",
+    "calendrier": "Calendrier",
+    "concours": "Concours",
+    "sport": "Sport & IA",
+    "aide": "Aide"
+  },
+  "a11y": {
+    "nav_main": "Navigation principale",
+    "menu": "Menu",
+    "theme_toggle": "Basculer le thème",
+    "close": "Fermer"
+  },
+  "search": {
+    "placeholder_pigeon": "Rechercher un pigeon..."
+  },
+  "status": {
+    "actif": "Actif",
+    "reproducteur": "Reproducteur",
+    "concours": "Concours",
+    "perdu": "Perdu",
+    "retraite": "Retraité",
+    "decede": "Décédé"
+  },
+  "page": {
+    "dashboard": { "title": "Tableau de bord" },
+    "pigeons": { "title": "Pigeons", "add": "+ Ajouter un pigeon" },
+    "lignees": { "title": "Lignées", "add": "+ Ajouter une lignée" },
+    "performances": { "title": "Performances", "add": "+ Ajouter une performance" },
+    "sante": { "title": "Santé", "add": "+ Ajouter un événement" },
+    "couples": { "title": "Couples & Reproduction", "add": "+ Nouveau couple" },
+    "eleveur": { "title": "Mon Élevage" },
+    "calendrier": { "title": "Calendrier" },
+    "concours": { "title": "Concours", "add": "+ Nouveau concours" }
+  },
+  "error": {
+    "api_generic": "Erreur API",
+    "not_found_title": "Page introuvable",
+    "not_found_message": "La section <code>{hash}</code> n'existe pas."
+  },
+  "modal": {
+    "title_default": "Titre"
+  },
+  "eleveur": {
+    "error": {
+      "load": "Impossible de charger le profil éleveur"
+    },
+    "photo": {
+      "change": "📷 Changer la photo"
+    },
+    "preview": {
+      "title": "Aperçu en-tête PDF",
+      "licence": "Licence"
+    },
+    "section": {
+      "identity": "👤 Identité",
+      "loft": "🏠 Colombier",
+      "contact": "📞 Contact",
+      "sport": "🏆 Colombophilie",
+      "notes": "📝 Notes"
+    },
+    "field": {
+      "prenom": "Prénom",
+      "nom": "Nom",
+      "colombier": "Nom du colombier",
+      "adresse": "Adresse",
+      "cp": "Code postal",
+      "ville": "Ville",
+      "tel": "Téléphone",
+      "email": "Email",
+      "web": "Site web",
+      "asso": "Association",
+      "licence": "N° Licence",
+      "annee": "Année de début",
+      "specialite": "Spécialité"
+    },
+    "placeholder": {
+      "prenom": "Jean",
+      "nom": "Dupont",
+      "colombier": "Colombier des Bruyères",
+      "adresse": "12 rue des Pigeons",
+      "cp": "86000",
+      "ville": "Poitiers",
+      "tel": "06 12 34 56 78",
+      "email": "jean@example.com",
+      "web": "https://...",
+      "asso": "Société Colombophile de Poitiers",
+      "licence": "86-0001",
+      "annee": "1995",
+      "specialite": "Grand fond, Vitesse...",
+      "notes": "Observations libres..."
+    },
+    "msg": {
+      "saved": "Profil sauvegardé ✅",
+      "photo_updated": "Photo mise à jour ✅",
+      "photo_error": "Erreur upload photo"
+    }
+  },
+  "lignees": {
+    "empty": {
+      "title": "Aucune lignée enregistrée",
+      "sub": "Commencez par créer vos premières lignées"
+    },
+    "table": {
+      "couleur": "Couleur",
+      "nom": "Nom",
+      "origine": "Origine",
+      "description": "Description",
+      "actions": "Actions"
+    },
+    "modal": {
+      "add_title": "Ajouter une lignée",
+      "edit_title": "Modifier la lignée"
+    },
+    "form": {
+      "nom_label": "Nom de la lignée *",
+      "nom_placeholder": "ex: Janssen",
+      "origine_label": "Origine",
+      "origine_placeholder": "ex: Belgique",
+      "description_label": "Description",
+      "description_placeholder": "Description de la lignée...",
+      "couleur_label": "Couleur d'identification",
+      "couleur_help": "Choisissez une couleur pour identifier cette lignée"
+    },
+    "msg": {
+      "name_required": "Le nom est obligatoire",
+      "updated": "Lignée modifiée avec succès ✅",
+      "created": "Lignée créée avec succès ✅",
+      "deleted": "Lignée \"{nom}\" supprimée"
+    },
+    "confirm_delete": "Supprimer la lignée <strong>{nom}</strong> ?"
+  },
+  "dashboard": {
+    "connecting": "Connexion à l'API... (tentative {attempt}/{max})",
+    "api_unreachable": "Impossible de contacter l'API",
+    "network_error": "Erreur réseau — vérifiez que le backend est démarré",
+    "stat": {
+      "total_pigeons": "Total pigeons",
+      "active": "Actifs",
+      "breeders": "Reproducteurs",
+      "racing": "En concours",
+      "lost": "Perdus"
+    },
+    "lignee_distribution": {
+      "title": "Répartition par lignée",
+      "empty": "Aucune donnée"
+    },
+    "status_distribution": {
+      "title": "Répartition par statut"
+    },
+    "recent": {
+      "title": "Derniers pigeons enregistrés",
+      "empty": "Aucun pigeon enregistré",
+      "empty_sub": "Commencez par ajouter vos premiers pigeons"
+    },
+    "table": {
+      "lignee": "Lignée",
+      "pigeons": "Pigeons",
+      "photo": "Photo",
+      "matricule": "Matricule",
+      "sexe": "Sexe",
+      "statut": "Statut",
+      "case": "Case"
+    }
+  },
+  "sport": {
+    "app_title": "Colomb Sport",
+    "nav": {
+      "back": "← Retour Élevage",
+      "section_general": "Général",
+      "section_nutrition": "Nutrition",
+      "section_intelligence": "Intelligence",
+      "dashboard": "Dashboard",
+      "sessions": "Séances",
+      "history": "Historique pigeon",
+      "nutrition": "Nutrition",
+      "analytics": "Analytics",
+      "ai": "Recommandations IA",
+      "condition": "Condition sportive",
+      "colony": "Monitoring colonie"
+    },
+    "search": {
+      "placeholder": "Rechercher..."
+    },
+    "page": {
+      "dashboard": { "title": "Dashboard Sport" },
+      "sessions": { "title": "Séances d'entraînement", "add": "+ Nouvelle séance" },
+      "history": { "title": "Historique pigeon" },
+      "nutrition": { "title": "Nutrition" },
+      "plans": { "title": "Plans alimentaires", "add": "+ Nouveau plan" },
+      "analytics": { "title": "Analytics" },
+      "ai": { "title": "Recommandations IA" },
+      "condition": { "title": "Condition sportive" },
+      "colony": { "title": "Monitoring colonie" }
+    },
+    "error": {
+      "load_title": "Erreur de chargement",
+      "unexpected": "Une erreur inattendue s'est produite",
+      "api_error": "Erreur API ({status})",
+      "prefix": "Erreur : {message}"
+    },
+    "choose_pigeon_placeholder": "Choisir un pigeon...",
+    "session_type": {
+      "loft": "Loft",
+      "toss": "Lancer",
+      "race": "Concours"
+    },
+    "session_detail": {
+      "title": "Séance du {date}"
+    },
+    "dashboard": {
+      "stats": {
+        "pigeons_actifs": "Pigeons actifs",
+        "sessions_mois": "Séances ce mois",
+        "recup_moyenne": "Récup. moyenne",
+        "alertes_ia": "Alertes IA actives"
+      },
+      "view_all": "Voir tout",
+      "ai_alerts": {
+        "title": "🤖 Alertes IA actives",
+        "subtitle": "Recommandations en cours pour la colonie",
+        "no_pigeons_title": "Aucun pigeon enregistré",
+        "no_pigeons_text": "Ajoutez des pigeons pour voir les alertes IA.",
+        "none_title": "Aucune alerte active",
+        "none_text": "Tous les pigeons sont en bonne condition.",
+        "default_title": "Recommandation",
+        "more": "+ {count} autres alertes",
+        "load_error": "Impossible de charger les alertes IA"
+      },
+      "health": {
+        "title": "🏥 Santé intégrée",
+        "subtitle": "Événements médicaux récents",
+        "no_pigeons_title": "Aucun pigeon",
+        "no_pigeons_text": "Ajoutez des pigeons pour suivre leur santé.",
+        "none_title": "Aucun événement médical récent",
+        "none_text": "Tous les pigeons semblent en bonne santé.",
+        "event_default": "Événement",
+        "open_link": "→ Ouvrir module santé",
+        "load_error": "Erreur chargement santé"
+      },
+      "pending_feedback": {
+        "title": "📝 Pigeons en attente de feedback",
+        "subtitle": "Recommandations actives non résolues pour l'écurie",
+        "no_pigeons_title": "Aucun pigeon enregistré",
+        "no_pigeons_text": "Ajoutez des pigeons pour commencer le suivi.",
+        "none_title": "Aucun feedback en attente",
+        "none_text": "Tous les résultats de concours ont été saisis.",
+        "btn_feedback": "📝 Feedback",
+        "more": "+ {count} autres en attente",
+        "load_error": "Impossible de charger les feedbacks",
+        "rec_map": {
+          "concours": "Concours",
+          "entrainement_leger": "Entraînement",
+          "repos": "Repos",
+          "reforme": "Réforme",
+          "default": "Info"
+        }
+      },
+      "recent_sessions": {
+        "title": "🏃 Dernières séances",
+        "subtitle": "Activités d'entraînement récentes",
+        "view_all": "Toutes les séances",
+        "empty_title": "Aucune séance",
+        "empty_text": "Créez votre première séance d'entraînement.",
+        "table": { "date": "Date", "type": "Type", "distance": "Distance", "meteo": "Météo", "pigeons": "Pigeons" },
+        "load_error": "Erreur chargement séances"
+      },
+      "nutrition": {
+        "title": "🌾 Plan nutritionnel",
+        "subtitle": "Plan actif aujourd'hui",
+        "empty_title": "Aucun plan actif",
+        "empty_text": "Créez un plan alimentaire dans le module Nutrition.",
+        "default_name": "Plan nutritionnel",
+        "from": "Du {date}",
+        "to": "au {date}",
+        "plans_available": "Plans disponibles : {count}",
+        "manage_link": "→ Gérer les plans",
+        "load_error": "Erreur chargement nutrition"
+      }
+    },
+    "sessions": {
+      "btn_new": "+ Nouvelle séance",
+      "filter": {
+        "label": "Filtrer :",
+        "all_types": "Tous les types",
+        "from": "Du",
+        "to": "Au",
+        "reset": "Réinitialiser"
+      },
+      "title": "🏃 Séances d'entraînement",
+      "count": { "one": "{count} séance", "other": "{count} séances" },
+      "empty": {
+        "title": "Aucune séance trouvée",
+        "sub": "Créez votre première séance ou modifiez les filtres."
+      },
+      "table": {
+        "date": "Date",
+        "type": "Type",
+        "distance": "Distance",
+        "meteo": "Météo",
+        "temp": "Temp.",
+        "vent": "Vent",
+        "pigeons": "Pigeons",
+        "recup": "Récup. moy.",
+        "actions": "Actions"
+      },
+      "via_concours": "via Concours Colomb",
+      "managed_in_colomb": "Géré dans Colomb",
+      "btn_colomb": "Colomb",
+      "btn_detail": "Détail",
+      "btn_delete": "Supprimer",
+      "delete_confirm": "Supprimer cette séance ? Cette action est irréversible.",
+      "deleted": "Séance supprimée.",
+      "form": {
+        "concours_banner": "🏆 Les séances de <strong>Concours</strong> sont gérées depuis l'accueil <strong>Colomb</strong> (module Concours). Elles apparaissent ici automatiquement en lecture seule.",
+        "date_label": "Date *",
+        "type_label": "Type de séance *",
+        "distance_label": "Distance (m)",
+        "distance_placeholder": "ex: 50000",
+        "weather_label": "Météo",
+        "temperature_label": "Température (°C)",
+        "temperature_placeholder": "ex: 18",
+        "wind_label": "Vent",
+        "notes_label": "Notes",
+        "notes_placeholder": "Observations, conditions particulières...",
+        "submit_create": "Créer la séance",
+        "creating": "Création...",
+        "created": "Séance créée avec succès !"
+      },
+      "weather": {
+        "ensoleille": "Ensoleillé",
+        "nuageux": "Nuageux",
+        "couvert": "Couvert",
+        "pluie": "Pluie",
+        "vent_fort": "Vent fort",
+        "brouillard": "Brouillard"
+      },
+      "wind": {
+        "calme": "Calme",
+        "leger": "Léger",
+        "modere": "Modéré",
+        "fort": "Fort",
+        "tres_fort": "Très fort"
+      },
+      "detail": {
+        "loading_title": "Détail de la séance",
+        "concours_banner": "🏆 Cette séance est un <strong>concours</strong> géré depuis l'accueil Colomb.",
+        "concours_link": "Aller aux Concours →",
+        "results_title": "Résultats pigeons ({count})",
+        "btn_add_result": "+ Ajouter résultat",
+        "empty_results": {
+          "title": "Aucun résultat",
+          "sub": "Ajoutez les performances des pigeons."
+        },
+        "table": {
+          "pigeon": "Pigeon",
+          "return_time": "Retour (min)",
+          "rank": "Rang",
+          "recovery": "Récupération",
+          "hydration": "Hydratation",
+          "condition": "Condition",
+          "motivation": "Motivation",
+          "health": "Santé"
+        },
+        "health": {
+          "recent_treatment": "Traitement récent",
+          "suivi": "⚠️ Suivi",
+          "ok": "✅ OK"
+        }
+      },
+      "result_modal": {
+        "title": "+ Ajouter un résultat pigeon",
+        "pigeon_label": "Pigeon *",
+        "return_time_label": "Temps de retour (min)",
+        "return_time_placeholder": "ex: 45",
+        "rank_label": "Rang interne",
+        "rank_placeholder": "ex: 1",
+        "recovery_label": "Score récupération (0-10)",
+        "hydration_label": "Score hydratation (0-10)",
+        "condition_label": "Score condition (0-10)",
+        "motivation_label": "Score motivation (0-10)",
+        "notes_placeholder": "Observations...",
+        "back": "← Retour",
+        "submit": "Enregistrer",
+        "saving": "Enregistrement...",
+        "saved": "Résultat enregistré !",
+        "select_pigeon_required": "Veuillez sélectionner un pigeon."
+      }
+    },
+    "history": {
+      "pigeon_label": "🕊️ Pigeon :",
+      "btn_load": "Charger l'historique",
+      "empty": {
+        "title": "Sélectionnez un pigeon",
+        "sub": "L'historique complet s'affichera ici."
+      },
+      "event": {
+        "race_title": "🏆 Concours",
+        "training_title": "🏃 Séance {type}",
+        "recup": "Récup: {score}/10",
+        "rank": "Rang #{rank}",
+        "concours_default": "Concours",
+        "classement": "Classement: {classement}",
+        "health_default": "Événement santé",
+        "ai_default": "Recommandation IA"
+      },
+      "stats": {
+        "sessions": "Séances",
+        "recup_moy": "Récup moy.",
+        "concours": "Concours",
+        "alertes_ia": "Alertes IA"
+      },
+      "chart_title": "📈 Évolution récupération — 10 dernières séances",
+      "chart_label": "Score récupération",
+      "timeline_title": "📅 Timeline complète ({count} événements)",
+      "chips": {
+        "sessions": "🏃 Séances",
+        "concours": "🏆 Concours",
+        "sante": "🏥 Santé",
+        "ia": "🤖 IA"
+      },
+      "empty_timeline": "Aucun événement enregistré pour ce pigeon."
+    },
+    "colony": {
+      "stats": {
+        "total": "Total pigeons",
+        "forme": "En forme",
+        "repos": "En repos",
+        "surveillance_medicale": "Surveillance médicale"
+      },
+      "title": "🕊️ État de la colonie",
+      "subtitle": { "one": "{count} pigeon • Cliquer pour analyser la condition", "other": "{count} pigeons • Cliquer pour analyser la condition" },
+      "legend": {
+        "forme": "💚 En forme",
+        "moyen": "🟡 Moyen",
+        "repos": "😴 Repos",
+        "alerte": "🔴 Alerte"
+      },
+      "doughnut_title": "📊 Répartition colonie",
+      "legend_summary": {
+        "forme": "● En forme : {count}",
+        "surveillance": "● Surveillance : {count}",
+        "repos": "● Repos : {count}",
+        "probleme": "● Problème : {count}"
+      },
+      "alerts_title": "🚨 Pigeons à surveiller",
+      "click_to_analyze": "Cliquer pour analyser la condition",
+      "status": {
+        "repos": "😴 Repos",
+        "non_evalue": "❓ Non évalué",
+        "alerte": "🔴 Alerte",
+        "moyen": "🟡 Moyen",
+        "forme": "💚 En forme"
+      },
+      "recovery": "Récupération",
+      "condition": "Condition",
+      "no_data": "Pas de données",
+      "alerts": {
+        "healthy_title": "Colonie en bonne santé",
+        "healthy_text": "Aucun pigeon ne nécessite d'attention particulière.",
+        "no_snapshot": "Aucun snapshot disponible — condition inconnue",
+        "high_fatigue": "Risque fatigue élevé ({label})",
+        "low_condition": "Condition très faible ({value}/100)",
+        "monitor": "Surveillance recommandée"
+      },
+      "fatigue": { "eleve": "élevé", "moyen": "moyen", "faible": "faible" },
+      "doughnut": {
+        "no_data": "Aucune donnée de condition.",
+        "labels": {
+          "forme": "En forme",
+          "surveillance": "Surveillance",
+          "repos": "Repos",
+          "probleme": "Problème"
+        },
+        "tooltip": { "one": "{label} : {count} pigeon", "other": "{label} : {count} pigeons" }
+      }
+    },
+    "condition": {
+      "pigeon_label": "💪 Pigeon :",
+      "btn_analyze": "Analyser",
+      "empty": {
+        "title": "Sélectionnez un pigeon",
+        "sub": "La condition sportive détaillée s'affichera ici."
+      },
+      "alert": {
+        "title": "Risque de surcharge détecté ! ({pct}%)",
+        "text": "Ce pigeon présente des signes de fatigue élevée. Réduisez l'intensité des entraînements et assurez une récupération complète."
+      },
+      "indices_title": "📊 Indices de condition sportive",
+      "snapshot_date": "Snapshot du {date}",
+      "realtime_data": "Données en temps réel",
+      "btn_new_snapshot": "🔄 Nouveau snapshot",
+      "analyzing": "Analyse...",
+      "snapshot_created": "Snapshot créé avec succès !",
+      "gauges": {
+        "recovery": "Récupération (7j)",
+        "condition": "Condition (7j)",
+        "regularity": "Régularité",
+        "fatigue": "Risque fatigue",
+        "training_load": "Charge (30j)"
+      },
+      "no_indices": "Aucun indice disponible. Créez un snapshot pour obtenir les données de condition.",
+      "trends": {
+        "title": "📈 Tendances",
+        "subtitle": "Évolution 90 derniers jours",
+        "not_enough": "Pas assez de séances pour calculer les tendances.",
+        "insufficient": "Données insuffisantes.",
+        "metrics": {
+          "recovery_avg": "Récupération moy. (90j)",
+          "sessions_30": "Nb séances (30j)",
+          "sessions_90": "Nb séances (90j)"
+        }
+      },
+      "health_impact": {
+        "title": "🏥 Impact santé sur la condition",
+        "subtitle": "Événements médicaux récents (90j)",
+        "none_title": "Aucun événement médical récent",
+        "none_text": "Condition non impactée par des soins.",
+        "event_default": "Événement",
+        "days_ago": { "one": "Il y a {count} jour", "other": "Il y a {count} jours" },
+        "impact": {
+          "recent": "Impact récent probable sur la condition",
+          "recovering": "Récupération médicale en cours",
+          "monitor": "Événement récent, surveiller les performances",
+          "resolved": "Événement ancien, impact probablement résorbé"
+        }
+      },
+      "recent_perfs": {
+        "title": "🏃 Performances récentes",
+        "empty": "Aucune séance enregistrée.",
+        "table": {
+          "date": "Date",
+          "type": "Type",
+          "distance": "Distance",
+          "recovery": "Récupération",
+          "condition": "Condition",
+          "motivation": "Motivation"
+        }
+      }
+    },
+    "analytics": {
+      "stats": {
+        "total_sessions": "Total séances",
+        "avg_recovery": "Récup. globale moy.",
+        "races": "Concours disputés",
+        "avg_per_week": "Séances / semaine moy."
+      },
+      "error_prefix": "Erreur analytics : {message}",
+      "charts": {
+        "recovery": {
+          "title": "📈 Évolution récupération moyenne",
+          "subtitle": "90 derniers jours",
+          "label": "Récupération moyenne"
+        },
+        "charge": {
+          "title": "💪 Charge d'entraînement",
+          "subtitle": "4 dernières semaines",
+          "week_current": "S-actuelle",
+          "week_n": "S-{n}"
+        },
+        "temp": {
+          "title": "🌡️ Température vs Récupération",
+          "subtitle": "Corrélation météo / performance",
+          "label": "Température vs Récupération",
+          "tooltip": "{x}°C → Récup: {y}/10",
+          "axis_x": "Température (°C)",
+          "axis_y": "Récupération",
+          "empty": "Pas assez de données avec température renseignée."
+        },
+        "regularity": {
+          "title": "🕊️ Régularité par pigeon",
+          "subtitle": "Évolution récupération — top {count} pigeons",
+          "pigeon_default": "Pigeon {n}",
+          "empty": "Aucune donnée de récupération disponible."
+        }
+      }
+    },
+    "ai": {
+      "pigeon_label": "🤖 Pigeon analysé :",
+      "btn_load": "Charger l'analyse",
+      "btn_generate": "⚡ Analyser maintenant",
+      "btn_generate_title": "Lancer une analyse IA complète",
+      "empty": { "title": "Sélectionnez un pigeon", "sub": "Les recommandations IA s'afficheront ici." },
+      "analyzing": "Analyse en cours...",
+      "analysis_generated": "Analyse IA générée !",
+      "analysis_error": "Erreur lors de l'analyse",
+      "active_recs": {
+        "title": "⚠️ Recommandations actives ({count})",
+        "subtitle": "Alertes et conseils en attente de résolution",
+        "show_resolved": "Voir résolues ({count})",
+        "resolved_title": "Recommandations résolues"
+      },
+      "recs": {
+        "none_resolved": "Aucune recommandation résolue.",
+        "none_active_title": "Aucune alerte active",
+        "none_active_text": "Ce pigeon est en bonne condition selon l'IA."
+      },
+      "rec_types": {
+        "concours": "Concours",
+        "entrainement_leger": "Entraînement",
+        "repos": "Repos",
+        "reforme": "Réforme",
+        "info": "Info"
+      },
+      "rec_default_title": "Recommandation",
+      "resolved_on": "Résolu le {date}",
+      "btn_resolve": "✅ Résoudre",
+      "btn_outcome": "📝 Outcome",
+      "snapshot": {
+        "title": "📊 Snapshot sportif",
+        "last_analysis": "Dernière analyse : {date}",
+        "none": "Aucun snapshot disponible",
+        "btn_create": "🔄 Créer snapshot",
+        "created": "Snapshot créé !",
+        "empty": { "title": "Aucun snapshot", "sub": "Créez un snapshot pour obtenir les indices de condition sportive." },
+        "no_data": { "title": "Snapshot sans données exploitables", "sub": "Relancez une analyse après avoir enregistré des séances." },
+        "indices": {
+          "recovery": "Récupération (7j)",
+          "condition": "Condition (7j)",
+          "regularity": "Régularité",
+          "fatigue": "Risque fatigue",
+          "load": "Charge (30j)"
+        },
+        "data_quality": "Qualité des données : <strong>{quality}</strong> · {load} séances (30j) · Tendance récupération : {trend} · Risque fatigue : {fatigue}"
+      },
+      "events": {
+        "title": "📋 Événements sport ({count})",
+        "subtitle": "Historique des événements enregistrés par l'IA",
+        "empty": { "title": "Aucun événement enregistré", "sub": "Les événements apparaîtront automatiquement lors des analyses." },
+        "default_label": "Événement",
+        "more_old": { "one": "+ {count} événement plus ancien", "other": "+ {count} événements plus anciens" }
+      },
+      "rec_marked_resolved": "Recommandation marquée comme résolue.",
+      "load_error_title": "Erreur de chargement",
+      "outcome_modal": {
+        "title": "📝 Résultat après concours",
+        "subtitle_prefix": "Recommandation : ",
+        "section_outcome": "Outcome de la recommandation",
+        "result_label": "Résultat",
+        "choose": "— Choisir —",
+        "confirme": "✅ Confirmée — le pigeon était prêt",
+        "infirme": "❌ Infirmée — la reco était mauvaise",
+        "partiel": "⚠️ Partielle — résultat mitigé",
+        "result_required": "Veuillez choisir un résultat.",
+        "result_date_label": "Date du résultat",
+        "notes_label": "Observations",
+        "notes_placeholder": "Vos observations...",
+        "section_link_concours": "Lier un résultat concours",
+        "optional": "(optionnel)",
+        "concours_date_label": "Date du concours",
+        "distance_label": "Distance (km)",
+        "distance_placeholder": "ex: 150.5",
+        "classement_label": "Position d'arrivée",
+        "classement_placeholder": "ex: 3",
+        "nb_partants_label": "Nombre de pigeons engagés",
+        "nb_partants_placeholder": "ex: 120",
+        "share_label": "Partager ce feedback de façon anonyme pour améliorer l'IA collective",
+        "share_sub": "Aucune donnée personnelle transmise — uniquement les scores numériques",
+        "save": "Enregistrer →",
+        "saving": "Enregistrement...",
+        "resolve_error": "Erreur lors de la résolution",
+        "feedback_not_saved": "Feedback résultat non enregistré : {error}",
+        "feedback_error_default": "erreur",
+        "feedback_saved": "Feedback enregistré !"
+      }
+    },
+    "nutrition": {
+      "tabs": {
+        "mixes": "🔀 Mélanges",
+        "ingredients": "🌾 Ingrédients",
+        "supplements": "💊 Suppléments",
+        "plans": "📋 Plan alimentaire",
+        "affectation": "🎯 Affectation",
+        "calendar": "📅 Calendrier"
+      },
+      "usage": {
+        "recuperation": "Récupération",
+        "entrainement": "Entraînement",
+        "pre_panier": "Pré-panier",
+        "enlogement": "Enlogement"
+      },
+      "day_labels": {
+        "0": "Lundi", "1": "Mardi", "2": "Mercredi", "3": "Jeudi", "4": "Vendredi", "5": "Samedi", "6": "Dimanche"
+      },
+      "mixes": {
+        "create_btn": "+ Créer un mélange",
+        "empty": { "title": "Aucun mélange", "sub": "Créez vos formules de mélanges personnalisés." },
+        "composition_undefined": "Composition non définie",
+        "edit_title": "Modifier",
+        "duplicate_title": "Dupliquer",
+        "delete_title": "Supprimer",
+        "duplicated": "Mélange dupliqué !",
+        "copy_suffix": "(copie)",
+        "delete_confirm": "Supprimer ce mélange ? Cette action est irréversible.",
+        "deleted": "Mélange supprimé.",
+        "already_in_composition": "Déjà dans la composition",
+        "min_unlocked_warning": "Il faut au moins 2 ingrédients déverrouillés pour redistribuer",
+        "no_ingredient_selected": "Aucun ingrédient sélectionné",
+        "total_ingredients": "Total ingrédients : {pct}%",
+        "lock": "Verrouiller",
+        "unlock": "Déverrouiller",
+        "min_unlocked_title": "2 ingrédients déverrouillés minimum",
+        "already_in_mix": "Déjà dans le mélange",
+        "no_supplement_added": "Aucun supplément ajouté",
+        "qty_placeholder": "Qté",
+        "modal": {
+          "title_edit": "✏️ Modifier le mélange",
+          "title_new": "+ Nouveau mélange",
+          "name_label": "Nom du mélange *",
+          "name_placeholder": "ex: Mélange course longue distance",
+          "usage_label": "Usage",
+          "usage_none": "—",
+          "description_label": "Description",
+          "description_placeholder": "Usage recommandé...",
+          "ingredients_title": "🌾 Ingrédients — total 100%",
+          "ingredients_help": "Les pourcentages se recalculent proportionnellement. Les ingrédients à 0% sont exclus du recalcul automatique.",
+          "ingredient_select_placeholder": "— Choisir un ingrédient —",
+          "no_ingredient_available": "Aucun ingrédient disponible",
+          "add_btn": "+ Ajouter",
+          "supplements_title": "💊 Suppléments — hors calcul %",
+          "supplements_help": "Les suppléments n'entrent pas dans le calcul des pourcentages d'ingrédients.",
+          "supplement_select_placeholder": "— Choisir un supplément —",
+          "no_supplement_available": "Aucun supplément disponible",
+          "save_btn": "Enregistrer",
+          "create_btn": "Créer le mélange"
+        },
+        "total_warning": "Total ingrédients doit être 100% (actuellement {pct}%)",
+        "modified": "Mélange modifié !",
+        "created": "Mélange créé !"
+      },
+      "ingredients": {
+        "add_btn": "+ Ajouter un ingrédient",
+        "empty": { "title": "Aucun ingrédient", "sub": "Ajoutez vos premiers ingrédients nutritionnels." },
+        "table": {
+          "name": "Nom", "category": "Catégorie", "proteines": "Protéines", "lipides": "Lipides", "glucides": "Glucides", "energie": "Énergie (kcal)", "notes": "Notes"
+        },
+        "modal": {
+          "title": "+ Nouvel ingrédient",
+          "name_label": "Nom *",
+          "name_placeholder": "ex: Blé, Maïs, Avoine...",
+          "category_label": "Catégorie",
+          "category_none": "—",
+          "category": {
+            "energie": "Énergie", "depuratif": "Dépuratif", "sport": "Sport", "proteine": "Protéine", "graisse": "Graisse", "motivation": "Motivation", "pre_concours": "Pré-concours"
+          },
+          "energie_label": "Énergie (kcal/100g)",
+          "energie_placeholder": "ex: 350",
+          "proteines_label": "Protéines (%)",
+          "lipides_label": "Lipides (%)",
+          "glucides_label": "Glucides (%)",
+          "notes_label": "Notes",
+          "notes_placeholder": "Observations, source...",
+          "save_btn": "Enregistrer"
+        },
+        "added": "Ingrédient ajouté !"
+      },
+      "supplements": {
+        "add_btn": "+ Ajouter un supplément",
+        "empty": { "title": "Aucun supplément", "sub": "Gérez vos vitamines et suppléments." },
+        "table": { "name": "Nom", "type": "Type", "dosage": "Dosage", "description": "Description" },
+        "modal": {
+          "title": "+ Nouveau supplément",
+          "name_label": "Nom *",
+          "name_placeholder": "ex: Électrolytes, Vitamine B12...",
+          "type_label": "Type",
+          "type_none": "—",
+          "type": { "electrolyte": "Électrolyte", "vitamine": "Vitamine", "probiotique": "Probiotique", "autre": "Autre" },
+          "dosage_label": "Dosage recommandé",
+          "dosage_placeholder": "ex: 2g/kg",
+          "description_label": "Description / précautions",
+          "description_placeholder": "Contre-indications, conditions...",
+          "save_btn": "Enregistrer"
+        },
+        "added": "Supplément ajouté !"
+      },
+      "plans": {
+        "groups": {
+          "concours": "🏋️ Concours",
+          "inter_saison": "🍂 Inter-Saison",
+          "elevage": "🐣 Élevage",
+          "retraites": "🕊️ Retraités"
+        },
+        "create_btn": "+ Nouveau plan",
+        "empty": { "title": "Aucun plan", "sub": "Créez votre premier plan alimentaire hebdomadaire." },
+        "selector_placeholder": "— Choisir un programme —",
+        "detail_btn": "🔍 Détail",
+        "detail_title": "Voir le détail complet",
+        "edit_title": "Modifier",
+        "duplicate_title": "Dupliquer",
+        "delete_title": "Supprimer",
+        "weekly_planning_title": "📅 Planning hebdomadaire type",
+        "select_hint": "Sélectionnez un programme dans la liste ci-dessus pour afficher ses détails.",
+        "min_unlocked_warning": "Il faut au moins 2 mélanges déverrouillés pour redistribuer",
+        "duplicated": "Plan alimentaire dupliqué !",
+        "copy_suffix": "(copie)",
+        "delete_confirm": "Supprimer définitivement <strong>{name}</strong> ?",
+        "default_name": "ce plan",
+        "deleted": "Plan supprimé.",
+        "detail": {
+          "day_section_title": "📅 Détail par jour",
+          "no_mixes": "Aucun mélange planifié.",
+          "close": "Fermer",
+          "export_pdf": "🖨️ Exporter PDF",
+          "edit": "✏️ Modifier"
+        },
+        "modal": {
+          "title_edit": "✏️ Modifier le plan alimentaire",
+          "title_new": "+ Nouveau plan alimentaire",
+          "name_label": "Nom du plan *",
+          "name_placeholder": "ex: Plan pré-saison 2026",
+          "goal_label": "Objectif",
+          "description_label": "Description",
+          "description_placeholder": "Instructions générales...",
+          "days_title": "📅 Mélanges par jour de la semaine",
+          "days_help": "Pour chaque jour, ajoutez un ou plusieurs mélanges à distribuer. Aucun mélange = jeûne / eau seule.",
+          "mix_select_placeholder": "— Ajouter un mélange —",
+          "no_mix_available": "Aucun mélange disponible",
+          "save_btn": "Enregistrer",
+          "create_btn": "Créer le plan"
+        },
+        "already_in_day": "Ce mélange est déjà dans ce jour",
+        "no_mixes_day": "Aucun mélange — jeûne / eau",
+        "min_unlocked_title": "2 mélanges déverrouillés minimum",
+        "lock": "Verrouiller",
+        "unlock": "Déverrouiller",
+        "day_total_warning": "{day} : total des mélanges doit être 100% (actuellement {pct}%)",
+        "updated": "Plan alimentaire mis à jour !",
+        "created": "Plan alimentaire créé !",
+        "summary_title": "📊 Résumé hebdomadaire :"
+      },
+      "affectation": {
+        "section_a_title": "Section A — Choix des pigeons",
+        "mode_group": "Mode Groupe",
+        "mode_individual": "Mode Individuel",
+        "statut": { "actif": "Actif", "reproducteur": "Reproducteur", "concours": "Concours", "retraite": "Retraite" },
+        "selected_count": { "one": "{count} pigeon sélectionné", "other": "{count} pigeons sélectionnés" },
+        "search_placeholder": "Filtrer par bague ou nom...",
+        "no_pigeon_found": "Aucun pigeon trouvé.",
+        "section_b_title": "Section B — Plan alimentaire",
+        "plan_select_placeholder": "— Choisir un plan —",
+        "section_c_title": "Section C — Période",
+        "date_debut_label": "Date de début *",
+        "date_fin_label": "Date de fin",
+        "duree_label": "Durée (semaines)",
+        "duree_placeholder": "ex: 4",
+        "reconductible_label": "Reconductible",
+        "no_end_date": "Pas de date de fin",
+        "submit_btn": "🎯 Affecter →",
+        "registered_title": "📋 Affectations enregistrées",
+        "mix_fallback": "Mél.#{id}",
+        "select_pigeon_warning": "Sélectionnez au moins un pigeon",
+        "select_plan_warning": "Sélectionnez un plan alimentaire",
+        "select_date_warning": "Sélectionnez une date de début",
+        "period_range": "du {debut} au {fin}",
+        "period_recurring": "à partir du {debut} (reconductible)",
+        "confirm": {
+          "title": "✅ Confirmer l'affectation",
+          "plan_label": "📋 Plan :",
+          "pigeons_label": "🕊️ Pigeons :",
+          "pigeons_count": { "one": "{count} pigeon affecté", "other": "{count} pigeons affectés" },
+          "replace_notice": "— les affectations précédentes seront remplacées",
+          "period_label": "📅 Période :",
+          "details_summary": "Détail des pigeons ({count})",
+          "confirm_btn": "Confirmer l'affectation"
+        },
+        "created": { "one": "{count} affectation créée !", "other": "{count} affectations créées !" },
+        "list": {
+          "none": "Aucune affectation enregistrée.",
+          "group_title": "👥 Affectations par groupe",
+          "group_table": { "groupe": "Groupe", "plan": "Plan", "pigeons": "Pigeons", "debut": "Début", "fin": "Fin" },
+          "pigeons_count": { "one": "{count} pigeon", "other": "{count} pigeons" },
+          "delete_group_title": "Supprimer le groupe",
+          "individual_title": "👤 Affectations individuelles",
+          "individual_table": { "pigeon": "Pigeon", "plan": "Plan", "debut": "Début", "fin": "Fin" },
+          "statut_perdu": "Perdu",
+          "statut_decede": "Décédé",
+          "delete_title": "Supprimer",
+          "plan_fallback": "Plan #{id}"
+        },
+        "delete_group_confirm": { "one": "Supprimer le groupe ({count} affectation) ?", "other": "Supprimer le groupe ({count} affectations) ?" },
+        "group_deleted": "Groupe supprimé.",
+        "delete_confirm": "Supprimer cette affectation ?",
+        "deleted": "Affectation supprimée."
+      },
+      "calendar": {
+        "prev": "← Préc.",
+        "today": "Aujourd'hui",
+        "next": "Suiv. →",
+        "week_label": "Semaine {week} — {debut} au {fin}",
+        "empty": { "title": "Aucune affectation cette semaine", "sub": "Créez des affectations dans l'onglet <strong>🎯 Affectation</strong> pour les voir ici." },
+        "table": { "pigeon_group": "Pigeon / Groupe", "plan": "Plan alimentaire" },
+        "detail_btn": "🔍 Voir détail"
+      }
+    }
+  },
+  "pigeons": {
+    "empty": {
+      "title": "Aucun pigeon enregistré",
+      "sub": "Commencez par ajouter vos premiers pigeons ou importez une liste CSV"
+    },
+    "import_btn": "⬆️ Importer CSV",
+    "export_btn": "⬇️ Exporter CSV",
+    "filter": {
+      "all_lignees": "Toutes les lignées",
+      "all_status": "Tous les statuts",
+      "all_sexes": "Tous les sexes",
+      "all_years": "Toutes les années",
+      "reset": "✕ Réinitialiser"
+    },
+    "table": {
+      "photo": "Photo",
+      "matricule": "Matricule",
+      "annee": "Année",
+      "sexe": "Sexe",
+      "lignee": "Lignée",
+      "case": "Case",
+      "statut": "Statut",
+      "actions": "Actions"
+    },
+    "count": {
+      "all": { "one": "{total} pigeon", "other": "{total} pigeons" },
+      "filtered": { "one": "{affiches} pigeon sur {total}", "other": "{affiches} pigeons sur {total}" }
+    },
+    "pagination": {
+      "prev": "← Précédent",
+      "next": "Suivant →",
+      "page_of": "Page {current} / {total}"
+    },
+    "detail": {
+      "field": {
+        "annee": "Année",
+        "sexe": "Sexe",
+        "statut": "Statut",
+        "case": "Case",
+        "couleur": "Couleur",
+        "lignee": "Lignée"
+      },
+      "section": {
+        "notes": "📝 Notes",
+        "genealogy": "🌳 Généalogie",
+        "performances": "🏆 Performances ({count} concours)",
+        "health": "🏥 Suivi santé ({count} événements)"
+      },
+      "no_note": "Aucune note",
+      "no_perf": "Aucune performance enregistrée",
+      "no_health": "Aucun événement santé enregistré",
+      "pere": "PÈRE ♂️",
+      "mere": "MÈRE ♀️",
+      "unknown_male": "Inconnu",
+      "unknown_female": "Inconnue",
+      "perf_table": { "date": "Date", "concours": "Concours", "dist": "Dist.", "class": "Class.", "vitesse": "Vitesse" },
+      "health_table": { "date": "Date", "type": "Type", "description": "Description", "produit": "Produit" },
+      "btn": {
+        "close": "Fermer",
+        "print": "🖨️ Imprimer",
+        "pedigree": "🌳 Pedigree",
+        "history": "📋 Historique",
+        "edit": "✏️ Modifier"
+      },
+      "photo_btn": "📷 Photo"
+    },
+    "timeline": {
+      "title": "📋 Historique — {matricule}",
+      "no_events": "Aucun événement enregistré.",
+      "close": "Fermer"
+    },
+    "photo": {
+      "updated": "Photo mise à jour ✅",
+      "error": "Erreur upload photo"
+    },
+    "form": {
+      "add_title": "Ajouter un pigeon",
+      "edit_title": "Modifier le pigeon",
+      "matricule_label": "Matricule *",
+      "matricule_placeholder": "ex: 166548-24-F",
+      "annee_label": "Année de naissance *",
+      "sexe_label": "Sexe *",
+      "statut_label": "Statut",
+      "couleur_label": "Couleur du plumage",
+      "couleur_placeholder": "ex: Bleu barré",
+      "case_label": "Case colombier",
+      "case_placeholder": "ex: Case 12",
+      "lignee_label": "Lignée",
+      "no_lignee": "— Sans lignée —",
+      "pere_label": "Père ♂️",
+      "unknown_pere": "— Inconnu —",
+      "mere_label": "Mère ♀️",
+      "unknown_mere": "— Inconnue —",
+      "notes_label": "Notes",
+      "notes_placeholder": "Observations, caractéristiques..."
+    },
+    "msg": {
+      "matricule_required": "Le matricule est obligatoire",
+      "updated": "Pigeon modifié avec succès ✅",
+      "created": "Pigeon créé avec succès ✅",
+      "deleted": "Pigeon \"{matricule}\" supprimé",
+      "delete_confirm": "Supprimer définitivement le pigeon <strong>{matricule}</strong> ?",
+      "delete_error": "Erreur lors de la suppression",
+      "blocked": {
+        "title": "Suppression impossible",
+        "has_assignments": "Le pigeon <strong>{matricule}</strong> possède des affectations nutritionnelles actives.",
+        "suggestion": "Pour le retirer du suivi tout en conservant l'historique, marquez-le comme <strong>Perdu</strong>.",
+        "mark_lost_btn": "Marquer comme Perdu",
+        "marked_lost": "Pigeon \"{matricule}\" marqué comme Perdu",
+        "update_error": "Erreur lors de la mise à jour"
+      }
+    },
+    "import": {
+      "modal_title": "Importer des pigeons (CSV)",
+      "intro": "Le fichier CSV doit utiliser <strong>;</strong> comme séparateur avec les colonnes :",
+      "columns": "matricule ; annee_naissance ; sexe ; couleur_plumage ; statut ; colombier_case ; notes",
+      "sexe_values": "Valeurs sexe : <code>male</code> / <code>femelle</code>",
+      "statut_values": "Valeurs statut : <code>actif</code> · <code>reproducteur</code> · <code>concours</code> · <code>retraite</code> · <code>perdu</code> · <code>decede</code>",
+      "file_label": "Fichier CSV",
+      "select_file": "Sélectionnez un fichier CSV",
+      "submit": "Importer",
+      "error_generic": "Erreur lors de l'import",
+      "success": { "one": "{n} pigeon importé ✅", "other": "{n} pigeons importés ✅" },
+      "errors_count": { "one": "{n} ligne ignorée :", "other": "{n} lignes ignorées :" }
+    }
+  },
+  "performances": {
+    "empty": {
+      "title": "Aucune performance enregistrée",
+      "sub": "Ajoutez des résultats de concours ou importez une liste CSV"
+    },
+    "import_btn": "⬆️ Importer CSV",
+    "export_btn": "⬇️ Exporter CSV",
+    "table": {
+      "pigeon": "Pigeon",
+      "concours": "Concours",
+      "date": "Date",
+      "distance": "Distance",
+      "classement": "Classement",
+      "vitesse": "Vitesse (m/min)",
+      "engages": "Engagés",
+      "actions": "Actions"
+    },
+    "add": {
+      "modal_title": "🏆 Ajouter une performance",
+      "pigeon_label": "Pigeon *",
+      "choose_pigeon": "— Choisir un pigeon —",
+      "concours_label": "Nom du concours *",
+      "concours_placeholder": "ex: Grand Prix Marseille",
+      "date_label": "Date *",
+      "distance_label": "Distance (km)",
+      "distance_placeholder": "ex: 320",
+      "classement_label": "Classement",
+      "classement_placeholder": "ex: 3",
+      "vitesse_label": "Vitesse (m/min)",
+      "vitesse_placeholder": "ex: 1456.2",
+      "engages_label": "Pigeons engagés",
+      "engages_placeholder": "ex: 245",
+      "notes_label": "Notes",
+      "notes_placeholder": "Observations...",
+      "submit": "➕ Créer"
+    },
+    "msg": {
+      "choose_pigeon": "Choisissez un pigeon",
+      "concours_required": "Le nom du concours est obligatoire",
+      "date_required": "La date est obligatoire",
+      "saved": "Performance enregistrée ✅",
+      "deleted": "Performance supprimée",
+      "delete_confirm": "Supprimer la performance <strong>{nom}</strong> ?"
+    },
+    "import": {
+      "modal_title": "Importer des performances (CSV)",
+      "intro": "Colonnes requises (séparateur <strong>;</strong>) :",
+      "columns": "date ; pigeon_matricule ; nom_concours ; distance_km ; classement ; nb_pigeons_engages ; vitesse_m_min ; notes",
+      "date_format": "Format date : <code>YYYY-MM-DD</code> (ex: 2024-05-12)",
+      "file_label": "Fichier CSV",
+      "select_file": "Sélectionnez un fichier CSV",
+      "submit": "Importer",
+      "error_generic": "Erreur lors de l'import",
+      "success": { "one": "{n} performance importée ✅", "other": "{n} performances importées ✅" },
+      "errors_count": { "one": "{n} ligne ignorée :", "other": "{n} lignes ignorées :" }
+    }
+  },
+  "sante": {
+    "empty": {
+      "title": "Aucun événement santé enregistré",
+      "sub": "Suivez la santé de vos pigeons ici"
+    },
+    "export_btn": "⬇️ Exporter CSV",
+    "table": {
+      "pigeon": "Pigeon",
+      "date": "Date",
+      "type": "Type",
+      "description": "Description",
+      "produit": "Produit",
+      "actions": "Actions"
+    },
+    "type": {
+      "vaccination": "Vaccination",
+      "traitement": "Traitement",
+      "visite_veterinaire": "Visite vétérinaire",
+      "observation": "Observation"
+    },
+    "add": {
+      "modal_title": "🏥 Ajouter un événement santé",
+      "pigeon_label": "Pigeon *",
+      "choose_pigeon": "— Choisir un pigeon —",
+      "type_label": "Type *",
+      "type_vaccination": "💉 Vaccination",
+      "type_traitement": "💊 Traitement",
+      "type_visite": "🩺 Visite vétérinaire",
+      "type_observation": "👁️ Observation",
+      "date_label": "Date *",
+      "description_label": "Description",
+      "description_placeholder": "Détails de l'événement...",
+      "produit_label": "Produit utilisé",
+      "produit_placeholder": "ex: Colombovac PMV",
+      "submit": "➕ Créer"
+    },
+    "msg": {
+      "choose_pigeon": "Choisissez un pigeon",
+      "date_required": "La date est obligatoire",
+      "saved": "Événement santé enregistré ✅",
+      "deleted": "Événement supprimé",
+      "delete_confirm": "Supprimer cet événement santé ?"
+    }
+  },
+  "couples": {
+    "empty": {
+      "title": "Aucun couple enregistré",
+      "sub": "Créez votre premier couple reproducteur"
+    },
+    "active_section": "💑 Couples actifs ({count})",
+    "history_section": { "one": "📁 Historique ({count} couple)", "other": "📁 Historique ({count} couples)" },
+    "toggle": { "show": "▼ Afficher", "hide": "▲ Masquer" },
+    "table": {
+      "case": "Case",
+      "male": "♂️ Mâle",
+      "femelle": "♀️ Femelle",
+      "annee": "Année",
+      "nichees": "Nichées",
+      "actions": "Actions"
+    },
+    "detail": {
+      "male_label": "♂️ Mâle",
+      "femelle_label": "♀️ Femelle",
+      "unknown_male": "Inconnu",
+      "unknown_female": "Inconnue",
+      "case_label": "📍 Case",
+      "annee_label": "📅 Année",
+      "statut_label": "Statut",
+      "status_actif": "Actif",
+      "status_inactif": "Inactif",
+      "nichees_title": "🥚 Nichées ({count})",
+      "add_nichee_btn": "+ Ajouter une nichée",
+      "nichee_table": { "ponte": "Date ponte", "eclosion": "Date éclosion", "oeufs": "Œufs", "notes": "Notes" },
+      "no_nichee": "Aucune nichée enregistrée",
+      "btn": { "close": "Fermer", "dissolve": "🔓 Dissoudre", "delete": "🗑️ Supprimer" }
+    },
+    "nichee_edit": {
+      "modal_title": "✏️ Modifier la nichée",
+      "ponte_label": "Date de ponte",
+      "eclosion_label": "Date d'éclosion",
+      "oeufs_label": "Nombre d'œufs",
+      "notes_label": "Notes",
+      "notes_placeholder": "Observations...",
+      "submit": "💾 Modifier",
+      "msg_saved": "Nichée modifiée ✅"
+    },
+    "jeune": {
+      "modal_title": "🐣 Créer un jeune pigeon",
+      "matricule_label": "Matricule *",
+      "matricule_placeholder": "ex: FR-{annee}-XXX",
+      "annee_label": "Année de naissance *",
+      "sexe_label": "Sexe *",
+      "choose_sexe": "— Choisir —",
+      "statut_label": "Statut",
+      "pere_label": "♂️ Père",
+      "mere_label": "♀️ Mère",
+      "lignee_label": "Lignée",
+      "no_lignee": "— Aucune —",
+      "case_label": "Case colombier",
+      "case_placeholder": "ex: D5",
+      "couleur_label": "Couleur du plumage",
+      "couleur_placeholder": "ex: Bleu barré",
+      "notes_label": "Notes",
+      "notes_placeholder": "Observations...",
+      "submit": "🐣 Créer le jeune",
+      "msg": {
+        "matricule_required": "Le matricule est obligatoire",
+        "sexe_required": "Le sexe est obligatoire",
+        "annee_required": "L'année est obligatoire",
+        "created": "Jeune créé et bagué ✅"
+      }
+    },
+    "add": {
+      "modal_title": "💑 Nouveau couple",
+      "male_label": "Mâle *",
+      "choose_male": "— Choisir un mâle —",
+      "femelle_label": "Femelle *",
+      "choose_femelle": "— Choisir une femelle —",
+      "case_label": "Case colombier",
+      "case_placeholder": "ex: A3",
+      "annee_label": "Année *",
+      "notes_label": "Notes",
+      "notes_placeholder": "Observations...",
+      "submit": "➕ Créer",
+      "msg": {
+        "choose_male": "Choisissez un mâle",
+        "choose_femelle": "Choisissez une femelle",
+        "annee_required": "L'année est obligatoire",
+        "created": "Couple créé ✅"
+      }
+    },
+    "add_nichee": {
+      "modal_title": "🥚 Ajouter une nichée",
+      "ponte_label": "Date de ponte",
+      "eclosion_label": "Date d'éclosion",
+      "oeufs_label": "Nombre d'œufs",
+      "notes_label": "Notes",
+      "notes_placeholder": "Observations...",
+      "submit": "➕ Créer",
+      "msg_saved": "Nichée enregistrée ✅"
+    },
+    "msg": {
+      "dissolve_title": "Dissoudre le couple",
+      "dissolve_confirm": "Dissoudre le couple <strong>{label}</strong> ?<br>",
+      "dissolve_note": "Les deux pigeons repasseront en statut \"actif\".",
+      "dissolve_btn": "Dissoudre",
+      "dissolved": "Couple dissous",
+      "delete_confirm": "Supprimer définitivement le couple <strong>{label}</strong> et toutes ses nichées ?",
+      "deleted": "Couple supprimé",
+      "nichee_delete_confirm": "Supprimer cette nichée ?",
+      "nichee_deleted": "Nichée supprimée"
+    }
+  },
+  "calendrier": {
+    "prev": "← Précédent",
+    "next": "Suivant →",
+    "legend": { "session": "Séance d'entraînement", "concours": "Concours" },
+    "events_title": "Événements — {mois}",
+    "no_events": "Aucun événement ce mois.",
+    "session_type": {
+      "loft": "🏠 Loft",
+      "toss": "🚀 Lancer",
+      "race": "🏆 Concours",
+      "default": "Séance"
+    }
+  },
+  "concours_module": {
+    "loading_stats": "Chargement statistiques…",
+    "error_loading": "Erreur de chargement",
+    "empty": {
+      "title": "Aucun concours enregistré",
+      "sub": "Cliquez sur <strong>+ Nouveau concours</strong> pour commencer la saison"
+    },
+    "filter": {
+      "all_seasons": "Toutes les saisons",
+      "all_status": "Tous les statuts"
+    },
+    "status": {
+      "a_venir": "À venir",
+      "en_cours": "En cours",
+      "termine": "Terminé",
+      "annule": "Annulé",
+      "change_prompt": "Changer statut…"
+    },
+    "table": {
+      "nom": "Nom",
+      "date": "Date",
+      "lieu": "Lieu lâcher",
+      "distance": "Distance",
+      "statut": "Statut",
+      "engages": "Engagés",
+      "actions": "Actions"
+    },
+    "compteur": { "one": "{count} concours", "other": "{count} concours" },
+    "btn": { "detail": "📋 Détail" },
+    "modal": {
+      "add_title": "Nouveau concours",
+      "edit_title": "Modifier le concours"
+    },
+    "form": {
+      "nom_label": "Nom du concours *",
+      "nom_placeholder": "ex: Limoges 2025",
+      "date_label": "Date *",
+      "lieu_label": "Lieu de lâcher",
+      "lieu_placeholder": "ex: Limoges",
+      "distance_label": "Distance (mètres)",
+      "distance_placeholder": "ex: 425000",
+      "heure_label": "Heure de lâcher",
+      "ref_label": "Réf. fédération",
+      "ref_placeholder": "optionnel",
+      "notes_label": "Notes",
+      "notes_placeholder": "Conditions météo, remarques…",
+      "submit_create": "➕ Créer",
+      "submit_edit": "💾 Modifier"
+    },
+    "msg": {
+      "nom_date_required": "Nom et date obligatoires",
+      "updated": "Concours modifié ✅",
+      "created": "Concours créé ✅",
+      "status_updated": "Statut mis à jour ✅",
+      "deleted": "Concours supprimé",
+      "delete_confirm": "Supprimer le concours \"{nom}\" et tous ses engagements ?"
+    },
+    "detail": {
+      "back": "← Retour",
+      "lacher": "Lâcher",
+      "btn_edit": "✏️ Modifier",
+      "btn_feuille": "🖨️ Feuille",
+      "tab_engagements": "📋 Engagements ({count})",
+      "tab_constatation": "⏱️ Constatation",
+      "tab_resultats": "🏅 Résultats"
+    },
+    "categories": {
+      "vieux_coqs": "🐓 Vieux coqs",
+      "yearlings": "🦅 Yearlings",
+      "jeunes": "🐦 Jeunes",
+      "femelles": "♀️ Femelles"
+    },
+    "engagement_status": {
+      "engage": "Engagé",
+      "rentre_classe": "Rentré classé",
+      "rentre_non_classe": "Rentré (nc)",
+      "non_rentre_jour": "Non rentré/jour",
+      "perdu": "Perdu"
+    },
+    "engagement": {
+      "add_title": "➕ Engager un pigeon",
+      "pigeon_label": "Pigeon",
+      "choose_pigeon": "— Choisir un pigeon —",
+      "categorie_label": "Catégorie",
+      "mise_label": "Mise (€)",
+      "submit": "Engager",
+      "checking": "Vérification…",
+      "eligible_fcf": "✅ Éligible FCF",
+      "alerts": "⚠️ Alertes :",
+      "eligible_short": "✅ Éligible",
+      "alerts_short": "Alertes",
+      "list_title": "📋 Pigeons engagés ({count})",
+      "none_engaged": "Aucun pigeon engagé",
+      "table": {
+        "matricule": "Matricule",
+        "annee": "Année",
+        "categorie": "Catégorie",
+        "mise": "Mise",
+        "eligibilite": "Éligibilité",
+        "statut": "Statut",
+        "actions": "Actions",
+        "retirer": "Retirer"
+      },
+      "select_required": "Sélectionnez un pigeon",
+      "added": "Pigeon engagé ✅",
+      "removed": "Pigeon retiré",
+      "remove_confirm": "Retirer le pigeon {matricule} de ce concours ?"
+    },
+    "constatation": {
+      "none_engaged": "Aucun pigeon engagé.",
+      "mode_title": "Mode de saisie des arrivées",
+      "mode_manuel": "✏️ Manuel",
+      "mode_import": "📁 Import CSV/Excel",
+      "mode_benzing": "📡 Benzing Live!",
+      "import_title": "📁 Import fichier arrivées",
+      "import_intro": "Format CSV (séparateur <code>;</code>) : <code>matricule;heure_arrivee;correction_sec</code><br>Format Excel (.xlsx) : mêmes colonnes, premier onglet.",
+      "file_label": "Fichier (.csv / .txt / .xlsx)",
+      "submit_import": "Importer",
+      "select_file": "Sélectionnez un fichier",
+      "table_title": "⏱️ Constatation des arrivées",
+      "lacher": "Lâcher",
+      "distance": "Distance",
+      "table": {
+        "matricule": "Matricule",
+        "categorie": "Catégorie",
+        "heure_arrivee": "Heure arrivée",
+        "correction": "Correction (sec)",
+        "vitesse": "Vitesse (m/min)",
+        "source": "Source",
+        "save": "Enregistrer"
+      },
+      "invalid_time": "Heure invalide",
+      "arrival_required": "Saisissez une heure d'arrivée",
+      "arrival_saved": "Arrivée enregistrée ✅"
+    },
+    "benzing": {
+      "start": "▶ Démarrer écoute",
+      "stop": "■ Arrêter",
+      "apply": "🔄 Appliquer arrivées",
+      "waiting": "En attente…",
+      "listening": "📡 En écoute…",
+      "stopped": "Arrêté",
+      "status_pending": "📡 Écoute active — {n} arrivée(s) en attente",
+      "flushed": { "one": "{n} arrivée importée depuis Benzing ✅", "other": "{n} arrivées importées depuis Benzing ✅" }
+    },
+    "import_arrivees": {
+      "imported": { "one": "✅ {n} arrivée importée", "other": "✅ {n} arrivées importées" },
+      "not_found": "⚠️ Non trouvés : {liste}",
+      "errors": "❌ Erreurs :",
+      "generic_error": "Erreur lors de l'import"
+    },
+    "resultats": {
+      "official_data_title": "📊 Données officielles du concours",
+      "total_engages_label": "Total engagés officiel",
+      "total_placeholder": "ex: 1254",
+      "save": "Enregistrer",
+      "table": {
+        "matricule": "Matricule",
+        "heure_arrivee": "Heure arrivée",
+        "vitesse": "Vitesse (m/min)",
+        "classement_off": "Classement officiel",
+        "nb_engages_cat": "Nb engagés catégorie",
+        "score_as": "Score AS",
+        "statut": "Statut",
+        "actions": "Actions"
+      },
+      "classement_placeholder": "pos.",
+      "nb_engages_placeholder": "total",
+      "result_saved": "Résultat enregistré ✅",
+      "total_saved": "Total engagés enregistré ✅"
+    },
+    "feuille": {
+      "title": "Feuille d'engagement — {nom}",
+      "lacher": "Lâcher",
+      "total": { "one": "Total : {n} pigeon", "other": "Total : {n} pigeons" },
+      "table": {
+        "matricule": "Matricule",
+        "annee": "Année",
+        "couleur": "Couleur",
+        "case": "Case",
+        "categorie": "Catégorie",
+        "mise": "Mise",
+        "eligible": "Éligible"
+      },
+      "footer": "Édité le {date} — Colombophilie V3",
+      "error": "Erreur lors de la génération de la feuille"
+    },
+    "stats_as": {
+      "title": "🏅 Classement AS pigeon — Saison {annee}",
+      "no_data": "Aucune donnée pour cette saison.",
+      "table": {
+        "rank": "#",
+        "matricule": "Matricule",
+        "concours": "Concours",
+        "classes": "Classés",
+        "taux_retour": "Taux retour",
+        "vitesse_moy": "Vitesse moy.",
+        "meilleure_v": "Meilleure v.",
+        "points_as": "Points AS",
+        "score_as": "Score AS"
+      }
+    }
+  },
+  "setup": {
+    "title": "Bienvenue sur Colomb",
+    "step_lang_title": "Choisissez votre langue",
+    "step_lang_subtitle": "Sélectionnez la langue de l'application",
+    "step_profile_title": "Profil de l'éleveur",
+    "step_profile_subtitle": "Quelques informations pour personnaliser votre espace",
+    "step_confirm_title": "Récapitulatif",
+    "step_confirm_subtitle": "Vérifiez vos informations avant de lancer Colomb",
+    "field_nom": "Nom de l'éleveur",
+    "field_prenom": "Prénom",
+    "field_colombier": "Nom du colombier",
+    "field_ville": "Ville",
+    "field_pays": "Pays",
+    "field_federation": "Fédération colombophile",
+    "field_federation_other": "Précisez votre fédération",
+    "field_email": "Email de contact",
+    "placeholder_nom": "Ex. Dupont",
+    "placeholder_prenom": "Ex. Frédéric",
+    "placeholder_colombier": "Ex. Colombier de Hyères",
+    "placeholder_ville": "Ex. Hyères",
+    "placeholder_email": "Ex. nom@exemple.com",
+    "country_france": "France",
+    "country_belgique": "Belgique",
+    "country_pays_bas": "Pays-Bas",
+    "country_royaume_uni": "Royaume-Uni",
+    "country_autre": "Autre",
+    "btn_next": "Suivant",
+    "btn_back": "Retour",
+    "btn_launch": "Lancer Colomb",
+    "recap_lang": "Langue",
+    "recap_nom": "Éleveur",
+    "recap_colombier": "Colombier",
+    "recap_ville": "Ville",
+    "recap_pays": "Pays",
+    "recap_federation": "Fédération",
+    "recap_email": "Email",
+    "not_specified": "Non renseigné",
+    "loading": "Initialisation de votre élevage...",
+    "success": "Configuration terminée ! Redirection...",
+    "error_nom_required": "Le nom de l'éleveur est obligatoire",
+    "error_email_invalid": "Format d'email invalide",
+    "error_setup_failed": "Une erreur est survenue lors de la configuration"
+  }
+}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Colomb - Gestion d'élevage</title>
+  <title data-i18n="common.app_title">Colomb - Gestion d'élevage</title>
   <link rel="icon" type="image/png" href="images/Logo_Colomb.png">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,53 +24,58 @@
       <img src="images/Logo_Colomb.png" class="logo-icon" alt="Colomb logo">
       <span class="logo-text">Colomb</span>
     </div>
-    <nav class="sidebar-nav" aria-label="Navigation principale">
+    <nav class="sidebar-nav" data-i18n-aria-label="a11y.nav_main" aria-label="Navigation principale">
       <a href="#" class="nav-item active" data-page="dashboard">
         <span class="nav-icon" aria-hidden="true">🏠</span>
-        <span>Tableau de bord</span>
+        <span data-i18n="nav.dashboard">Tableau de bord</span>
       </a>
       <a href="#" class="nav-item" data-page="pigeons">
         <span class="nav-icon" aria-hidden="true">🕊️</span>
-        <span>Pigeons</span>
+        <span data-i18n="nav.pigeons">Pigeons</span>
       </a>
       <a href="#" class="nav-item" data-page="lignees">
         <span class="nav-icon" aria-hidden="true">🌳</span>
-        <span>Lignées</span>
+        <span data-i18n="nav.lignees">Lignées</span>
       </a>
       <a href="#" class="nav-item" data-page="performances">
         <span class="nav-icon" aria-hidden="true">🏆</span>
-        <span>Performances</span>
+        <span data-i18n="nav.performances">Performances</span>
       </a>
       <a href="#" class="nav-item" data-page="sante">
         <span class="nav-icon" aria-hidden="true">🏥</span>
-        <span>Santé</span>
+        <span data-i18n="nav.sante">Santé</span>
       </a>
       <a href="#" class="nav-item" data-page="couples">
         <span class="nav-icon" aria-hidden="true">💑</span>
-        <span>Couples</span>
+        <span data-i18n="nav.couples">Couples</span>
       </a>
       <a href="#" class="nav-item" data-page="eleveur">
         <span class="nav-icon" aria-hidden="true">⚙️</span>
-        <span>Mon Élevage</span>
+        <span data-i18n="nav.eleveur">Mon Élevage</span>
       </a>
       <a href="#" class="nav-item" data-page="calendrier">
         <span class="nav-icon" aria-hidden="true">📅</span>
-        <span>Calendrier</span>
+        <span data-i18n="nav.calendrier">Calendrier</span>
       </a>
       <a href="#" class="nav-item" data-page="concours">
         <span class="nav-icon" aria-hidden="true">🏆</span>
-        <span>Concours</span>
+        <span data-i18n="nav.concours">Concours</span>
       </a>
       <div style="border-top:1px solid rgba(255,255,255,0.1);margin:8px 0;"></div>
       <a href="/sport/" class="nav-item" style="background:rgba(41,128,185,0.2);">
         <span class="nav-icon" aria-hidden="true">🏃</span>
-        <span>Sport & IA</span>
+        <span data-i18n="nav.sport">Sport & IA</span>
       </a>
     </nav>
     <div class="sidebar-footer">
+      <div class="lang-switcher" style="display:flex;gap:4px;padding:8px 16px;">
+        <button data-lang-switch="fr" title="Français" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;padding:2px;border-radius:4px;">🇫🇷</button>
+        <button data-lang-switch="nl" title="Nederlands" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;padding:2px;border-radius:4px;">🇧🇪</button>
+        <button data-lang-switch="en" title="English" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;padding:2px;border-radius:4px;">🇬🇧</button>
+      </div>
       <a href="/MANUEL_UTILISATION.html" class="nav-item" target="_blank" style="opacity:0.7;font-size:13px;">
         <span class="nav-icon">❓</span>
-        <span>Aide</span>
+        <span data-i18n="nav.aide">Aide</span>
       </a>
       <span style="padding:8px 16px;font-size:12px;opacity:0.4;">v3.0.0</span>
     </div>
@@ -82,16 +87,16 @@
     <!-- TOPBAR -->
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button class="hamburger" id="hamburger" aria-label="Menu">
+        <button class="hamburger" id="hamburger" data-i18n-aria-label="a11y.menu" aria-label="Menu">
           <span></span><span></span><span></span>
         </button>
-        <h1 class="page-title" id="page-title">Tableau de bord</h1>
+        <h1 class="page-title" id="page-title" data-i18n="nav.dashboard">Tableau de bord</h1>
       </div>
       <div class="topbar-actions">
-        <input type="text" class="search-input" placeholder="Rechercher un pigeon..." id="search-input">
-        <button id="btn-theme" aria-label="Basculer le thème"
+        <input type="text" class="search-input" data-i18n-placeholder="search.placeholder_pigeon" placeholder="Rechercher un pigeon..." id="search-input">
+        <button id="btn-theme" data-i18n-aria-label="a11y.theme_toggle" aria-label="Basculer le thème"
           style="background:none;border:none;font-size:20px;cursor:pointer;padding:4px 8px;border-radius:8px;">🌙</button>
-        <button class="btn btn-primary" id="btn-add">+ Ajouter</button>
+        <button class="btn btn-primary" id="btn-add" data-i18n="common.add">+ Ajouter</button>
       </div>
     </header>
 
@@ -106,14 +111,15 @@
   <div class="modal-overlay" id="modal-overlay" style="display:none;">
     <div class="modal" id="modal">
       <div class="modal-header">
-        <h2 class="modal-title" id="modal-title">Titre</h2>
-        <button class="modal-close" id="modal-close" aria-label="Fermer">✕</button>
+        <h2 class="modal-title" id="modal-title" data-i18n="modal.title_default">Titre</h2>
+        <button class="modal-close" id="modal-close" data-i18n-aria-label="a11y.close" aria-label="Fermer">✕</button>
       </div>
       <div class="modal-body" id="modal-body">
       </div>
     </div>
   </div>
 
+  <script src="js/i18n.js"></script>
   <script src="js/calendrier.js"></script>
   <script src="js/concours.js"></script>
   <script src="js/app.js"></script>

@@ -17,7 +17,7 @@ async function apiFetch(endpoint, options = {}) {
   }
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
-    const msg = error.detail || 'Erreur API';
+    const msg = error.detail || t('error.api_generic');
     const err = new Error(msg);
     err.status = response.status;
     if (response.status !== 409) showNotification(msg, 'danger');
@@ -61,49 +61,49 @@ document.getElementById('modal-overlay').addEventListener('click', (e) => {
 // ===== NAVIGATION =====
 const pages = {
   dashboard: {
-    title: 'Tableau de bord',
+    titleKey: 'page.dashboard.title',
     load: () => loadDashboard(),
-    addLabel: null
+    addLabelKey: null
   },
   pigeons: {
-    title: 'Pigeons',
+    titleKey: 'page.pigeons.title',
     load: () => loadPigeons(),
-    addLabel: '+ Ajouter un pigeon'
+    addLabelKey: 'page.pigeons.add'
   },
   lignees: {
-    title: 'Lignées',
+    titleKey: 'page.lignees.title',
     load: () => loadLignees(),
-    addLabel: '+ Ajouter une lignée'
+    addLabelKey: 'page.lignees.add'
   },
   performances: {
-    title: 'Performances',
+    titleKey: 'page.performances.title',
     load: () => loadPerformances(),
-    addLabel: '+ Ajouter une performance'
+    addLabelKey: 'page.performances.add'
   },
   sante: {
-    title: 'Santé',
+    titleKey: 'page.sante.title',
     load: () => loadSante(),
-    addLabel: '+ Ajouter un événement'
+    addLabelKey: 'page.sante.add'
   },
   couples: {
-    title: 'Couples & Reproduction',
+    titleKey: 'page.couples.title',
     load: () => loadCouples(),
-    addLabel: '+ Nouveau couple'
+    addLabelKey: 'page.couples.add'
   },
   eleveur: {
-    title: 'Mon Élevage',
+    titleKey: 'page.eleveur.title',
     load: () => loadEleveur(),
-    addLabel: null
+    addLabelKey: null
   },
   calendrier: {
-    title: 'Calendrier',
+    titleKey: 'page.calendrier.title',
     load: () => loadCalendrier(),
-    addLabel: null
+    addLabelKey: null
   },
   concours: {
-    title: 'Concours',
+    titleKey: 'page.concours.title',
     load: () => loadConcours(),
-    addLabel: '+ Nouveau concours'
+    addLabelKey: 'page.concours.add'
   }
 };
 
@@ -118,19 +118,19 @@ function navigateTo(page) {
   });
 
   // Titre
-  document.getElementById('page-title').textContent = pages[page].title;
+  document.getElementById('page-title').textContent = t(pages[page].titleKey);
 
   // Bouton ajouter
   const btnAdd = document.getElementById('btn-add');
-  if (pages[page].addLabel) {
-    btnAdd.textContent = pages[page].addLabel;
+  if (pages[page].addLabelKey) {
+    btnAdd.textContent = t(pages[page].addLabelKey);
     btnAdd.style.display = 'block';
   } else {
     btnAdd.style.display = 'none';
   }
 
   // Charger le contenu
-  document.getElementById('content').innerHTML = '<div class="loading">Chargement...</div>';
+  document.getElementById('content').innerHTML = `<div class="loading">${t('common.loading')}</div>`;
   pages[page].load();
 }
 
@@ -157,14 +157,15 @@ document.getElementById('btn-add').addEventListener('click', () => {
 // ===== BADGES STATUT =====
 function badgeStatut(statut) {
   const map = {
-    'actif':        ['badge-actif',        'Actif'],
-    'reproducteur': ['badge-reproducteur', 'Reproducteur'],
-    'concours':     ['badge-concours',     'Concours'],
-    'perdu':        ['badge-perdu',        'Perdu'],
-    'retraite':     ['badge-retraite',     'Retraité'],
-    'decede':       ['badge-decede',       'Décédé'],
+    'actif':        ['badge-actif',        'status.actif'],
+    'reproducteur': ['badge-reproducteur', 'status.reproducteur'],
+    'concours':     ['badge-concours',     'status.concours'],
+    'perdu':        ['badge-perdu',        'status.perdu'],
+    'retraite':     ['badge-retraite',     'status.retraite'],
+    'decede':       ['badge-decede',       'status.decede'],
   };
-  const [cls, label] = map[statut] || ['', statut];
+  const [cls, key] = map[statut] || ['', null];
+  const label = key ? t(key) : statut;
   return `<span class="badge ${cls}">${label}</span>`;
 }
 
@@ -201,14 +202,14 @@ function getPageFromHash() {
 
 function show404() {
   const hash = window.location.hash || '#';
-  document.getElementById('page-title').textContent = 'Page introuvable';
+  document.getElementById('page-title').textContent = t('error.not_found_title');
   document.getElementById('btn-add').style.display = 'none';
   document.getElementById('content').innerHTML = `
     <div style="text-align:center; padding:80px 20px;">
       <div style="font-size:64px; margin-bottom:16px;">🔍</div>
-      <h2 style="font-family:'Playfair Display',serif; font-size:28px; margin-bottom:12px;">Page introuvable</h2>
-      <p style="color:var(--text-light); margin-bottom:32px;">La section <code>${hash}</code> n'existe pas.</p>
-      <button class="btn btn-primary" onclick="navigateTo('dashboard')">← Retour au tableau de bord</button>
+      <h2 style="font-family:'Playfair Display',serif; font-size:28px; margin-bottom:12px;">${t('error.not_found_title')}</h2>
+      <p style="color:var(--text-light); margin-bottom:32px;">${t('error.not_found_message', { hash })}</p>
+      <button class="btn btn-primary" onclick="navigateTo('dashboard')">${t('common.back_dashboard')}</button>
     </div>`;
 }
 
@@ -231,7 +232,7 @@ function confirmAction(titre, message, btnLabel, btnClass, onConfirm) {
       <div style="font-size:15px; color:var(--text); line-height:1.5;">${message}</div>
     </div>
     <div style="display:flex; justify-content:flex-end; gap:12px;">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
       <button class="btn ${btnClass}" id="btn-confirm-action">${btnLabel}</button>
     </div>
   `);
@@ -242,7 +243,7 @@ function confirmAction(titre, message, btnLabel, btnClass, onConfirm) {
 }
 
 function confirmDelete(message, onConfirm) {
-  confirmAction('Confirmer la suppression', message, 'Supprimer définitivement', 'btn-danger', onConfirm);
+  confirmAction(t('common.confirm_delete_title'), message, t('common.delete_permanently'), 'btn-danger', onConfirm);
 }
 
 // ===== MODE SOMBRE =====
@@ -310,6 +311,37 @@ function closeSidebarMobile() {
   };
 })();
 
+// ===== RECHARGEMENT AU CHANGEMENT DE LANGUE =====
+// Le contenu dynamique (tableaux, cartes...) est généré via t() au moment du
+// rendu : il faut donc recharger la page courante quand la langue change.
+let appStarted = false;
+document.addEventListener('i18n:changed', () => {
+  if (appStarted) pages[currentPage].load();
+});
+
 // ===== DÉMARRAGE =====
-// Délai 500ms pour laisser l'API finir son démarrage avant le premier appel
-setTimeout(handleHash, 500);
+// Premier lancement : si aucune configuration n'existe encore, on redirige
+// vers l'assistant de configuration avant d'afficher l'application.
+async function checkFirstLaunch() {
+  try {
+    const res = await fetch('http://localhost:8001/api/config/status');
+    const data = await res.json();
+    if (data.first_launch) {
+      window.location.href = 'setup.html';
+      return true;
+    }
+  } catch (err) {
+    // Backend injoignable : on continue normalement.
+  }
+  return false;
+}
+
+// Délai 500ms pour laisser l'API finir son démarrage avant le premier appel,
+// et on attend que les traductions soient chargées pour afficher les bons libellés.
+checkFirstLaunch().then(redirected => {
+  if (redirected) return;
+  i18nReady.then(() => setTimeout(() => {
+    appStarted = true;
+    handleHash();
+  }, 500));
+});

@@ -23,7 +23,7 @@ async function loadSportDashboard() {
     ]);
     pigeons = p;
   } catch (err) {
-    content.innerHTML = renderEmptyState('⚠️', 'Erreur de chargement', err.message);
+    content.innerHTML = renderEmptyState('⚠️', t('sport.error.load_title'), err.message);
     return;
   }
 
@@ -35,22 +35,22 @@ async function loadSportDashboard() {
       <div class="stat-card stat-blue">
         <div class="stat-icon">🕊️</div>
         <div class="stat-value">${totalPigeons}</div>
-        <div class="stat-label">Pigeons actifs</div>
+        <div class="stat-label">${t('sport.dashboard.stats.pigeons_actifs')}</div>
       </div>
       <div class="stat-card stat-green">
         <div class="stat-icon">🏃</div>
         <div class="stat-value" id="stat-sessions">—</div>
-        <div class="stat-label">Séances ce mois</div>
+        <div class="stat-label">${t('sport.dashboard.stats.sessions_mois')}</div>
       </div>
       <div class="stat-card stat-gold">
         <div class="stat-icon">⚡</div>
         <div class="stat-value" id="stat-recovery">—</div>
-        <div class="stat-label">Récup. moyenne</div>
+        <div class="stat-label">${t('sport.dashboard.stats.recup_moyenne')}</div>
       </div>
       <div class="stat-card stat-purple">
         <div class="stat-icon">🤖</div>
         <div class="stat-value" id="stat-alerts">—</div>
-        <div class="stat-label">Alertes IA actives</div>
+        <div class="stat-label">${t('sport.dashboard.stats.alertes_ia')}</div>
       </div>
     </div>
 
@@ -59,18 +59,18 @@ async function loadSportDashboard() {
       <div class="card flex-2">
         <div class="card-header">
           <div>
-            <div class="card-title">🤖 Alertes IA actives</div>
-            <div class="card-subtitle">Recommandations en cours pour la colonie</div>
+            <div class="card-title">${t('sport.dashboard.ai_alerts.title')}</div>
+            <div class="card-subtitle">${t('sport.dashboard.ai_alerts.subtitle')}</div>
           </div>
-          <a href="#" class="btn btn-sm btn-ghost" data-page-link="ai">Voir tout</a>
+          <a href="#" class="btn btn-sm btn-ghost" data-page-link="ai">${t('sport.dashboard.view_all')}</a>
         </div>
         <div id="widget-ai-alerts"><div class="loader-spinner"></div></div>
       </div>
       <div class="card flex-1">
         <div class="card-header">
           <div>
-            <div class="card-title">🏥 Santé intégrée</div>
-            <div class="card-subtitle">Événements médicaux récents</div>
+            <div class="card-title">${t('sport.dashboard.health.title')}</div>
+            <div class="card-subtitle">${t('sport.dashboard.health.subtitle')}</div>
           </div>
         </div>
         <div id="widget-health"><div class="loader-spinner"></div></div>
@@ -81,8 +81,8 @@ async function loadSportDashboard() {
     <div class="card" style="margin-bottom:16px;">
       <div class="card-header">
         <div>
-          <div class="card-title">📝 Pigeons en attente de feedback</div>
-          <div class="card-subtitle">Recommandations actives non résolues pour l'écurie</div>
+          <div class="card-title">${t('sport.dashboard.pending_feedback.title')}</div>
+          <div class="card-subtitle">${t('sport.dashboard.pending_feedback.subtitle')}</div>
         </div>
       </div>
       <div id="widget-pending-feedback"><div class="loader-spinner"></div></div>
@@ -93,18 +93,18 @@ async function loadSportDashboard() {
       <div class="card flex-2">
         <div class="card-header">
           <div>
-            <div class="card-title">🏃 Dernières séances</div>
-            <div class="card-subtitle">Activités d'entraînement récentes</div>
+            <div class="card-title">${t('sport.dashboard.recent_sessions.title')}</div>
+            <div class="card-subtitle">${t('sport.dashboard.recent_sessions.subtitle')}</div>
           </div>
-          <a href="#" class="btn btn-sm btn-ghost" data-page-link="sessions">Toutes les séances</a>
+          <a href="#" class="btn btn-sm btn-ghost" data-page-link="sessions">${t('sport.dashboard.recent_sessions.view_all')}</a>
         </div>
         <div id="widget-sessions"><div class="loader-spinner"></div></div>
       </div>
       <div class="card flex-1">
         <div class="card-header">
           <div>
-            <div class="card-title">🌾 Plan nutritionnel</div>
-            <div class="card-subtitle">Plan actif aujourd'hui</div>
+            <div class="card-title">${t('sport.dashboard.nutrition.title')}</div>
+            <div class="card-subtitle">${t('sport.dashboard.nutrition.subtitle')}</div>
           </div>
         </div>
         <div id="widget-nutrition"><div class="loader-spinner"></div></div>
@@ -135,7 +135,7 @@ async function loadPendingFeedbackWidget(pigeons) {
 
   try {
     if (!pigeons || pigeons.length === 0) {
-      el.innerHTML = renderEmptyState('🕊️', 'Aucun pigeon enregistré', 'Ajoutez des pigeons pour commencer le suivi.');
+      el.innerHTML = renderEmptyState('🕊️', t('sport.dashboard.pending_feedback.no_pigeons_title'), t('sport.dashboard.pending_feedback.no_pigeons_text'));
       return;
     }
 
@@ -151,19 +151,19 @@ async function loadPendingFeedbackWidget(pigeons) {
     });
 
     if (pending.length === 0) {
-      el.innerHTML = renderEmptyState('✅', 'Aucun feedback en attente', 'Tous les résultats de concours ont été saisis.');
+      el.innerHTML = renderEmptyState('✅', t('sport.dashboard.pending_feedback.none_title'), t('sport.dashboard.pending_feedback.none_text'));
       return;
     }
 
     const recMap = {
-      concours:           { label: 'Concours',      cls: 'badge-success' },
-      entrainement_leger: { label: 'Entraînement',  cls: 'badge-info' },
-      repos:              { label: 'Repos',          cls: 'badge-warning' },
-      reforme:            { label: 'Réforme',        cls: 'badge-danger' },
+      concours:           { label: t('sport.dashboard.pending_feedback.rec_map.concours'),           cls: 'badge-success' },
+      entrainement_leger: { label: t('sport.dashboard.pending_feedback.rec_map.entrainement_leger'), cls: 'badge-info' },
+      repos:              { label: t('sport.dashboard.pending_feedback.rec_map.repos'),              cls: 'badge-warning' },
+      reforme:            { label: t('sport.dashboard.pending_feedback.rec_map.reforme'),            cls: 'badge-danger' },
     };
 
     el.innerHTML = pending.slice(0, 10).map(r => {
-      const s = recMap[r.recommendation] || { label: r.recommendation || 'Info', cls: 'badge-info' };
+      const s = recMap[r.recommendation] || { label: r.recommendation || t('sport.dashboard.pending_feedback.rec_map.default'), cls: 'badge-info' };
       const p = r._pigeon;
       return `
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
@@ -177,10 +177,10 @@ async function loadPendingFeedbackWidget(pigeons) {
             <button class="btn btn-sm btn-primary btn-dash-outcome"
               data-rec-id="${r.id}"
               data-pigeon-id="${p.id}"
-            >📝 Feedback</button>
+            >${t('sport.dashboard.pending_feedback.btn_feedback')}</button>
           </div>
         </div>`;
-    }).join('') + (pending.length > 10 ? `<p style="text-align:center;color:var(--text-light);font-size:0.78rem;margin-top:8px;">+ ${pending.length - 10} autres en attente</p>` : '');
+    }).join('') + (pending.length > 10 ? `<p style="text-align:center;color:var(--text-light);font-size:0.78rem;margin-top:8px;">${t('sport.dashboard.pending_feedback.more', { count: pending.length - 10 })}</p>` : '');
 
     el.querySelectorAll('.btn-dash-outcome').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -189,7 +189,7 @@ async function loadPendingFeedbackWidget(pigeons) {
     });
 
   } catch (err) {
-    el.innerHTML = renderEmptyState('⚠️', 'Impossible de charger les feedbacks', err.message);
+    el.innerHTML = renderEmptyState('⚠️', t('sport.dashboard.pending_feedback.load_error'), err.message);
   }
 }
 
@@ -201,7 +201,7 @@ async function loadAIAlertWidget(pigeons) {
   try {
     const top3 = (pigeons || []).slice(0, 3);
     if (top3.length === 0) {
-      el.innerHTML = renderEmptyState('🕊️', 'Aucun pigeon enregistré', 'Ajoutez des pigeons pour voir les alertes IA.');
+      el.innerHTML = renderEmptyState('🕊️', t('sport.dashboard.ai_alerts.no_pigeons_title'), t('sport.dashboard.ai_alerts.no_pigeons_text'));
       return;
     }
 
@@ -230,8 +230,8 @@ async function loadAIAlertWidget(pigeons) {
         <div class="alert-card success">
           <span class="alert-icon">✅</span>
           <div class="alert-content">
-            <div class="alert-title">Aucune alerte active</div>
-            <div class="alert-text">Tous les pigeons sont en bonne condition.</div>
+            <div class="alert-title">${t('sport.dashboard.ai_alerts.none_title')}</div>
+            <div class="alert-text">${t('sport.dashboard.ai_alerts.none_text')}</div>
           </div>
         </div>`;
       return;
@@ -254,14 +254,14 @@ async function loadAIAlertWidget(pigeons) {
         <div class="alert-card ${s.cls}">
           <span class="alert-icon">${s.icon}</span>
           <div class="alert-content">
-            <div class="alert-title">${r._pigeon ? `<span class="chip" style="margin-right:6px;">${bague}</span>` : ''}${r.title || r.recommendation_type || 'Recommandation'}</div>
+            <div class="alert-title">${r._pigeon ? `<span class="chip" style="margin-right:6px;">${bague}</span>` : ''}${r.title || r.recommendation_type || t('sport.dashboard.ai_alerts.default_title')}</div>
             <div class="alert-text">${r.message || r.content || ''}</div>
           </div>
         </div>`;
-    }).join('') + (actives.length > 5 ? `<p style="text-align:center;color:var(--text-light);font-size:0.8rem;margin-top:8px;">+ ${actives.length - 5} autres alertes</p>` : '');
+    }).join('') + (actives.length > 5 ? `<p style="text-align:center;color:var(--text-light);font-size:0.8rem;margin-top:8px;">${t('sport.dashboard.ai_alerts.more', { count: actives.length - 5 })}</p>` : '');
 
   } catch (err) {
-    el.innerHTML = renderEmptyState('⚠️', 'Impossible de charger les alertes IA', err.message);
+    el.innerHTML = renderEmptyState('⚠️', t('sport.dashboard.ai_alerts.load_error'), err.message);
   }
 }
 
@@ -273,7 +273,7 @@ async function loadHealthWidget(pigeons) {
   try {
     const top3 = (pigeons || []).slice(0, 3);
     if (top3.length === 0) {
-      el.innerHTML = renderEmptyState('🏥', 'Aucun pigeon', 'Ajoutez des pigeons pour suivre leur santé.');
+      el.innerHTML = renderEmptyState('🏥', t('sport.dashboard.health.no_pigeons_title'), t('sport.dashboard.health.no_pigeons_text'));
       return;
     }
 
@@ -291,7 +291,7 @@ async function loadHealthWidget(pigeons) {
     const recent = allEvents.slice(0, 5);
 
     if (recent.length === 0) {
-      el.innerHTML = renderEmptyState('🟢', 'Aucun événement médical récent', 'Tous les pigeons semblent en bonne santé.');
+      el.innerHTML = renderEmptyState('🟢', t('sport.dashboard.health.none_title'), t('sport.dashboard.health.none_text'));
     } else {
       el.innerHTML = recent.map(e => {
         const isBad = ['maladie', 'traitement', 'blessure'].includes((e.type || '').toLowerCase());
@@ -299,17 +299,17 @@ async function loadHealthWidget(pigeons) {
           <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);">
             <span>${isBad ? '🔴' : '🟢'}</span>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:0.82rem;font-weight:600;color:var(--text);">${e._pigeon.matricule || '—'} — ${e.type || e.evenement || 'Événement'}</div>
+              <div style="font-size:0.82rem;font-weight:600;color:var(--text);">${e._pigeon.matricule || '—'} — ${e.type || e.evenement || t('sport.dashboard.health.event_default')}</div>
               <div style="font-size:0.75rem;color:var(--text-light);">${formatDate(e.date || e.created_at)}</div>
             </div>
           </div>`;
       }).join('');
     }
 
-    el.innerHTML += `<div style="margin-top:12px;"><a href="http://localhost:8080/#sante" target="_blank" style="font-size:0.8rem;color:var(--accent);">→ Ouvrir module santé</a></div>`;
+    el.innerHTML += `<div style="margin-top:12px;"><a href="http://localhost:8080/#sante" target="_blank" style="font-size:0.8rem;color:var(--accent);">${t('sport.dashboard.health.open_link')}</a></div>`;
 
   } catch (err) {
-    el.innerHTML = renderEmptyState('⚠️', 'Erreur chargement santé', err.message);
+    el.innerHTML = renderEmptyState('⚠️', t('sport.dashboard.health.load_error'), err.message);
   }
 }
 
@@ -346,7 +346,7 @@ async function loadRecentSessionsWidget() {
     if (statRec) statRec.textContent = avgRec;
 
     if (list.length === 0) {
-      el.innerHTML = '<div class="empty-state"><div class="empty-icon">🏃</div><h3>Aucune séance</h3><p>Créez votre première séance d\'entraînement.</p></div>';
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">🏃</div><h3>${t('sport.dashboard.recent_sessions.empty_title')}</h3><p>${t('sport.dashboard.recent_sessions.empty_text')}</p></div>`;
       return;
     }
 
@@ -355,11 +355,11 @@ async function loadRecentSessionsWidget() {
       <table class="table-modern">
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Distance</th>
-            <th>Météo</th>
-            <th>Pigeons</th>
+            <th>${t('sport.dashboard.recent_sessions.table.date')}</th>
+            <th>${t('sport.dashboard.recent_sessions.table.type')}</th>
+            <th>${t('sport.dashboard.recent_sessions.table.distance')}</th>
+            <th>${t('sport.dashboard.recent_sessions.table.meteo')}</th>
+            <th>${t('sport.dashboard.recent_sessions.table.pigeons')}</th>
           </tr>
         </thead>
         <tbody>
@@ -374,7 +374,7 @@ async function loadRecentSessionsWidget() {
         </tbody>
       </table>`;
   } catch (err) {
-    el.innerHTML = renderEmptyState('⚠️', 'Erreur chargement séances', err.message);
+    el.innerHTML = renderEmptyState('⚠️', t('sport.dashboard.recent_sessions.load_error'), err.message);
   }
 }
 
@@ -388,7 +388,7 @@ async function loadNutritionWidget() {
     const list = Array.isArray(plans) ? plans : (plans.items || []);
 
     if (list.length === 0) {
-      el.innerHTML = renderEmptyState('🌾', 'Aucun plan actif', 'Créez un plan alimentaire dans le module Nutrition.');
+      el.innerHTML = renderEmptyState('🌾', t('sport.dashboard.nutrition.empty_title'), t('sport.dashboard.nutrition.empty_text'));
       return;
     }
 
@@ -396,21 +396,21 @@ async function loadNutritionWidget() {
     const plan = list[0];
     el.innerHTML = `
       <div style="margin-bottom:10px;">
-        <div style="font-weight:600;font-size:0.95rem;">${plan.name || 'Plan nutritionnel'}</div>
+        <div style="font-weight:600;font-size:0.95rem;">${plan.name || t('sport.dashboard.nutrition.default_name')}</div>
         <div style="font-size:0.8rem;color:var(--text-light);margin-top:2px;">${plan.description || ''}</div>
       </div>
       ${plan.goal ? `<div style="margin-bottom:8px;"><span class="badge badge-info">${plan.goal}</span></div>` : ''}
       <div style="font-size:0.8rem;color:var(--text-light);">
-        ${plan.start_date ? `Du ${formatDate(plan.start_date)}` : ''}
-        ${plan.end_date ? ` au ${formatDate(plan.end_date)}` : ''}
+        ${plan.start_date ? t('sport.dashboard.nutrition.from', { date: formatDate(plan.start_date) }) : ''}
+        ${plan.end_date ? ' ' + t('sport.dashboard.nutrition.to', { date: formatDate(plan.end_date) }) : ''}
       </div>
       <div style="margin-top:12px;">
-        <strong style="font-size:0.82rem;">Plans disponibles : ${list.length}</strong>
+        <strong style="font-size:0.82rem;">${t('sport.dashboard.nutrition.plans_available', { count: list.length })}</strong>
       </div>
       <div style="margin-top:10px;">
-        <a href="#" style="font-size:0.8rem;color:var(--accent);" onclick="event.preventDefault();showPage('plans')">→ Gérer les plans</a>
+        <a href="#" style="font-size:0.8rem;color:var(--accent);" onclick="event.preventDefault();showPage('plans')">${t('sport.dashboard.nutrition.manage_link')}</a>
       </div>`;
   } catch (err) {
-    el.innerHTML = renderEmptyState('⚠️', 'Erreur chargement nutrition', err.message);
+    el.innerHTML = renderEmptyState('⚠️', t('sport.dashboard.nutrition.load_error'), err.message);
   }
 }

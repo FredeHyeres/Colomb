@@ -13,18 +13,18 @@ async function loadHistory() {
   content.innerHTML = `
     <!-- Sélecteur de pigeon -->
     <div class="pigeon-select-bar">
-      <label>🕊️ Pigeon :</label>
+      <label>${t('sport.history.pigeon_label')}</label>
       <select class="form-control" id="history-pigeon-select">
-        <option value="">Choisir un pigeon...</option>
+        <option value="">${t('sport.choose_pigeon_placeholder')}</option>
       </select>
-      <button class="btn btn-primary btn-sm" id="btn-load-history" disabled>Charger l'historique</button>
+      <button class="btn btn-primary btn-sm" id="btn-load-history" disabled>${t('sport.history.btn_load')}</button>
     </div>
 
     <div id="history-content">
       <div class="empty-state">
         <div class="empty-icon">📊</div>
-        <h3>Sélectionnez un pigeon</h3>
-        <p>L'historique complet s'affichera ici.</p>
+        <h3>${t('sport.history.empty.title')}</h3>
+        <p>${t('sport.history.empty.sub')}</p>
       </div>
     </div>
   `;
@@ -79,11 +79,11 @@ async function loadPigeonHistory(pigeonId, pigeon) {
       events.push({
         type: s.session_type === 'race' ? 'race' : 'training',
         date: new Date(rawDate),
-        title: s.session_type === 'race' ? '🏆 Concours' : `🏃 Séance ${s.session_type === 'loft' ? 'Loft' : 'Lancer'}`,
+        title: s.session_type === 'race' ? t('sport.history.event.race_title') : t('sport.history.event.training_title', { type: s.session_type === 'loft' ? t('sport.session_type.loft') : t('sport.session_type.toss') }),
         desc: [
           s.distance_km ? `${s.distance_km} km` : null,
-          s.recovery_score != null ? `Récup: ${s.recovery_score}/10` : null,
-          s.internal_rank ? `Rang #${s.internal_rank}` : null,
+          s.recovery_score != null ? t('sport.history.event.recup', { score: s.recovery_score }) : null,
+          s.internal_rank ? t('sport.history.event.rank', { rank: s.internal_rank }) : null,
           s.weather || null
         ].filter(Boolean).join(' · '),
         raw: s
@@ -94,10 +94,10 @@ async function loadPigeonHistory(pigeonId, pigeon) {
       events.push({
         type: 'race',
         date: new Date(p.date || p.created_at),
-        title: `🏆 ${p.competition || p.concours || 'Concours'}`,
+        title: `🏆 ${p.competition || p.concours || t('sport.history.event.concours_default')}`,
         desc: [
           p.distance ? `${p.distance} km` : null,
-          p.classement ? `Classement: ${p.classement}` : null,
+          p.classement ? t('sport.history.event.classement', { classement: p.classement }) : null,
           p.vitesse ? `${p.vitesse} m/min` : null
         ].filter(Boolean).join(' · '),
         raw: p
@@ -109,7 +109,7 @@ async function loadPigeonHistory(pigeonId, pigeon) {
       events.push({
         type: isBad ? 'health' : 'health-ok',
         date: new Date(h.date || h.created_at),
-        title: `${isBad ? '🏥' : '💊'} ${h.type || h.evenement || 'Événement santé'}`,
+        title: `${isBad ? '🏥' : '💊'} ${h.type || h.evenement || t('sport.history.event.health_default')}`,
         desc: h.description || h.notes || h.traitement || '',
         raw: h
       });
@@ -119,7 +119,7 @@ async function loadPigeonHistory(pigeonId, pigeon) {
       events.push({
         type: 'ai',
         date: new Date(r.created_at || Date.now()),
-        title: `🤖 ${r.title || r.recommendation_type || 'Recommandation IA'}`,
+        title: `🤖 ${r.title || r.recommendation_type || t('sport.history.event.ai_default')}`,
         desc: r.message || r.content || '',
         raw: r
       });
@@ -154,19 +154,19 @@ async function loadPigeonHistory(pigeonId, pigeon) {
           <div style="display:flex;gap:16px;margin-left:auto;flex-wrap:wrap;">
             <div class="stat-card stat-blue" style="min-width:100px;padding:12px 16px;">
               <div class="stat-value">${sessions.length}</div>
-              <div class="stat-label">Séances</div>
+              <div class="stat-label">${t('sport.history.stats.sessions')}</div>
             </div>
             <div class="stat-card stat-green" style="min-width:100px;padding:12px 16px;">
               <div class="stat-value">${avgRec}</div>
-              <div class="stat-label">Récup moy.</div>
+              <div class="stat-label">${t('sport.history.stats.recup_moy')}</div>
             </div>
             <div class="stat-card stat-gold" style="min-width:100px;padding:12px 16px;">
               <div class="stat-value">${perfList.length}</div>
-              <div class="stat-label">Concours</div>
+              <div class="stat-label">${t('sport.history.stats.concours')}</div>
             </div>
             <div class="stat-card stat-purple" style="min-width:100px;padding:12px 16px;">
               <div class="stat-value">${recs.filter(r => !r.resolved_at).length}</div>
-              <div class="stat-label">Alertes IA</div>
+              <div class="stat-label">${t('sport.history.stats.alertes_ia')}</div>
             </div>
           </div>
         </div>
@@ -176,7 +176,7 @@ async function loadPigeonHistory(pigeonId, pigeon) {
       ${sessionResults.length > 0 ? `
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
-          <div class="card-title">📈 Évolution récupération — 10 dernières séances</div>
+          <div class="card-title">${t('sport.history.chart_title')}</div>
         </div>
         <div class="chart-container" style="height:200px;">
           <canvas id="history-chart"></canvas>
@@ -186,16 +186,16 @@ async function loadPigeonHistory(pigeonId, pigeon) {
       <!-- Timeline -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">📅 Timeline complète (${events.length} événements)</div>
+          <div class="card-title">${t('sport.history.timeline_title', { count: events.length })}</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <span class="chip" style="color:var(--sport-blue);border-color:var(--sport-blue);">🏃 Séances</span>
-            <span class="chip" style="color:var(--sport-gold);border-color:var(--sport-gold);">🏆 Concours</span>
-            <span class="chip" style="color:var(--sport-red);border-color:var(--sport-red);">🏥 Santé</span>
-            <span class="chip" style="color:var(--sport-purple);border-color:var(--sport-purple);">🤖 IA</span>
+            <span class="chip" style="color:var(--sport-blue);border-color:var(--sport-blue);">${t('sport.history.chips.sessions')}</span>
+            <span class="chip" style="color:var(--sport-gold);border-color:var(--sport-gold);">${t('sport.history.chips.concours')}</span>
+            <span class="chip" style="color:var(--sport-red);border-color:var(--sport-red);">${t('sport.history.chips.sante')}</span>
+            <span class="chip" style="color:var(--sport-purple);border-color:var(--sport-purple);">${t('sport.history.chips.ia')}</span>
           </div>
         </div>
         ${events.length === 0
-          ? '<div class="empty-state"><p>Aucun événement enregistré pour ce pigeon.</p></div>'
+          ? `<div class="empty-state"><p>${t('sport.history.empty_timeline')}</p></div>`
           : `<div class="timeline">
               ${events.map(e => `
                 <div class="timeline-item">
@@ -216,7 +216,7 @@ async function loadPigeonHistory(pigeonId, pigeon) {
         data: {
           labels: sessionResults.map(x => formatDateShort(x.date)),
           datasets: [{
-            label: 'Score récupération',
+            label: t('sport.history.chart_label'),
             data: sessionResults.map(x => x.score),
             borderColor: '#2980B9',
             backgroundColor: 'rgba(41,128,185,0.1)',
@@ -243,7 +243,7 @@ async function loadPigeonHistory(pigeonId, pigeon) {
     }
 
   } catch (err) {
-    container.innerHTML = `<div class="card"><p style="color:var(--danger);">Erreur : ${err.message}</p></div>`;
+    container.innerHTML = `<div class="card"><p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p></div>`;
     showToast(err.message, 'error');
   }
 }

@@ -16,7 +16,7 @@ async function apiFetch(endpoint, options = {}) {
     const raw = error.detail;
     const msg = Array.isArray(raw)
       ? raw.map(e => e.msg || JSON.stringify(e)).join(' | ')
-      : (raw || `Erreur API (${response.status})`);
+      : (raw || t('sport.error.api_error', { status: response.status }));
     throw new Error(msg);
   }
   if (response.status === 204) return null;
@@ -52,21 +52,21 @@ function formatDate(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return d.toLocaleDateString(getLocaleCode(), { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 function formatDateShort(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+  return d.toLocaleDateString(getLocaleCode(), { day: '2-digit', month: 'short' });
 }
 
 function formatDatetime(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
   if (isNaN(d)) return dateStr;
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleDateString(getLocaleCode(), { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
 /* ——— Score → couleur CSS ——— */
@@ -102,9 +102,9 @@ function renderScoreBar(score) {
 /* ——— Badge type séance ——— */
 function sessionTypeBadge(type) {
   const map = {
-    loft: { label: 'Loft', cls: 'badge-loft' },
-    toss: { label: 'Lancer', cls: 'badge-toss' },
-    race: { label: 'Concours', cls: 'badge-race' }
+    loft: { label: t('sport.session_type.loft'), cls: 'badge-loft' },
+    toss: { label: t('sport.session_type.toss'), cls: 'badge-toss' },
+    race: { label: t('sport.session_type.race'), cls: 'badge-race' }
   };
   const m = map[type] || { label: type || '—', cls: 'badge-secondary' };
   return `<span class="badge ${m.cls}">${m.label}</span>`;
@@ -291,7 +291,7 @@ function invalidatePigeonsCache() {
 }
 
 /* ——— Utilitaire : construire un <select> de pigeons ——— */
-async function buildPigeonSelect(selectEl, emptyLabel = 'Choisir un pigeon...') {
+async function buildPigeonSelect(selectEl, emptyLabel = t('sport.choose_pigeon_placeholder')) {
   const pigeons = await getPigeonsCache();
   selectEl.innerHTML = `<option value="">${emptyLabel}</option>` +
     pigeons.map(p =>

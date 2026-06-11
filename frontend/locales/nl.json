@@ -1,0 +1,1522 @@
+{
+  "common": {
+    "app_title": "Colomb - Duivenbeheer",
+    "add": "+ Toevoegen",
+    "cancel": "Annuleren",
+    "close": "Sluiten",
+    "loading": "Laden...",
+    "back_dashboard": "← Terug naar dashboard",
+    "confirm_delete_title": "Verwijdering bevestigen",
+    "delete_permanently": "Definitief verwijderen",
+    "retry": "🔄 Opnieuw proberen",
+    "edit": "✏️ Bewerken",
+    "delete": "🗑️ Verwijderen",
+    "save_edit": "💾 Bewerken",
+    "create": "➕ Aanmaken",
+    "save": "💾 Opslaan"
+  },
+  "gender": {
+    "male": "♂️ Man",
+    "female": "♀️ Vrouw"
+  },
+  "lignee": {
+    "unknown": "Onbekend",
+    "none": "Geen lijn"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "pigeons": "Reisduiven",
+    "lignees": "Lijnen",
+    "performances": "Prestaties",
+    "sante": "Gezondheid",
+    "couples": "Koppels",
+    "eleveur": "Mijn Duiventil",
+    "calendrier": "Kalender",
+    "concours": "Wedvluchten",
+    "sport": "Sport & AI",
+    "aide": "Help"
+  },
+  "a11y": {
+    "nav_main": "Hoofdnavigatie",
+    "menu": "Menu",
+    "theme_toggle": "Thema wisselen",
+    "close": "Sluiten"
+  },
+  "search": {
+    "placeholder_pigeon": "Zoek een duif..."
+  },
+  "status": {
+    "actif": "Actief",
+    "reproducteur": "Kweekduif",
+    "concours": "Wedvlucht",
+    "perdu": "Verloren",
+    "retraite": "Gepensioneerd",
+    "decede": "Overleden"
+  },
+  "page": {
+    "dashboard": { "title": "Dashboard" },
+    "pigeons": { "title": "Reisduiven", "add": "+ Duif toevoegen" },
+    "lignees": { "title": "Lijnen", "add": "+ Lijn toevoegen" },
+    "performances": { "title": "Prestaties", "add": "+ Prestatie toevoegen" },
+    "sante": { "title": "Gezondheid", "add": "+ Gebeurtenis toevoegen" },
+    "couples": { "title": "Koppels & Voortplanting", "add": "+ Nieuw koppel" },
+    "eleveur": { "title": "Mijn Duiventil" },
+    "calendrier": { "title": "Kalender" },
+    "concours": { "title": "Wedvluchten", "add": "+ Nieuwe wedvlucht" }
+  },
+  "error": {
+    "api_generic": "API-fout",
+    "not_found_title": "Pagina niet gevonden",
+    "not_found_message": "De sectie <code>{hash}</code> bestaat niet."
+  },
+  "modal": {
+    "title_default": "Titel"
+  },
+  "eleveur": {
+    "error": {
+      "load": "Kan het fokkersprofiel niet laden"
+    },
+    "photo": {
+      "change": "📷 Foto wijzigen"
+    },
+    "preview": {
+      "title": "Voorbeeld PDF-koptekst",
+      "licence": "Vergunning"
+    },
+    "section": {
+      "identity": "👤 Identiteit",
+      "loft": "🏠 Duiventil",
+      "contact": "📞 Contact",
+      "sport": "🏆 Duivensport",
+      "notes": "📝 Notities"
+    },
+    "field": {
+      "prenom": "Voornaam",
+      "nom": "Naam",
+      "colombier": "Naam van de duiventil",
+      "adresse": "Adres",
+      "cp": "Postcode",
+      "ville": "Stad",
+      "tel": "Telefoon",
+      "email": "E-mail",
+      "web": "Website",
+      "asso": "Vereniging",
+      "licence": "Vergunningsnummer",
+      "annee": "Startjaar",
+      "specialite": "Specialiteit"
+    },
+    "placeholder": {
+      "prenom": "Jan",
+      "nom": "Janssens",
+      "colombier": "Duiventil De Vlieger",
+      "adresse": "Duivenstraat 12",
+      "cp": "2000",
+      "ville": "Antwerpen",
+      "tel": "0470 12 34 56",
+      "email": "jan@example.com",
+      "web": "https://...",
+      "asso": "Koninklijke Duivenmaatschappij",
+      "licence": "BE-0001",
+      "annee": "1995",
+      "specialite": "Lange afstand, Snelheid...",
+      "notes": "Vrije opmerkingen..."
+    },
+    "msg": {
+      "saved": "Profiel opgeslagen ✅",
+      "photo_updated": "Foto bijgewerkt ✅",
+      "photo_error": "Fout bij uploaden foto"
+    }
+  },
+  "lignees": {
+    "empty": {
+      "title": "Geen lijn geregistreerd",
+      "sub": "Begin met het aanmaken van je eerste lijnen"
+    },
+    "table": {
+      "couleur": "Kleur",
+      "nom": "Naam",
+      "origine": "Herkomst",
+      "description": "Beschrijving",
+      "actions": "Acties"
+    },
+    "modal": {
+      "add_title": "Lijn toevoegen",
+      "edit_title": "Lijn bewerken"
+    },
+    "form": {
+      "nom_label": "Naam van de lijn *",
+      "nom_placeholder": "bv: Janssen",
+      "origine_label": "Herkomst",
+      "origine_placeholder": "bv: België",
+      "description_label": "Beschrijving",
+      "description_placeholder": "Beschrijving van de lijn...",
+      "couleur_label": "Identificatiekleur",
+      "couleur_help": "Kies een kleur om deze lijn te identificeren"
+    },
+    "msg": {
+      "name_required": "De naam is verplicht",
+      "updated": "Lijn succesvol bewerkt ✅",
+      "created": "Lijn succesvol aangemaakt ✅",
+      "deleted": "Lijn \"{nom}\" verwijderd"
+    },
+    "confirm_delete": "Lijn <strong>{nom}</strong> verwijderen?"
+  },
+  "dashboard": {
+    "connecting": "Verbinden met de API... (poging {attempt}/{max})",
+    "api_unreachable": "Kan geen verbinding maken met de API",
+    "network_error": "Netwerkfout — controleer of de backend actief is",
+    "stat": {
+      "total_pigeons": "Totaal duiven",
+      "active": "Actief",
+      "breeders": "Kwekers",
+      "racing": "In wedvlucht",
+      "lost": "Verloren"
+    },
+    "lignee_distribution": {
+      "title": "Verdeling per lijn",
+      "empty": "Geen gegevens"
+    },
+    "status_distribution": {
+      "title": "Verdeling per status"
+    },
+    "recent": {
+      "title": "Laatst geregistreerde duiven",
+      "empty": "Geen duif geregistreerd",
+      "empty_sub": "Begin met het toevoegen van je eerste duiven"
+    },
+    "table": {
+      "lignee": "Lijn",
+      "pigeons": "Duiven",
+      "photo": "Foto",
+      "matricule": "Ringnummer",
+      "sexe": "Geslacht",
+      "statut": "Status",
+      "case": "Hok"
+    }
+  },
+  "sport": {
+    "app_title": "Colomb Sport",
+    "nav": {
+      "back": "← Terug naar duiventil",
+      "section_general": "Algemeen",
+      "section_nutrition": "Voeding",
+      "section_intelligence": "Intelligentie",
+      "dashboard": "Dashboard",
+      "sessions": "Trainingen",
+      "history": "Geschiedenis duif",
+      "nutrition": "Voeding",
+      "analytics": "Analytics",
+      "ai": "AI-aanbevelingen",
+      "condition": "Sportieve conditie",
+      "colony": "Kolonie monitoring"
+    },
+    "search": {
+      "placeholder": "Zoeken..."
+    },
+    "page": {
+      "dashboard": { "title": "Sport Dashboard" },
+      "sessions": { "title": "Trainingssessies", "add": "+ Nieuwe sessie" },
+      "history": { "title": "Geschiedenis duif" },
+      "nutrition": { "title": "Voeding" },
+      "plans": { "title": "Voedingsplannen", "add": "+ Nieuw plan" },
+      "analytics": { "title": "Analytics" },
+      "ai": { "title": "AI-aanbevelingen" },
+      "condition": { "title": "Sportieve conditie" },
+      "colony": { "title": "Kolonie monitoring" }
+    },
+    "error": {
+      "load_title": "Laadfout",
+      "unexpected": "Er is een onverwachte fout opgetreden",
+      "api_error": "API-fout ({status})",
+      "prefix": "Fout: {message}"
+    },
+    "choose_pigeon_placeholder": "Kies een duif...",
+    "session_type": {
+      "loft": "Hok",
+      "toss": "Loslating",
+      "race": "Wedvlucht"
+    },
+    "session_detail": {
+      "title": "Sessie van {date}"
+    },
+    "dashboard": {
+      "stats": {
+        "pigeons_actifs": "Actieve duiven",
+        "sessions_mois": "Sessies deze maand",
+        "recup_moyenne": "Gem. herstel",
+        "alertes_ia": "Actieve AI-meldingen"
+      },
+      "view_all": "Alles bekijken",
+      "ai_alerts": {
+        "title": "🤖 Actieve AI-meldingen",
+        "subtitle": "Lopende aanbevelingen voor de kolonie",
+        "no_pigeons_title": "Geen duiven geregistreerd",
+        "no_pigeons_text": "Voeg duiven toe om AI-meldingen te zien.",
+        "none_title": "Geen actieve melding",
+        "none_text": "Alle duiven zijn in goede conditie.",
+        "default_title": "Aanbeveling",
+        "more": "+ {count} andere meldingen",
+        "load_error": "AI-meldingen konden niet worden geladen"
+      },
+      "health": {
+        "title": "🏥 Geïntegreerde gezondheid",
+        "subtitle": "Recente medische gebeurtenissen",
+        "no_pigeons_title": "Geen duiven",
+        "no_pigeons_text": "Voeg duiven toe om hun gezondheid te volgen.",
+        "none_title": "Geen recente medische gebeurtenis",
+        "none_text": "Alle duiven lijken gezond.",
+        "event_default": "Gebeurtenis",
+        "open_link": "→ Gezondheidsmodule openen",
+        "load_error": "Fout bij laden gezondheid"
+      },
+      "pending_feedback": {
+        "title": "📝 Duiven in afwachting van feedback",
+        "subtitle": "Actieve, onopgeloste aanbevelingen voor de kolonie",
+        "no_pigeons_title": "Geen duiven geregistreerd",
+        "no_pigeons_text": "Voeg duiven toe om te beginnen met opvolgen.",
+        "none_title": "Geen feedback in afwachting",
+        "none_text": "Alle wedvluchtresultaten zijn ingevoerd.",
+        "btn_feedback": "📝 Feedback",
+        "more": "+ {count} andere in afwachting",
+        "load_error": "Feedback kon niet worden geladen",
+        "rec_map": {
+          "concours": "Wedvlucht",
+          "entrainement_leger": "Training",
+          "repos": "Rust",
+          "reforme": "Hervorming",
+          "default": "Info"
+        }
+      },
+      "recent_sessions": {
+        "title": "🏃 Laatste sessies",
+        "subtitle": "Recente trainingsactiviteiten",
+        "view_all": "Alle sessies",
+        "empty_title": "Geen sessie",
+        "empty_text": "Maak je eerste trainingssessie aan.",
+        "table": { "date": "Datum", "type": "Type", "distance": "Afstand", "meteo": "Weer", "pigeons": "Duiven" },
+        "load_error": "Fout bij laden sessies"
+      },
+      "nutrition": {
+        "title": "🌾 Voedingsplan",
+        "subtitle": "Vandaag actief plan",
+        "empty_title": "Geen actief plan",
+        "empty_text": "Maak een voedingsplan aan in de module Voeding.",
+        "default_name": "Voedingsplan",
+        "from": "Van {date}",
+        "to": "tot {date}",
+        "plans_available": "Beschikbare plannen: {count}",
+        "manage_link": "→ Plannen beheren",
+        "load_error": "Fout bij laden voeding"
+      }
+    },
+    "sessions": {
+      "btn_new": "+ Nieuwe sessie",
+      "filter": {
+        "label": "Filteren:",
+        "all_types": "Alle types",
+        "from": "Van",
+        "to": "Tot",
+        "reset": "Reset"
+      },
+      "title": "🏃 Trainingssessies",
+      "count": { "one": "{count} sessie", "other": "{count} sessies" },
+      "empty": {
+        "title": "Geen sessies gevonden",
+        "sub": "Maak uw eerste sessie aan of wijzig de filters."
+      },
+      "table": {
+        "date": "Datum",
+        "type": "Type",
+        "distance": "Afstand",
+        "meteo": "Weer",
+        "temp": "Temp.",
+        "vent": "Wind",
+        "pigeons": "Duiven",
+        "recup": "Gem. herstel",
+        "actions": "Acties"
+      },
+      "via_concours": "via Concours Colomb",
+      "managed_in_colomb": "Beheerd in Colomb",
+      "btn_colomb": "Colomb",
+      "btn_detail": "Detail",
+      "btn_delete": "Verwijderen",
+      "delete_confirm": "Deze sessie verwijderen? Deze actie is onomkeerbaar.",
+      "deleted": "Sessie verwijderd.",
+      "form": {
+        "concours_banner": "🏆 <strong>Wedvlucht</strong>sessies worden beheerd vanaf het <strong>Colomb</strong>-startscherm (module Wedvluchten). Ze verschijnen hier automatisch in alleen-lezen modus.",
+        "date_label": "Datum *",
+        "type_label": "Sessietype *",
+        "distance_label": "Afstand (m)",
+        "distance_placeholder": "bv: 50000",
+        "weather_label": "Weer",
+        "temperature_label": "Temperatuur (°C)",
+        "temperature_placeholder": "bv: 18",
+        "wind_label": "Wind",
+        "notes_label": "Notities",
+        "notes_placeholder": "Opmerkingen, bijzondere omstandigheden...",
+        "submit_create": "Sessie aanmaken",
+        "creating": "Aanmaken...",
+        "created": "Sessie succesvol aangemaakt!"
+      },
+      "weather": {
+        "ensoleille": "Zonnig",
+        "nuageux": "Bewolkt",
+        "couvert": "Betrokken",
+        "pluie": "Regen",
+        "vent_fort": "Harde wind",
+        "brouillard": "Mist"
+      },
+      "wind": {
+        "calme": "Kalm",
+        "leger": "Licht",
+        "modere": "Matig",
+        "fort": "Sterk",
+        "tres_fort": "Zeer sterk"
+      },
+      "detail": {
+        "loading_title": "Sessiedetails",
+        "concours_banner": "🏆 Deze sessie is een <strong>wedvlucht</strong> die wordt beheerd vanaf het Colomb-startscherm.",
+        "concours_link": "Naar Wedvluchten →",
+        "results_title": "Resultaten duiven ({count})",
+        "btn_add_result": "+ Resultaat toevoegen",
+        "empty_results": {
+          "title": "Geen resultaat",
+          "sub": "Voeg de prestaties van de duiven toe."
+        },
+        "table": {
+          "pigeon": "Duif",
+          "return_time": "Terugkeer (min)",
+          "rank": "Rang",
+          "recovery": "Herstel",
+          "hydration": "Hydratatie",
+          "condition": "Conditie",
+          "motivation": "Motivatie",
+          "health": "Gezondheid"
+        },
+        "health": {
+          "recent_treatment": "Recente behandeling",
+          "suivi": "⚠️ Opvolging",
+          "ok": "✅ OK"
+        }
+      },
+      "result_modal": {
+        "title": "+ Duifresultaat toevoegen",
+        "pigeon_label": "Duif *",
+        "return_time_label": "Terugkeertijd (min)",
+        "return_time_placeholder": "bv: 45",
+        "rank_label": "Interne rangorde",
+        "rank_placeholder": "bv: 1",
+        "recovery_label": "Herstelscore (0-10)",
+        "hydration_label": "Hydratatiescore (0-10)",
+        "condition_label": "Conditiescore (0-10)",
+        "motivation_label": "Motivatiescore (0-10)",
+        "notes_placeholder": "Opmerkingen...",
+        "back": "← Terug",
+        "submit": "Opslaan",
+        "saving": "Opslaan...",
+        "saved": "Resultaat opgeslagen!",
+        "select_pigeon_required": "Selecteer een duif."
+      }
+    },
+    "history": {
+      "pigeon_label": "🕊️ Duif:",
+      "btn_load": "Geschiedenis laden",
+      "empty": {
+        "title": "Selecteer een duif",
+        "sub": "De volledige geschiedenis wordt hier weergegeven."
+      },
+      "event": {
+        "race_title": "🏆 Wedvlucht",
+        "training_title": "🏃 Sessie {type}",
+        "recup": "Herstel: {score}/10",
+        "rank": "Rang #{rank}",
+        "concours_default": "Wedvlucht",
+        "classement": "Klassering: {classement}",
+        "health_default": "Gezondheidsgebeurtenis",
+        "ai_default": "AI-aanbeveling"
+      },
+      "stats": {
+        "sessions": "Sessies",
+        "recup_moy": "Gem. herstel",
+        "concours": "Wedvluchten",
+        "alertes_ia": "AI-meldingen"
+      },
+      "chart_title": "📈 Herstelevolutie — laatste 10 sessies",
+      "chart_label": "Herstelscore",
+      "timeline_title": "📅 Volledige tijdlijn ({count} gebeurtenissen)",
+      "chips": {
+        "sessions": "🏃 Sessies",
+        "concours": "🏆 Wedvluchten",
+        "sante": "🏥 Gezondheid",
+        "ia": "🤖 AI"
+      },
+      "empty_timeline": "Geen gebeurtenissen geregistreerd voor deze duif."
+    },
+    "colony": {
+      "stats": {
+        "total": "Totaal duiven",
+        "forme": "In vorm",
+        "repos": "In rust",
+        "surveillance_medicale": "Medisch toezicht"
+      },
+      "title": "🕊️ Toestand van de kolonie",
+      "subtitle": { "one": "{count} duif • Klik om de conditie te analyseren", "other": "{count} duiven • Klik om de conditie te analyseren" },
+      "legend": {
+        "forme": "💚 In vorm",
+        "moyen": "🟡 Gemiddeld",
+        "repos": "😴 Rust",
+        "alerte": "🔴 Alarm"
+      },
+      "doughnut_title": "📊 Verdeling kolonie",
+      "legend_summary": {
+        "forme": "● In vorm: {count}",
+        "surveillance": "● Toezicht: {count}",
+        "repos": "● Rust: {count}",
+        "probleme": "● Probleem: {count}"
+      },
+      "alerts_title": "🚨 Duiven om in de gaten te houden",
+      "click_to_analyze": "Klik om de conditie te analyseren",
+      "status": {
+        "repos": "😴 Rust",
+        "non_evalue": "❓ Niet geëvalueerd",
+        "alerte": "🔴 Alarm",
+        "moyen": "🟡 Gemiddeld",
+        "forme": "💚 In vorm"
+      },
+      "recovery": "Herstel",
+      "condition": "Conditie",
+      "no_data": "Geen gegevens",
+      "alerts": {
+        "healthy_title": "Kolonie in goede gezondheid",
+        "healthy_text": "Geen duif vereist bijzondere aandacht.",
+        "no_snapshot": "Geen snapshot beschikbaar — conditie onbekend",
+        "high_fatigue": "Hoog vermoeidheidsrisico ({label})",
+        "low_condition": "Zeer lage conditie ({value}/100)",
+        "monitor": "Toezicht aanbevolen"
+      },
+      "fatigue": { "eleve": "hoog", "moyen": "gemiddeld", "faible": "laag" },
+      "doughnut": {
+        "no_data": "Geen conditiegegevens.",
+        "labels": {
+          "forme": "In vorm",
+          "surveillance": "Toezicht",
+          "repos": "Rust",
+          "probleme": "Probleem"
+        },
+        "tooltip": { "one": "{label}: {count} duif", "other": "{label}: {count} duiven" }
+      }
+    },
+    "condition": {
+      "pigeon_label": "💪 Duif:",
+      "btn_analyze": "Analyseren",
+      "empty": {
+        "title": "Selecteer een duif",
+        "sub": "De gedetailleerde sportconditie wordt hier weergegeven."
+      },
+      "alert": {
+        "title": "Risico op overbelasting gedetecteerd! ({pct}%)",
+        "text": "Deze duif vertoont tekenen van hoge vermoeidheid. Verminder de trainingsintensiteit en zorg voor volledig herstel."
+      },
+      "indices_title": "📊 Sportconditie-indices",
+      "snapshot_date": "Snapshot van {date}",
+      "realtime_data": "Realtime gegevens",
+      "btn_new_snapshot": "🔄 Nieuwe snapshot",
+      "analyzing": "Analyseren...",
+      "snapshot_created": "Snapshot succesvol aangemaakt!",
+      "gauges": {
+        "recovery": "Herstel (7d)",
+        "condition": "Conditie (7d)",
+        "regularity": "Regelmaat",
+        "fatigue": "Vermoeidheidsrisico",
+        "training_load": "Belasting (30d)"
+      },
+      "no_indices": "Geen indices beschikbaar. Maak een snapshot aan om conditiegegevens te verkrijgen.",
+      "trends": {
+        "title": "📈 Trends",
+        "subtitle": "Evolutie laatste 90 dagen",
+        "not_enough": "Niet genoeg sessies om trends te berekenen.",
+        "insufficient": "Onvoldoende gegevens.",
+        "metrics": {
+          "recovery_avg": "Gem. herstel (90d)",
+          "sessions_30": "Aantal sessies (30d)",
+          "sessions_90": "Aantal sessies (90d)"
+        }
+      },
+      "health_impact": {
+        "title": "🏥 Impact gezondheid op conditie",
+        "subtitle": "Recente medische gebeurtenissen (90d)",
+        "none_title": "Geen recente medische gebeurtenis",
+        "none_text": "Conditie niet beïnvloed door verzorging.",
+        "event_default": "Gebeurtenis",
+        "days_ago": { "one": "{count} dag geleden", "other": "{count} dagen geleden" },
+        "impact": {
+          "recent": "Waarschijnlijk recente impact op de conditie",
+          "recovering": "Medisch herstel aan de gang",
+          "monitor": "Recente gebeurtenis, prestaties in de gaten houden",
+          "resolved": "Oude gebeurtenis, impact waarschijnlijk verdwenen"
+        }
+      },
+      "recent_perfs": {
+        "title": "🏃 Recente prestaties",
+        "empty": "Geen sessies geregistreerd.",
+        "table": {
+          "date": "Datum",
+          "type": "Type",
+          "distance": "Afstand",
+          "recovery": "Herstel",
+          "condition": "Conditie",
+          "motivation": "Motivatie"
+        }
+      }
+    },
+    "analytics": {
+      "stats": {
+        "total_sessions": "Totaal sessies",
+        "avg_recovery": "Gem. globaal herstel",
+        "races": "Wedvluchten gehouden",
+        "avg_per_week": "Sessies / week gem."
+      },
+      "error_prefix": "Analytics fout: {message}",
+      "charts": {
+        "recovery": {
+          "title": "📈 Evolutie gemiddeld herstel",
+          "subtitle": "Laatste 90 dagen",
+          "label": "Gemiddeld herstel"
+        },
+        "charge": {
+          "title": "💪 Trainingsbelasting",
+          "subtitle": "Laatste 4 weken",
+          "week_current": "W-huidig",
+          "week_n": "W-{n}"
+        },
+        "temp": {
+          "title": "🌡️ Temperatuur vs Herstel",
+          "subtitle": "Correlatie weer / prestatie",
+          "label": "Temperatuur vs Herstel",
+          "tooltip": "{x}°C → Herstel: {y}/10",
+          "axis_x": "Temperatuur (°C)",
+          "axis_y": "Herstel",
+          "empty": "Onvoldoende gegevens met temperatuur."
+        },
+        "regularity": {
+          "title": "🕊️ Regelmaat per duif",
+          "subtitle": "Herstelevolutie — top {count} duiven",
+          "pigeon_default": "Duif {n}",
+          "empty": "Geen herstelgegevens beschikbaar."
+        }
+      }
+    },
+    "ai": {
+      "pigeon_label": "🤖 Geanalyseerde duif:",
+      "btn_load": "Analyse laden",
+      "btn_generate": "⚡ Nu analyseren",
+      "btn_generate_title": "Een volledige AI-analyse starten",
+      "empty": { "title": "Selecteer een duif", "sub": "AI-aanbevelingen worden hier weergegeven." },
+      "analyzing": "Analyse bezig...",
+      "analysis_generated": "AI-analyse gegenereerd!",
+      "analysis_error": "Fout tijdens de analyse",
+      "active_recs": {
+        "title": "⚠️ Actieve aanbevelingen ({count})",
+        "subtitle": "Waarschuwingen en advies in afwachting van oplossing",
+        "show_resolved": "Opgeloste tonen ({count})",
+        "resolved_title": "Opgeloste aanbevelingen"
+      },
+      "recs": {
+        "none_resolved": "Geen opgeloste aanbevelingen.",
+        "none_active_title": "Geen actieve waarschuwing",
+        "none_active_text": "Deze duif is in goede conditie volgens de AI."
+      },
+      "rec_types": {
+        "concours": "Wedvlucht",
+        "entrainement_leger": "Training",
+        "repos": "Rust",
+        "reforme": "Hervormen",
+        "info": "Info"
+      },
+      "rec_default_title": "Aanbeveling",
+      "resolved_on": "Opgelost op {date}",
+      "btn_resolve": "✅ Oplossen",
+      "btn_outcome": "📝 Resultaat",
+      "snapshot": {
+        "title": "📊 Sportieve snapshot",
+        "last_analysis": "Laatste analyse: {date}",
+        "none": "Geen snapshot beschikbaar",
+        "btn_create": "🔄 Snapshot aanmaken",
+        "created": "Snapshot aangemaakt!",
+        "empty": { "title": "Geen snapshot", "sub": "Maak een snapshot aan om sportconditie-indices te verkrijgen." },
+        "no_data": { "title": "Snapshot zonder bruikbare gegevens", "sub": "Start een nieuwe analyse na het registreren van sessies." },
+        "indices": {
+          "recovery": "Herstel (7d)",
+          "condition": "Conditie (7d)",
+          "regularity": "Regelmaat",
+          "fatigue": "Vermoeidheidsrisico",
+          "load": "Belasting (30d)"
+        },
+        "data_quality": "Datakwaliteit: <strong>{quality}</strong> · {load} sessies (30d) · Hersteltrend: {trend} · Vermoeidheidsrisico: {fatigue}"
+      },
+      "events": {
+        "title": "📋 Sportgebeurtenissen ({count})",
+        "subtitle": "Geschiedenis van gebeurtenissen geregistreerd door AI",
+        "empty": { "title": "Geen gebeurtenis geregistreerd", "sub": "Gebeurtenissen verschijnen automatisch tijdens analyses." },
+        "default_label": "Gebeurtenis",
+        "more_old": { "one": "+ {count} oudere gebeurtenis", "other": "+ {count} oudere gebeurtenissen" }
+      },
+      "rec_marked_resolved": "Aanbeveling gemarkeerd als opgelost.",
+      "load_error_title": "Laadfout",
+      "outcome_modal": {
+        "title": "📝 Resultaat na wedvlucht",
+        "subtitle_prefix": "Aanbeveling: ",
+        "section_outcome": "Resultaat van de aanbeveling",
+        "result_label": "Resultaat",
+        "choose": "— Kiezen —",
+        "confirme": "✅ Bevestigd — de duif was klaar",
+        "infirme": "❌ Ontkracht — de aanbeveling was verkeerd",
+        "partiel": "⚠️ Gedeeltelijk — gemengd resultaat",
+        "result_required": "Kies een resultaat.",
+        "result_date_label": "Datum van het resultaat",
+        "notes_label": "Opmerkingen",
+        "notes_placeholder": "Uw opmerkingen...",
+        "section_link_concours": "Een wedvluchtresultaat koppelen",
+        "optional": "(optioneel)",
+        "concours_date_label": "Datum van de wedvlucht",
+        "distance_label": "Afstand (km)",
+        "distance_placeholder": "bv: 150.5",
+        "classement_label": "Aankomstpositie",
+        "classement_placeholder": "bv: 3",
+        "nb_partants_label": "Aantal deelnemende duiven",
+        "nb_partants_placeholder": "bv: 120",
+        "share_label": "Deel deze feedback anoniem om de collectieve AI te verbeteren",
+        "share_sub": "Geen persoonsgegevens verzonden — alleen numerieke scores",
+        "save": "Opslaan →",
+        "saving": "Opslaan...",
+        "resolve_error": "Fout bij het oplossen",
+        "feedback_not_saved": "Resultaatfeedback niet opgeslagen: {error}",
+        "feedback_error_default": "fout",
+        "feedback_saved": "Feedback opgeslagen!"
+      }
+    },
+    "nutrition": {
+      "tabs": {
+        "mixes": "🔀 Mengsels",
+        "ingredients": "🌾 Ingrediënten",
+        "supplements": "💊 Supplementen",
+        "plans": "📋 Voedingsplan",
+        "affectation": "🎯 Toewijzing",
+        "calendar": "📅 Kalender"
+      },
+      "usage": {
+        "recuperation": "Herstel",
+        "entrainement": "Training",
+        "pre_panier": "Voor inkorving",
+        "enlogement": "Inkorving"
+      },
+      "day_labels": {
+        "0": "Maandag", "1": "Dinsdag", "2": "Woensdag", "3": "Donderdag", "4": "Vrijdag", "5": "Zaterdag", "6": "Zondag"
+      },
+      "mixes": {
+        "create_btn": "+ Mengsel aanmaken",
+        "empty": { "title": "Geen mengsels", "sub": "Maak uw eigen mengselformules aan." },
+        "composition_undefined": "Samenstelling niet bepaald",
+        "edit_title": "Bewerken",
+        "duplicate_title": "Dupliceren",
+        "delete_title": "Verwijderen",
+        "duplicated": "Mengsel gedupliceerd!",
+        "copy_suffix": "(kopie)",
+        "delete_confirm": "Dit mengsel verwijderen? Deze actie is onomkeerbaar.",
+        "deleted": "Mengsel verwijderd.",
+        "already_in_composition": "Al in de samenstelling",
+        "min_unlocked_warning": "Er moeten minstens 2 ingrediënten ontgrendeld zijn om te herverdelen",
+        "no_ingredient_selected": "Geen ingrediënt geselecteerd",
+        "total_ingredients": "Totaal ingrediënten: {pct}%",
+        "lock": "Vergrendelen",
+        "unlock": "Ontgrendelen",
+        "min_unlocked_title": "Minimaal 2 ontgrendelde ingrediënten",
+        "already_in_mix": "Al in het mengsel",
+        "no_supplement_added": "Geen supplement toegevoegd",
+        "qty_placeholder": "Hvlh",
+        "modal": {
+          "title_edit": "✏️ Mengsel bewerken",
+          "title_new": "+ Nieuw mengsel",
+          "name_label": "Naam van het mengsel *",
+          "name_placeholder": "bv: Mengsel lange afstand",
+          "usage_label": "Gebruik",
+          "usage_none": "—",
+          "description_label": "Beschrijving",
+          "description_placeholder": "Aanbevolen gebruik...",
+          "ingredients_title": "🌾 Ingrediënten — totaal 100%",
+          "ingredients_help": "De percentages worden proportioneel herberekend. Ingrediënten op 0% worden uitgesloten van de automatische herberekening.",
+          "ingredient_select_placeholder": "— Kies een ingrediënt —",
+          "no_ingredient_available": "Geen ingrediënt beschikbaar",
+          "add_btn": "+ Toevoegen",
+          "supplements_title": "💊 Supplementen — buiten %-berekening",
+          "supplements_help": "Supplementen tellen niet mee in de berekening van de ingrediëntenpercentages.",
+          "supplement_select_placeholder": "— Kies een supplement —",
+          "no_supplement_available": "Geen supplement beschikbaar",
+          "save_btn": "Opslaan",
+          "create_btn": "Mengsel aanmaken"
+        },
+        "total_warning": "Totaal ingrediënten moet 100% zijn (momenteel {pct}%)",
+        "modified": "Mengsel gewijzigd!",
+        "created": "Mengsel aangemaakt!"
+      },
+      "ingredients": {
+        "add_btn": "+ Ingrediënt toevoegen",
+        "empty": { "title": "Geen ingrediënten", "sub": "Voeg uw eerste voedingsingrediënten toe." },
+        "table": {
+          "name": "Naam", "category": "Categorie", "proteines": "Eiwitten", "lipides": "Vetten", "glucides": "Koolhydraten", "energie": "Energie (kcal)", "notes": "Notities"
+        },
+        "modal": {
+          "title": "+ Nieuw ingrediënt",
+          "name_label": "Naam *",
+          "name_placeholder": "bv: Tarwe, Maïs, Haver...",
+          "category_label": "Categorie",
+          "category_none": "—",
+          "category": {
+            "energie": "Energie", "depuratif": "Zuiverend", "sport": "Sport", "proteine": "Eiwit", "graisse": "Vet", "motivation": "Motivatie", "pre_concours": "Voor wedstrijd"
+          },
+          "energie_label": "Energie (kcal/100g)",
+          "energie_placeholder": "bv: 350",
+          "proteines_label": "Eiwitten (%)",
+          "lipides_label": "Vetten (%)",
+          "glucides_label": "Koolhydraten (%)",
+          "notes_label": "Notities",
+          "notes_placeholder": "Opmerkingen, bron...",
+          "save_btn": "Opslaan"
+        },
+        "added": "Ingrediënt toegevoegd!"
+      },
+      "supplements": {
+        "add_btn": "+ Supplement toevoegen",
+        "empty": { "title": "Geen supplementen", "sub": "Beheer uw vitamines en supplementen." },
+        "table": { "name": "Naam", "type": "Type", "dosage": "Dosering", "description": "Beschrijving" },
+        "modal": {
+          "title": "+ Nieuw supplement",
+          "name_label": "Naam *",
+          "name_placeholder": "bv: Elektrolyten, Vitamine B12...",
+          "type_label": "Type",
+          "type_none": "—",
+          "type": { "electrolyte": "Elektrolyt", "vitamine": "Vitamine", "probiotique": "Probioticum", "autre": "Overig" },
+          "dosage_label": "Aanbevolen dosering",
+          "dosage_placeholder": "bv: 2g/kg",
+          "description_label": "Beschrijving / voorzorgsmaatregelen",
+          "description_placeholder": "Contra-indicaties, voorwaarden...",
+          "save_btn": "Opslaan"
+        },
+        "added": "Supplement toegevoegd!"
+      },
+      "plans": {
+        "groups": {
+          "concours": "🏋️ Wedvlucht",
+          "inter_saison": "🍂 Tussenseizoen",
+          "elevage": "🐣 Kweek",
+          "retraites": "🕊️ Gepensioneerden"
+        },
+        "create_btn": "+ Nieuw plan",
+        "empty": { "title": "Geen plan", "sub": "Maak uw eerste wekelijkse voedingsplan aan." },
+        "selector_placeholder": "— Kies een programma —",
+        "detail_btn": "🔍 Detail",
+        "detail_title": "Volledig detail bekijken",
+        "edit_title": "Bewerken",
+        "duplicate_title": "Dupliceren",
+        "delete_title": "Verwijderen",
+        "weekly_planning_title": "📅 Type weekplanning",
+        "select_hint": "Selecteer een programma in de lijst hierboven om de details te tonen.",
+        "min_unlocked_warning": "Er moeten minstens 2 mengsels ontgrendeld zijn om te herverdelen",
+        "duplicated": "Voedingsplan gedupliceerd!",
+        "copy_suffix": "(kopie)",
+        "delete_confirm": "<strong>{name}</strong> definitief verwijderen?",
+        "default_name": "dit plan",
+        "deleted": "Plan verwijderd.",
+        "detail": {
+          "day_section_title": "📅 Detail per dag",
+          "no_mixes": "Geen mengsel gepland.",
+          "close": "Sluiten",
+          "export_pdf": "🖨️ PDF exporteren",
+          "edit": "✏️ Bewerken"
+        },
+        "modal": {
+          "title_edit": "✏️ Voedingsplan bewerken",
+          "title_new": "+ Nieuw voedingsplan",
+          "name_label": "Naam van het plan *",
+          "name_placeholder": "bv: Plan voorseizoen 2026",
+          "goal_label": "Doel",
+          "description_label": "Beschrijving",
+          "description_placeholder": "Algemene instructies...",
+          "days_title": "📅 Mengsels per dag van de week",
+          "days_help": "Voeg voor elke dag een of meerdere mengsels toe om te verdelen. Geen mengsel = vasten / alleen water.",
+          "mix_select_placeholder": "— Mengsel toevoegen —",
+          "no_mix_available": "Geen mengsel beschikbaar",
+          "save_btn": "Opslaan",
+          "create_btn": "Plan aanmaken"
+        },
+        "already_in_day": "Dit mengsel zit al in deze dag",
+        "no_mixes_day": "Geen mengsel — vasten / water",
+        "min_unlocked_title": "Minimaal 2 ontgrendelde mengsels",
+        "lock": "Vergrendelen",
+        "unlock": "Ontgrendelen",
+        "day_total_warning": "{day}: totaal van de mengsels moet 100% zijn (momenteel {pct}%)",
+        "updated": "Voedingsplan bijgewerkt!",
+        "created": "Voedingsplan aangemaakt!",
+        "summary_title": "📊 Wekelijks overzicht:"
+      },
+      "affectation": {
+        "section_a_title": "Sectie A — Keuze van de duiven",
+        "mode_group": "Groepsmodus",
+        "mode_individual": "Individuele modus",
+        "statut": { "actif": "Actief", "reproducteur": "Kweekduif", "concours": "Wedstrijd", "retraite": "Pensioen" },
+        "selected_count": { "one": "{count} duif geselecteerd", "other": "{count} duiven geselecteerd" },
+        "search_placeholder": "Filter op ring of naam...",
+        "no_pigeon_found": "Geen duif gevonden.",
+        "section_b_title": "Sectie B — Voedingsplan",
+        "plan_select_placeholder": "— Kies een plan —",
+        "section_c_title": "Sectie C — Periode",
+        "date_debut_label": "Startdatum *",
+        "date_fin_label": "Einddatum",
+        "duree_label": "Duur (weken)",
+        "duree_placeholder": "bv: 4",
+        "reconductible_label": "Hernieuwbaar",
+        "no_end_date": "Geen einddatum",
+        "submit_btn": "🎯 Toewijzen →",
+        "registered_title": "📋 Geregistreerde toewijzingen",
+        "mix_fallback": "Mengsel #{id}",
+        "select_pigeon_warning": "Selecteer minstens één duif",
+        "select_plan_warning": "Selecteer een voedingsplan",
+        "select_date_warning": "Selecteer een startdatum",
+        "period_range": "van {debut} tot {fin}",
+        "period_recurring": "vanaf {debut} (hernieuwbaar)",
+        "confirm": {
+          "title": "✅ Toewijzing bevestigen",
+          "plan_label": "📋 Plan:",
+          "pigeons_label": "🕊️ Duiven:",
+          "pigeons_count": { "one": "{count} duif toegewezen", "other": "{count} duiven toegewezen" },
+          "replace_notice": "— eerdere toewijzingen worden vervangen",
+          "period_label": "📅 Periode:",
+          "details_summary": "Detail van de duiven ({count})",
+          "confirm_btn": "Toewijzing bevestigen"
+        },
+        "created": { "one": "{count} toewijzing aangemaakt!", "other": "{count} toewijzingen aangemaakt!" },
+        "list": {
+          "none": "Geen toewijzingen geregistreerd.",
+          "group_title": "👥 Toewijzingen per groep",
+          "group_table": { "groupe": "Groep", "plan": "Plan", "pigeons": "Duiven", "debut": "Start", "fin": "Einde" },
+          "pigeons_count": { "one": "{count} duif", "other": "{count} duiven" },
+          "delete_group_title": "Groep verwijderen",
+          "individual_title": "👤 Individuele toewijzingen",
+          "individual_table": { "pigeon": "Duif", "plan": "Plan", "debut": "Start", "fin": "Einde" },
+          "statut_perdu": "Verloren",
+          "statut_decede": "Overleden",
+          "delete_title": "Verwijderen",
+          "plan_fallback": "Plan #{id}"
+        },
+        "delete_group_confirm": { "one": "Groep verwijderen ({count} toewijzing)?", "other": "Groep verwijderen ({count} toewijzingen)?" },
+        "group_deleted": "Groep verwijderd.",
+        "delete_confirm": "Deze toewijzing verwijderen?",
+        "deleted": "Toewijzing verwijderd."
+      },
+      "calendar": {
+        "prev": "← Vorige",
+        "today": "Vandaag",
+        "next": "Volgende →",
+        "week_label": "Week {week} — {debut} tot {fin}",
+        "empty": { "title": "Geen toewijzing deze week", "sub": "Maak toewijzingen aan in het tabblad <strong>🎯 Toewijzing</strong> om ze hier te zien." },
+        "table": { "pigeon_group": "Duif / Groep", "plan": "Voedingsplan" },
+        "detail_btn": "🔍 Detail bekijken"
+      }
+    }
+  },
+  "pigeons": {
+    "empty": {
+      "title": "Geen duif geregistreerd",
+      "sub": "Begin met het toevoegen van je eerste duiven of importeer een CSV-lijst"
+    },
+    "import_btn": "⬆️ CSV importeren",
+    "export_btn": "⬇️ CSV exporteren",
+    "filter": {
+      "all_lignees": "Alle lijnen",
+      "all_status": "Alle statussen",
+      "all_sexes": "Alle geslachten",
+      "all_years": "Alle jaren",
+      "reset": "✕ Reset"
+    },
+    "table": {
+      "photo": "Foto",
+      "matricule": "Ringnummer",
+      "annee": "Jaar",
+      "sexe": "Geslacht",
+      "lignee": "Lijn",
+      "case": "Hok",
+      "statut": "Status",
+      "actions": "Acties"
+    },
+    "count": {
+      "all": { "one": "{total} duif", "other": "{total} duiven" },
+      "filtered": { "one": "{affiches} duif van {total}", "other": "{affiches} duiven van {total}" }
+    },
+    "pagination": {
+      "prev": "← Vorige",
+      "next": "Volgende →",
+      "page_of": "Pagina {current} / {total}"
+    },
+    "detail": {
+      "field": {
+        "annee": "Jaar",
+        "sexe": "Geslacht",
+        "statut": "Status",
+        "case": "Hok",
+        "couleur": "Kleur",
+        "lignee": "Lijn"
+      },
+      "section": {
+        "notes": "📝 Notities",
+        "genealogy": "🌳 Stamboom",
+        "performances": "🏆 Prestaties ({count} wedvluchten)",
+        "health": "🏥 Gezondheidsopvolging ({count} gebeurtenissen)"
+      },
+      "no_note": "Geen notitie",
+      "no_perf": "Geen prestatie geregistreerd",
+      "no_health": "Geen gezondheidsgebeurtenis geregistreerd",
+      "pere": "VADER ♂️",
+      "mere": "MOEDER ♀️",
+      "unknown_male": "Onbekend",
+      "unknown_female": "Onbekend",
+      "perf_table": { "date": "Datum", "concours": "Wedvlucht", "dist": "Afst.", "class": "Plaats", "vitesse": "Snelheid" },
+      "health_table": { "date": "Datum", "type": "Type", "description": "Beschrijving", "produit": "Product" },
+      "btn": {
+        "close": "Sluiten",
+        "print": "🖨️ Afdrukken",
+        "pedigree": "🌳 Stamboom",
+        "history": "📋 Geschiedenis",
+        "edit": "✏️ Bewerken"
+      },
+      "photo_btn": "📷 Foto"
+    },
+    "timeline": {
+      "title": "📋 Geschiedenis — {matricule}",
+      "no_events": "Geen gebeurtenissen geregistreerd.",
+      "close": "Sluiten"
+    },
+    "photo": {
+      "updated": "Foto bijgewerkt ✅",
+      "error": "Fout bij uploaden foto"
+    },
+    "form": {
+      "add_title": "Duif toevoegen",
+      "edit_title": "Duif bewerken",
+      "matricule_label": "Ringnummer *",
+      "matricule_placeholder": "bv: 166548-24-F",
+      "annee_label": "Geboortejaar *",
+      "sexe_label": "Geslacht *",
+      "statut_label": "Status",
+      "couleur_label": "Kleur van het verenkleed",
+      "couleur_placeholder": "bv: Blauw gebaarde",
+      "case_label": "Hok",
+      "case_placeholder": "bv: Hok 12",
+      "lignee_label": "Lijn",
+      "no_lignee": "— Geen lijn —",
+      "pere_label": "Vader ♂️",
+      "unknown_pere": "— Onbekend —",
+      "mere_label": "Moeder ♀️",
+      "unknown_mere": "— Onbekend —",
+      "notes_label": "Notities",
+      "notes_placeholder": "Opmerkingen, kenmerken..."
+    },
+    "msg": {
+      "matricule_required": "Het ringnummer is verplicht",
+      "updated": "Duif succesvol bewerkt ✅",
+      "created": "Duif succesvol aangemaakt ✅",
+      "deleted": "Duif \"{matricule}\" verwijderd",
+      "delete_confirm": "Duif <strong>{matricule}</strong> definitief verwijderen?",
+      "delete_error": "Fout bij verwijderen",
+      "blocked": {
+        "title": "Verwijderen niet mogelijk",
+        "has_assignments": "Duif <strong>{matricule}</strong> heeft actieve voedingstoewijzingen.",
+        "suggestion": "Om de duif uit de opvolging te halen met behoud van de geschiedenis, markeer hem als <strong>Verloren</strong>.",
+        "mark_lost_btn": "Markeren als Verloren",
+        "marked_lost": "Duif \"{matricule}\" gemarkeerd als Verloren",
+        "update_error": "Fout bij bijwerken"
+      }
+    },
+    "import": {
+      "modal_title": "Duiven importeren (CSV)",
+      "intro": "Het CSV-bestand moet <strong>;</strong> als scheidingsteken gebruiken met de kolommen:",
+      "columns": "matricule ; annee_naissance ; sexe ; couleur_plumage ; statut ; colombier_case ; notes",
+      "sexe_values": "Waarden geslacht: <code>male</code> / <code>femelle</code>",
+      "statut_values": "Waarden status: <code>actif</code> · <code>reproducteur</code> · <code>concours</code> · <code>retraite</code> · <code>perdu</code> · <code>decede</code>",
+      "file_label": "CSV-bestand",
+      "select_file": "Selecteer een CSV-bestand",
+      "submit": "Importeren",
+      "error_generic": "Fout bij importeren",
+      "success": { "one": "{n} duif geïmporteerd ✅", "other": "{n} duiven geïmporteerd ✅" },
+      "errors_count": { "one": "{n} regel genegeerd:", "other": "{n} regels genegeerd:" }
+    }
+  },
+  "performances": {
+    "empty": {
+      "title": "Geen prestatie geregistreerd",
+      "sub": "Voeg wedvluchtresultaten toe of importeer een CSV-lijst"
+    },
+    "import_btn": "⬆️ CSV importeren",
+    "export_btn": "⬇️ CSV exporteren",
+    "table": {
+      "pigeon": "Duif",
+      "concours": "Wedvlucht",
+      "date": "Datum",
+      "distance": "Afstand",
+      "classement": "Plaats",
+      "vitesse": "Snelheid (m/min)",
+      "engages": "Deelnemers",
+      "actions": "Acties"
+    },
+    "add": {
+      "modal_title": "🏆 Prestatie toevoegen",
+      "pigeon_label": "Duif *",
+      "choose_pigeon": "— Kies een duif —",
+      "concours_label": "Naam van de wedvlucht *",
+      "concours_placeholder": "bv: Grote Prijs Marseille",
+      "date_label": "Datum *",
+      "distance_label": "Afstand (km)",
+      "distance_placeholder": "bv: 320",
+      "classement_label": "Plaats",
+      "classement_placeholder": "bv: 3",
+      "vitesse_label": "Snelheid (m/min)",
+      "vitesse_placeholder": "bv: 1456.2",
+      "engages_label": "Aantal deelnemende duiven",
+      "engages_placeholder": "bv: 245",
+      "notes_label": "Notities",
+      "notes_placeholder": "Opmerkingen...",
+      "submit": "➕ Aanmaken"
+    },
+    "msg": {
+      "choose_pigeon": "Kies een duif",
+      "concours_required": "De naam van de wedvlucht is verplicht",
+      "date_required": "De datum is verplicht",
+      "saved": "Prestatie opgeslagen ✅",
+      "deleted": "Prestatie verwijderd",
+      "delete_confirm": "Prestatie <strong>{nom}</strong> verwijderen?"
+    },
+    "import": {
+      "modal_title": "Prestaties importeren (CSV)",
+      "intro": "Vereiste kolommen (scheidingsteken <strong>;</strong>):",
+      "columns": "date ; pigeon_matricule ; nom_concours ; distance_km ; classement ; nb_pigeons_engages ; vitesse_m_min ; notes",
+      "date_format": "Datumformaat: <code>YYYY-MM-DD</code> (bv: 2024-05-12)",
+      "file_label": "CSV-bestand",
+      "select_file": "Selecteer een CSV-bestand",
+      "submit": "Importeren",
+      "error_generic": "Fout bij importeren",
+      "success": { "one": "{n} prestatie geïmporteerd ✅", "other": "{n} prestaties geïmporteerd ✅" },
+      "errors_count": { "one": "{n} regel genegeerd:", "other": "{n} regels genegeerd:" }
+    }
+  },
+  "sante": {
+    "empty": {
+      "title": "Geen gezondheidsgebeurtenis geregistreerd",
+      "sub": "Volg hier de gezondheid van je duiven"
+    },
+    "export_btn": "⬇️ CSV exporteren",
+    "table": {
+      "pigeon": "Duif",
+      "date": "Datum",
+      "type": "Type",
+      "description": "Beschrijving",
+      "produit": "Product",
+      "actions": "Acties"
+    },
+    "type": {
+      "vaccination": "Vaccinatie",
+      "traitement": "Behandeling",
+      "visite_veterinaire": "Dierenartsbezoek",
+      "observation": "Observatie"
+    },
+    "add": {
+      "modal_title": "🏥 Gezondheidsgebeurtenis toevoegen",
+      "pigeon_label": "Duif *",
+      "choose_pigeon": "— Kies een duif —",
+      "type_label": "Type *",
+      "type_vaccination": "💉 Vaccinatie",
+      "type_traitement": "💊 Behandeling",
+      "type_visite": "🩺 Dierenartsbezoek",
+      "type_observation": "👁️ Observatie",
+      "date_label": "Datum *",
+      "description_label": "Beschrijving",
+      "description_placeholder": "Details van de gebeurtenis...",
+      "produit_label": "Gebruikt product",
+      "produit_placeholder": "bv: Colombovac PMV",
+      "submit": "➕ Aanmaken"
+    },
+    "msg": {
+      "choose_pigeon": "Kies een duif",
+      "date_required": "De datum is verplicht",
+      "saved": "Gezondheidsgebeurtenis opgeslagen ✅",
+      "deleted": "Gebeurtenis verwijderd",
+      "delete_confirm": "Deze gezondheidsgebeurtenis verwijderen?"
+    }
+  },
+  "couples": {
+    "empty": {
+      "title": "Geen koppel geregistreerd",
+      "sub": "Maak je eerste fokkoppel aan"
+    },
+    "active_section": "💑 Actieve koppels ({count})",
+    "history_section": { "one": "📁 Geschiedenis ({count} koppel)", "other": "📁 Geschiedenis ({count} koppels)" },
+    "toggle": { "show": "▼ Tonen", "hide": "▲ Verbergen" },
+    "table": {
+      "case": "Hok",
+      "male": "♂️ Man",
+      "femelle": "♀️ Vrouw",
+      "annee": "Jaar",
+      "nichees": "Broedsels",
+      "actions": "Acties"
+    },
+    "detail": {
+      "male_label": "♂️ Man",
+      "femelle_label": "♀️ Vrouw",
+      "unknown_male": "Onbekend",
+      "unknown_female": "Onbekend",
+      "case_label": "📍 Hok",
+      "annee_label": "📅 Jaar",
+      "statut_label": "Status",
+      "status_actif": "Actief",
+      "status_inactif": "Inactief",
+      "nichees_title": "🥚 Broedsels ({count})",
+      "add_nichee_btn": "+ Broedsel toevoegen",
+      "nichee_table": { "ponte": "Legdatum", "eclosion": "Uitkomstdatum", "oeufs": "Eieren", "notes": "Notities" },
+      "no_nichee": "Geen broedsel geregistreerd",
+      "btn": { "close": "Sluiten", "dissolve": "🔓 Ontbinden", "delete": "🗑️ Verwijderen" }
+    },
+    "nichee_edit": {
+      "modal_title": "✏️ Broedsel bewerken",
+      "ponte_label": "Legdatum",
+      "eclosion_label": "Uitkomstdatum",
+      "oeufs_label": "Aantal eieren",
+      "notes_label": "Notities",
+      "notes_placeholder": "Opmerkingen...",
+      "submit": "💾 Bewerken",
+      "msg_saved": "Broedsel bewerkt ✅"
+    },
+    "jeune": {
+      "modal_title": "🐣 Jonge duif aanmaken",
+      "matricule_label": "Ringnummer *",
+      "matricule_placeholder": "bv: FR-{annee}-XXX",
+      "annee_label": "Geboortejaar *",
+      "sexe_label": "Geslacht *",
+      "choose_sexe": "— Kiezen —",
+      "statut_label": "Status",
+      "pere_label": "♂️ Vader",
+      "mere_label": "♀️ Moeder",
+      "lignee_label": "Lijn",
+      "no_lignee": "— Geen —",
+      "case_label": "Hok",
+      "case_placeholder": "bv: D5",
+      "couleur_label": "Kleur van het verenkleed",
+      "couleur_placeholder": "bv: Blauw gebaarde",
+      "notes_label": "Notities",
+      "notes_placeholder": "Opmerkingen...",
+      "submit": "🐣 Jong aanmaken",
+      "msg": {
+        "matricule_required": "Het ringnummer is verplicht",
+        "sexe_required": "Het geslacht is verplicht",
+        "annee_required": "Het jaar is verplicht",
+        "created": "Jong aangemaakt en geringd ✅"
+      }
+    },
+    "add": {
+      "modal_title": "💑 Nieuw koppel",
+      "male_label": "Man *",
+      "choose_male": "— Kies een man —",
+      "femelle_label": "Vrouw *",
+      "choose_femelle": "— Kies een vrouw —",
+      "case_label": "Hok",
+      "case_placeholder": "bv: A3",
+      "annee_label": "Jaar *",
+      "notes_label": "Notities",
+      "notes_placeholder": "Opmerkingen...",
+      "submit": "➕ Aanmaken",
+      "msg": {
+        "choose_male": "Kies een man",
+        "choose_femelle": "Kies een vrouw",
+        "annee_required": "Het jaar is verplicht",
+        "created": "Koppel aangemaakt ✅"
+      }
+    },
+    "add_nichee": {
+      "modal_title": "🥚 Broedsel toevoegen",
+      "ponte_label": "Legdatum",
+      "eclosion_label": "Uitkomstdatum",
+      "oeufs_label": "Aantal eieren",
+      "notes_label": "Notities",
+      "notes_placeholder": "Opmerkingen...",
+      "submit": "➕ Aanmaken",
+      "msg_saved": "Broedsel geregistreerd ✅"
+    },
+    "msg": {
+      "dissolve_title": "Koppel ontbinden",
+      "dissolve_confirm": "Koppel <strong>{label}</strong> ontbinden?<br>",
+      "dissolve_note": "Beide duiven keren terug naar status \"actief\".",
+      "dissolve_btn": "Ontbinden",
+      "dissolved": "Koppel ontbonden",
+      "delete_confirm": "Koppel <strong>{label}</strong> en alle broedsels definitief verwijderen?",
+      "deleted": "Koppel verwijderd",
+      "nichee_delete_confirm": "Dit broedsel verwijderen?",
+      "nichee_deleted": "Broedsel verwijderd"
+    }
+  },
+  "calendrier": {
+    "prev": "← Vorige",
+    "next": "Volgende →",
+    "legend": { "session": "Trainingssessie", "concours": "Wedvlucht" },
+    "events_title": "Gebeurtenissen — {mois}",
+    "no_events": "Geen gebeurtenis deze maand.",
+    "session_type": {
+      "loft": "🏠 Hok",
+      "toss": "🚀 Loslating",
+      "race": "🏆 Wedvlucht",
+      "default": "Sessie"
+    }
+  },
+  "concours_module": {
+    "loading_stats": "Statistieken laden…",
+    "error_loading": "Laadfout",
+    "empty": {
+      "title": "Geen wedvlucht geregistreerd",
+      "sub": "Klik op <strong>+ Nieuwe wedvlucht</strong> om het seizoen te starten"
+    },
+    "filter": {
+      "all_seasons": "Alle seizoenen",
+      "all_status": "Alle statussen"
+    },
+    "status": {
+      "a_venir": "Aankomend",
+      "en_cours": "Bezig",
+      "termine": "Afgelopen",
+      "annule": "Geannuleerd",
+      "change_prompt": "Status wijzigen…"
+    },
+    "table": {
+      "nom": "Naam",
+      "date": "Datum",
+      "lieu": "Losplaats",
+      "distance": "Afstand",
+      "statut": "Status",
+      "engages": "Ingeschreven",
+      "actions": "Acties"
+    },
+    "compteur": { "one": "{count} wedvlucht", "other": "{count} wedvluchten" },
+    "btn": { "detail": "📋 Detail" },
+    "modal": {
+      "add_title": "Nieuwe wedvlucht",
+      "edit_title": "Wedvlucht bewerken"
+    },
+    "form": {
+      "nom_label": "Naam wedvlucht *",
+      "nom_placeholder": "bv: Limoges 2025",
+      "date_label": "Datum *",
+      "lieu_label": "Losplaats",
+      "lieu_placeholder": "bv: Limoges",
+      "distance_label": "Afstand (meter)",
+      "distance_placeholder": "bv: 425000",
+      "heure_label": "Lostijd",
+      "ref_label": "Federatiereferentie",
+      "ref_placeholder": "optioneel",
+      "notes_label": "Notities",
+      "notes_placeholder": "Weersomstandigheden, opmerkingen…",
+      "submit_create": "➕ Aanmaken",
+      "submit_edit": "💾 Bewerken"
+    },
+    "msg": {
+      "nom_date_required": "Naam en datum verplicht",
+      "updated": "Wedvlucht bewerkt ✅",
+      "created": "Wedvlucht aangemaakt ✅",
+      "status_updated": "Status bijgewerkt ✅",
+      "deleted": "Wedvlucht verwijderd",
+      "delete_confirm": "Wedvlucht \"{nom}\" en alle inschrijvingen verwijderen?"
+    },
+    "detail": {
+      "back": "← Terug",
+      "lacher": "Lossing",
+      "btn_edit": "✏️ Bewerken",
+      "btn_feuille": "🖨️ Inschrijfblad",
+      "tab_engagements": "📋 Inschrijvingen ({count})",
+      "tab_constatation": "⏱️ Constatering",
+      "tab_resultats": "🏅 Resultaten"
+    },
+    "categories": {
+      "vieux_coqs": "🐓 Oude doffers",
+      "yearlings": "🦅 Jaarlingen",
+      "jeunes": "🐦 Jonge duiven",
+      "femelles": "♀️ Duivinnen"
+    },
+    "engagement_status": {
+      "engage": "Ingeschreven",
+      "rentre_classe": "Terug geklasseerd",
+      "rentre_non_classe": "Terug (nk)",
+      "non_rentre_jour": "Niet terug/dag",
+      "perdu": "Verloren"
+    },
+    "engagement": {
+      "add_title": "➕ Duif inschrijven",
+      "pigeon_label": "Duif",
+      "choose_pigeon": "— Kies een duif —",
+      "categorie_label": "Categorie",
+      "mise_label": "Inzet (€)",
+      "submit": "Inschrijven",
+      "checking": "Controleren…",
+      "eligible_fcf": "✅ FCF-gerechtigd",
+      "alerts": "⚠️ Waarschuwingen:",
+      "eligible_short": "✅ Gerechtigd",
+      "alerts_short": "Waarschuwingen",
+      "list_title": "📋 Ingeschreven duiven ({count})",
+      "none_engaged": "Geen duif ingeschreven",
+      "table": {
+        "matricule": "Ringnummer",
+        "annee": "Jaar",
+        "categorie": "Categorie",
+        "mise": "Inzet",
+        "eligibilite": "Gerechtigdheid",
+        "statut": "Status",
+        "actions": "Acties",
+        "retirer": "Verwijderen"
+      },
+      "select_required": "Selecteer een duif",
+      "added": "Duif ingeschreven ✅",
+      "removed": "Duif verwijderd",
+      "remove_confirm": "Duif {matricule} uit deze wedvlucht verwijderen?"
+    },
+    "constatation": {
+      "none_engaged": "Geen duif ingeschreven.",
+      "mode_title": "Invoermodus voor aankomsten",
+      "mode_manuel": "✏️ Handmatig",
+      "mode_import": "📁 CSV/Excel-import",
+      "mode_benzing": "📡 Benzing Live!",
+      "import_title": "📁 Aankomstenbestand importeren",
+      "import_intro": "CSV-formaat (scheidingsteken <code>;</code>) : <code>matricule;heure_arrivee;correction_sec</code><br>Excel-formaat (.xlsx): zelfde kolommen, eerste tabblad.",
+      "file_label": "Bestand (.csv / .txt / .xlsx)",
+      "submit_import": "Importeren",
+      "select_file": "Selecteer een bestand",
+      "table_title": "⏱️ Constatering van aankomsten",
+      "lacher": "Lossing",
+      "distance": "Afstand",
+      "table": {
+        "matricule": "Ringnummer",
+        "categorie": "Categorie",
+        "heure_arrivee": "Aankomsttijd",
+        "correction": "Correctie (sec)",
+        "vitesse": "Snelheid (m/min)",
+        "source": "Bron",
+        "save": "Opslaan"
+      },
+      "invalid_time": "Ongeldige tijd",
+      "arrival_required": "Voer een aankomsttijd in",
+      "arrival_saved": "Aankomst geregistreerd ✅"
+    },
+    "benzing": {
+      "start": "▶ Start luisteren",
+      "stop": "■ Stoppen",
+      "apply": "🔄 Aankomsten toepassen",
+      "waiting": "Wachten…",
+      "listening": "📡 Aan het luisteren…",
+      "stopped": "Gestopt",
+      "status_pending": "📡 Actief — {n} aankomst(en) in wachtrij",
+      "flushed": { "one": "{n} aankomst geïmporteerd via Benzing ✅", "other": "{n} aankomsten geïmporteerd via Benzing ✅" }
+    },
+    "import_arrivees": {
+      "imported": { "one": "✅ {n} aankomst geïmporteerd", "other": "✅ {n} aankomsten geïmporteerd" },
+      "not_found": "⚠️ Niet gevonden: {liste}",
+      "errors": "❌ Fouten:",
+      "generic_error": "Fout bij het importeren"
+    },
+    "resultats": {
+      "official_data_title": "📊 Officiële gegevens van de wedvlucht",
+      "total_engages_label": "Totaal officieel ingeschreven",
+      "total_placeholder": "bv: 1254",
+      "save": "Opslaan",
+      "table": {
+        "matricule": "Ringnummer",
+        "heure_arrivee": "Aankomsttijd",
+        "vitesse": "Snelheid (m/min)",
+        "classement_off": "Officiële klassering",
+        "nb_engages_cat": "Aantal ingeschreven categorie",
+        "score_as": "AS-score",
+        "statut": "Status",
+        "actions": "Acties"
+      },
+      "classement_placeholder": "pos.",
+      "nb_engages_placeholder": "totaal",
+      "result_saved": "Resultaat opgeslagen ✅",
+      "total_saved": "Totaal ingeschreven opgeslagen ✅"
+    },
+    "feuille": {
+      "title": "Inschrijfblad — {nom}",
+      "lacher": "Lossing",
+      "total": { "one": "Totaal: {n} duif", "other": "Totaal: {n} duiven" },
+      "table": {
+        "matricule": "Ringnummer",
+        "annee": "Jaar",
+        "couleur": "Kleur",
+        "case": "Hok",
+        "categorie": "Categorie",
+        "mise": "Inzet",
+        "eligible": "Gerechtigd"
+      },
+      "footer": "Afgedrukt op {date} — Colombophilie V3",
+      "error": "Fout bij het genereren van het inschrijfblad"
+    },
+    "stats_as": {
+      "title": "🏅 AS-duif klassement — Seizoen {annee}",
+      "no_data": "Geen gegevens voor dit seizoen.",
+      "table": {
+        "rank": "#",
+        "matricule": "Ringnummer",
+        "concours": "Wedvluchten",
+        "classes": "Geklasseerd",
+        "taux_retour": "Terugkeerpercentage",
+        "vitesse_moy": "Gem. snelheid",
+        "meilleure_v": "Beste snelheid",
+        "points_as": "AS-punten",
+        "score_as": "AS-score"
+      }
+    }
+  },
+  "setup": {
+    "title": "Welkom bij Colomb",
+    "step_lang_title": "Kies uw taal",
+    "step_lang_subtitle": "Selecteer de taal van de applicatie",
+    "step_profile_title": "Profiel van de liefhebber",
+    "step_profile_subtitle": "Enkele gegevens om uw omgeving te personaliseren",
+    "step_confirm_title": "Overzicht",
+    "step_confirm_subtitle": "Controleer uw gegevens voordat u Colomb start",
+    "field_nom": "Naam van de liefhebber",
+    "field_prenom": "Voornaam",
+    "field_colombier": "Naam van het duivenhok",
+    "field_ville": "Stad",
+    "field_pays": "Land",
+    "field_federation": "Duivenbond",
+    "field_federation_other": "Geef uw bond op",
+    "field_email": "Contact e-mail",
+    "placeholder_nom": "Bijv. Janssens",
+    "placeholder_prenom": "Bijv. Pieter",
+    "placeholder_colombier": "Bijv. Duiventil Hyères",
+    "placeholder_ville": "Bijv. Antwerpen",
+    "placeholder_email": "Bijv. naam@voorbeeld.com",
+    "country_france": "Frankrijk",
+    "country_belgique": "België",
+    "country_pays_bas": "Nederland",
+    "country_royaume_uni": "Verenigd Koninkrijk",
+    "country_autre": "Andere",
+    "btn_next": "Volgende",
+    "btn_back": "Terug",
+    "btn_launch": "Colomb starten",
+    "recap_lang": "Taal",
+    "recap_nom": "Liefhebber",
+    "recap_colombier": "Duivenhok",
+    "recap_ville": "Stad",
+    "recap_pays": "Land",
+    "recap_federation": "Bond",
+    "recap_email": "E-mail",
+    "not_specified": "Niet opgegeven",
+    "loading": "Uw duivenhok wordt ingesteld...",
+    "success": "Configuratie voltooid! Doorverwijzen...",
+    "error_nom_required": "De naam van de liefhebber is verplicht",
+    "error_email_invalid": "Ongeldig e-mailformaat",
+    "error_setup_failed": "Er is een fout opgetreden tijdens de configuratie"
+  }
+}

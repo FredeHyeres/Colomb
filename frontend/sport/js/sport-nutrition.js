@@ -11,12 +11,12 @@ async function loadNutrition() {
   content.innerHTML = `
     <div class="card">
       <div class="tabs-header">
-        <button class="tab-btn active" data-tab="mixes">🔀 Mélanges</button>
-        <button class="tab-btn" data-tab="ingredients">🌾 Ingrédients</button>
-        <button class="tab-btn" data-tab="supplements">💊 Suppléments</button>
-        <button class="tab-btn" data-tab="plans">📋 Plan alimentaire</button>
-        <button class="tab-btn" data-tab="affectation">🎯 Affectation</button>
-        <button class="tab-btn" data-tab="calendar">📅 Calendrier</button>
+        <button class="tab-btn active" data-tab="mixes">${t('sport.nutrition.tabs.mixes')}</button>
+        <button class="tab-btn" data-tab="ingredients">${t('sport.nutrition.tabs.ingredients')}</button>
+        <button class="tab-btn" data-tab="supplements">${t('sport.nutrition.tabs.supplements')}</button>
+        <button class="tab-btn" data-tab="plans">${t('sport.nutrition.tabs.plans')}</button>
+        <button class="tab-btn" data-tab="affectation">${t('sport.nutrition.tabs.affectation')}</button>
+        <button class="tab-btn" data-tab="calendar">${t('sport.nutrition.tabs.calendar')}</button>
       </div>
       <div id="tab-mixes"       class="tab-panel active"><div class="loader-spinner"></div></div>
       <div id="tab-ingredients" class="tab-panel"><div class="loader-spinner"></div></div>
@@ -54,14 +54,19 @@ async function loadMixesTab() {
   try {
     const mixes = await SportAPI.getMixes();
     const list = Array.isArray(mixes) ? mixes : (mixes.items || []);
-    const usageLabels = { recuperation:'Récupération', entrainement:'Entraînement', pre_panier:'Pré-panier', enlogement:'Enlogement' };
+    const usageLabels = {
+      recuperation: t('sport.nutrition.usage.recuperation'),
+      entrainement: t('sport.nutrition.usage.entrainement'),
+      pre_panier: t('sport.nutrition.usage.pre_panier'),
+      enlogement: t('sport.nutrition.usage.enlogement'),
+    };
 
     el.innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-        <button class="btn btn-primary btn-sm" onclick="openMixModal()">+ Créer un mélange</button>
+        <button class="btn btn-primary btn-sm" onclick="openMixModal()">${t('sport.nutrition.mixes.create_btn')}</button>
       </div>
       ${list.length === 0
-        ? `<div class="empty-state"><div class="empty-icon">🔀</div><h3>Aucun mélange</h3><p>Créez vos formules de mélanges personnalisés.</p></div>`
+        ? `<div class="empty-state"><div class="empty-icon">🔀</div><h3>${t('sport.nutrition.mixes.empty.title')}</h3><p>${t('sport.nutrition.mixes.empty.sub')}</p></div>`
         : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;">
             ${list.map(m => `
               <div class="card" style="padding:16px;">
@@ -71,9 +76,9 @@ async function loadMixesTab() {
                     ${m.usage ? `<span class="badge badge-info" style="margin-top:4px;">${usageLabels[m.usage] || m.usage}</span>` : ''}
                   </div>
                   <div style="display:flex;gap:6px;">
-                    <button class="btn btn-sm btn-icon" onclick="openMixModal(${m.id})" title="Modifier">✏️</button>
-                    <button class="btn btn-sm btn-icon" onclick="duplicateMix(${m.id})" title="Dupliquer">📋</button>
-                    <button class="btn btn-sm btn-icon" onclick="deleteMixItem(${m.id})" title="Supprimer">🗑️</button>
+                    <button class="btn btn-sm btn-icon" onclick="openMixModal(${m.id})" title="${t('sport.nutrition.mixes.edit_title')}">✏️</button>
+                    <button class="btn btn-sm btn-icon" onclick="duplicateMix(${m.id})" title="${t('sport.nutrition.mixes.duplicate_title')}">📋</button>
+                    <button class="btn btn-sm btn-icon" onclick="deleteMixItem(${m.id})" title="${t('sport.nutrition.mixes.delete_title')}">🗑️</button>
                   </div>
                 </div>
                 ${m.description ? `<p style="font-size:0.8rem;color:var(--text-light);margin-bottom:8px;">${m.description}</p>` : ''}
@@ -81,13 +86,13 @@ async function loadMixesTab() {
               </div>`).join('')}
           </div>`}`;
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    el.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
 
 function _renderMixCompositionPreview(compositionJson) {
-  if (!compositionJson) return '<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">Composition non définie</div>';
+  if (!compositionJson) return `<div style="font-size:0.75rem;color:var(--text-light);margin-top:4px;">${t('sport.nutrition.mixes.composition_undefined')}</div>`;
   try {
     const comp = JSON.parse(compositionJson);
     if (!Array.isArray(comp) || comp.length === 0) return '';
@@ -109,22 +114,22 @@ async function duplicateMix(mixId) {
   try {
     const src = await SportAPI.getMix(mixId);
     const copy = {
-      name:        `${src.name} (copie)`,
+      name:        `${src.name} ${t('sport.nutrition.mixes.copy_suffix')}`,
       usage:       src.usage       || null,
       description: src.description || null,
       composition: src.composition || null,
     };
     await SportAPI.createMix(copy);
-    showToast('Mélange dupliqué !', 'success');
+    showToast(t('sport.nutrition.mixes.duplicated'), 'success');
     loadMixesTab();
   } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function deleteMixItem(mixId) {
-  if (!confirm('Supprimer ce mélange ? Cette action est irréversible.')) return;
+  if (!confirm(t('sport.nutrition.mixes.delete_confirm'))) return;
   try {
     await SportAPI.deleteMix(mixId);
-    showToast('Mélange supprimé.', 'success');
+    showToast(t('sport.nutrition.mixes.deleted'), 'success');
     loadMixesTab();
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -141,7 +146,7 @@ let _supState = { items: [] };
 
 /* ——— Ingrédients ——— */
 function _ingAddItem(id, name) {
-  if (_ingState.items.find(i => i.id === id)) { showToast('Déjà dans la composition', 'warning'); return; }
+  if (_ingState.items.find(i => i.id === id)) { showToast(t('sport.nutrition.mixes.already_in_composition'), 'warning'); return; }
   _ingState.items.push({ id, name, pct: 0, locked: false });
   _ingRebalanceEqual();
   _ingRenderList();
@@ -153,7 +158,7 @@ function _ingToggleLock(idx) {
     items[idx].locked = false;
   } else {
     const unlocked = items.filter(i => !i.locked).length;
-    if (unlocked <= 2) { showToast('Il faut au moins 2 ingrédients déverrouillés pour redistribuer', 'warning'); return; }
+    if (unlocked <= 2) { showToast(t('sport.nutrition.mixes.min_unlocked_warning'), 'warning'); return; }
     items[idx].locked = true;
   }
   _ingRenderList();
@@ -231,7 +236,7 @@ function _ingUpdateDOM() {
   if (totalEl) {
     const total = _ingState.items.reduce((s, i) => s + i.pct, 0);
     const ok = Math.abs(total - 100) < 0.05;
-    totalEl.textContent  = `Total ingrédients : ${total.toFixed(2)}%`;
+    totalEl.textContent  = t('sport.nutrition.mixes.total_ingredients', { pct: total.toFixed(2) });
     totalEl.style.color  = ok ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--warning)');
     totalEl.style.fontWeight = '600';
   }
@@ -243,21 +248,21 @@ function _ingRenderList() {
   if (!el) return;
 
   if (_ingState.items.length === 0) {
-    el.innerHTML = '<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">Aucun ingrédient sélectionné</div>';
-    if (totalEl) { totalEl.textContent = 'Total ingrédients : 0%'; totalEl.style.color = 'var(--text)'; }
+    el.innerHTML = `<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">${t('sport.nutrition.mixes.no_ingredient_selected')}</div>`;
+    if (totalEl) { totalEl.textContent = t('sport.nutrition.mixes.total_ingredients', { pct: '0' }); totalEl.style.color = 'var(--text)'; }
     return;
   }
 
   const unlockedCount = _ingState.items.filter(i => !i.locked).length;
   el.innerHTML = _ingState.items.map((item, idx) => {
     const canLock    = !item.locked && unlockedCount > 2;
-    const lockDisabled = !item.locked && !canLock ? 'disabled title="2 ingrédients déverrouillés minimum"' : '';
+    const lockDisabled = !item.locked && !canLock ? `disabled title="${t('sport.nutrition.mixes.min_unlocked_title')}"` : '';
     const maxVal     = item.locked ? 100 : _ingMaxForItem(idx);
     return `
     <div class="mix-ing-row" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;${item.locked ? 'opacity:0.75;' : ''}">
       <button type="button" class="btn btn-sm btn-icon mix-ing-lock" data-idx="${idx}" ${lockDisabled}
         style="font-size:1rem;padding:2px 5px;${item.locked ? 'color:var(--accent);' : 'color:var(--text-light);'}"
-        title="${item.locked ? 'Déverrouiller' : 'Verrouiller'}">${item.locked ? '🔒' : '🔓'}</button>
+        title="${item.locked ? t('sport.nutrition.mixes.unlock') : t('sport.nutrition.mixes.lock')}">${item.locked ? '🔒' : '🔓'}</button>
       <span style="flex:1;font-size:0.88rem;min-width:90px;">🌾 ${item.name}</span>
       <input type="range" min="0" max="${maxVal}" step="0.01" value="${item.pct}"
         class="mix-ing-slider" data-idx="${idx}"
@@ -294,7 +299,7 @@ function _ingRenderList() {
 
 /* ——— Suppléments (hors %) ——— */
 function _supAddItem(id, name) {
-  if (_supState.items.find(s => s.id === id)) { showToast('Déjà dans le mélange', 'warning'); return; }
+  if (_supState.items.find(s => s.id === id)) { showToast(t('sport.nutrition.mixes.already_in_mix'), 'warning'); return; }
   _supState.items.push({ id, name, quantity: '', unit: 'g/kg' });
   _supRenderList();
 }
@@ -309,7 +314,7 @@ function _supRenderList() {
   if (!el) return;
 
   if (_supState.items.length === 0) {
-    el.innerHTML = '<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">Aucun supplément ajouté</div>';
+    el.innerHTML = `<div style="font-size:0.8rem;color:var(--text-light);padding:8px 0;">${t('sport.nutrition.mixes.no_supplement_added')}</div>`;
     return;
   }
 
@@ -320,7 +325,7 @@ function _supRenderList() {
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap;">
       <span style="flex:1;font-size:0.88rem;min-width:100px;">💊 ${item.name}</span>
       <input type="number" min="0" step="0.01" value="${item.quantity}"
-        class="form-control mix-sup-qty" style="width:75px;" data-idx="${idx}" placeholder="Qté">
+        class="form-control mix-sup-qty" style="width:75px;" data-idx="${idx}" placeholder="${t('sport.nutrition.mixes.qty_placeholder')}">
       <select class="form-control form-control-sm mix-sup-unit" data-idx="${idx}" style="width:110px;">
         ${unitOpts}
       </select>
@@ -351,7 +356,7 @@ function _supRenderList() {
 /* ——— Modal mélange (création + modification) ——— */
 async function openMixModal(mixId = null) {
   const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = mixId ? '✏️ Modifier le mélange' : '+ Nouveau mélange';
+  document.getElementById('modal-title').textContent = mixId ? t('sport.nutrition.mixes.modal.title_edit') : t('sport.nutrition.mixes.modal.title_new');
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = '<div class="loader-spinner"></div>';
   overlay.style.display = 'flex';
@@ -395,63 +400,63 @@ async function openMixModal(mixId = null) {
   document.getElementById('modal-body').innerHTML = `
     <form id="form-mix">
       <div class="form-group">
-        <label class="form-label">Nom du mélange *</label>
+        <label class="form-label">${t('sport.nutrition.mixes.modal.name_label')}</label>
         <input type="text" class="form-control" name="name" required
-          placeholder="ex: Mélange course longue distance"
+          placeholder="${t('sport.nutrition.mixes.modal.name_placeholder')}"
           value="${mix ? (mix.name || '') : ''}">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Usage</label>
+          <label class="form-label">${t('sport.nutrition.mixes.modal.usage_label')}</label>
           <select class="form-control" name="usage">
-            <option value="">—</option>
-            <option value="recuperation"${mix?.usage==='recuperation'?' selected':''}>Récupération</option>
-            <option value="entrainement"${mix?.usage==='entrainement'?' selected':''}>Entraînement</option>
-            <option value="pre_panier"${mix?.usage==='pre_panier'?' selected':''}>Pré-panier</option>
-            <option value="enlogement"${mix?.usage==='enlogement'?' selected':''}>Enlogement</option>
+            <option value="">${t('sport.nutrition.mixes.modal.usage_none')}</option>
+            <option value="recuperation"${mix?.usage==='recuperation'?' selected':''}>${t('sport.nutrition.usage.recuperation')}</option>
+            <option value="entrainement"${mix?.usage==='entrainement'?' selected':''}>${t('sport.nutrition.usage.entrainement')}</option>
+            <option value="pre_panier"${mix?.usage==='pre_panier'?' selected':''}>${t('sport.nutrition.usage.pre_panier')}</option>
+            <option value="enlogement"${mix?.usage==='enlogement'?' selected':''}>${t('sport.nutrition.usage.enlogement')}</option>
           </select>
         </div>
         <div class="form-group" style="flex:2;">
-          <label class="form-label">Description</label>
+          <label class="form-label">${t('sport.nutrition.mixes.modal.description_label')}</label>
           <input type="text" class="form-control" name="description"
-            placeholder="Usage recommandé..." value="${mix?.description || ''}">
+            placeholder="${t('sport.nutrition.mixes.modal.description_placeholder')}" value="${mix?.description || ''}">
         </div>
       </div>
 
       <div style="margin:18px 0 6px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
-        🌾 Ingrédients — total 100%
+        ${t('sport.nutrition.mixes.modal.ingredients_title')}
       </div>
       <p style="font-size:0.77rem;color:var(--text-light);margin-bottom:8px;">
-        Les pourcentages se recalculent proportionnellement. Les ingrédients à 0% sont exclus du recalcul automatique.
+        ${t('sport.nutrition.mixes.modal.ingredients_help')}
       </p>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <select id="mix-ing-sel" class="form-control form-control-sm" style="flex:1;">
-          <option value="">— Choisir un ingrédient —</option>
-          ${ingOpts || '<option disabled>Aucun ingrédient disponible</option>'}
+          <option value="">${t('sport.nutrition.mixes.modal.ingredient_select_placeholder')}</option>
+          ${ingOpts || `<option disabled>${t('sport.nutrition.mixes.modal.no_ingredient_available')}</option>`}
         </select>
-        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-ing-btn">+ Ajouter</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-ing-btn">${t('sport.nutrition.mixes.modal.add_btn')}</button>
       </div>
       <div id="mix-ing-list"></div>
-      <div id="mix-ing-total" style="font-size:0.84rem;margin-top:4px;">Total ingrédients : 0%</div>
+      <div id="mix-ing-total" style="font-size:0.84rem;margin-top:4px;">${t('sport.nutrition.mixes.total_ingredients', { pct: '0' })}</div>
 
       <div style="margin:18px 0 6px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
-        💊 Suppléments — hors calcul %
+        ${t('sport.nutrition.mixes.modal.supplements_title')}
       </div>
       <p style="font-size:0.77rem;color:var(--text-light);margin-bottom:8px;">
-        Les suppléments n'entrent pas dans le calcul des pourcentages d'ingrédients.
+        ${t('sport.nutrition.mixes.modal.supplements_help')}
       </p>
       <div style="display:flex;gap:8px;margin-bottom:10px;">
         <select id="mix-sup-sel" class="form-control form-control-sm" style="flex:1;">
-          <option value="">— Choisir un supplément —</option>
-          ${supOpts || '<option disabled>Aucun supplément disponible</option>'}
+          <option value="">${t('sport.nutrition.mixes.modal.supplement_select_placeholder')}</option>
+          ${supOpts || `<option disabled>${t('sport.nutrition.mixes.modal.no_supplement_available')}</option>`}
         </select>
-        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-sup-btn">+ Ajouter</button>
+        <button type="button" class="btn btn-secondary btn-sm" id="mix-add-sup-btn">${t('sport.nutrition.mixes.modal.add_btn')}</button>
       </div>
       <div id="mix-sup-list"></div>
 
       <div class="modal-footer" style="padding:0;margin-top:18px;">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">${mixId ? 'Enregistrer' : 'Créer le mélange'}</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+        <button type="submit" class="btn btn-primary">${mixId ? t('sport.nutrition.mixes.modal.save_btn') : t('sport.nutrition.mixes.modal.create_btn')}</button>
       </div>
     </form>`;
 
@@ -481,7 +486,7 @@ async function openMixModal(mixId = null) {
     if (_ingState.items.length > 0) {
       const total = _ingState.items.reduce((s, i) => s + i.pct, 0);
       if (Math.abs(total - 100) > 0.5) {
-        showToast(`Total ingrédients doit être 100% (actuellement ${total.toFixed(2)}%)`, 'warning');
+        showToast(t('sport.nutrition.mixes.total_warning', { pct: total.toFixed(2) }), 'warning');
         return;
       }
     }
@@ -496,14 +501,14 @@ async function openMixModal(mixId = null) {
     btn.disabled = true;
     btn.innerHTML = '<span class="loader-inline"></span>';
     try {
-      if (mixId) { await SportAPI.updateMix(mixId, data); showToast('Mélange modifié !', 'success'); }
-      else        { await SportAPI.createMix(data);        showToast('Mélange créé !',    'success'); }
+      if (mixId) { await SportAPI.updateMix(mixId, data); showToast(t('sport.nutrition.mixes.modified'), 'success'); }
+      else        { await SportAPI.createMix(data);        showToast(t('sport.nutrition.mixes.created'), 'success'); }
       closeModal();
       loadMixesTab();
     } catch (err) {
       showToast(err.message, 'error');
       btn.disabled = false;
-      btn.textContent = mixId ? 'Enregistrer' : 'Créer le mélange';
+      btn.textContent = mixId ? t('sport.nutrition.mixes.modal.save_btn') : t('sport.nutrition.mixes.modal.create_btn');
     }
   });
 }
@@ -521,17 +526,17 @@ async function loadIngredientsTab() {
 
     el.innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-        <button class="btn btn-primary btn-sm" onclick="openIngredientModal()">+ Ajouter un ingrédient</button>
+        <button class="btn btn-primary btn-sm" onclick="openIngredientModal()">${t('sport.nutrition.ingredients.add_btn')}</button>
       </div>
       ${list.length === 0
-        ? `<div class="empty-state"><div class="empty-icon">🌾</div><h3>Aucun ingrédient</h3><p>Ajoutez vos premiers ingrédients nutritionnels.</p></div>`
+        ? `<div class="empty-state"><div class="empty-icon">🌾</div><h3>${t('sport.nutrition.ingredients.empty.title')}</h3><p>${t('sport.nutrition.ingredients.empty.sub')}</p></div>`
         : `<table class="table-modern">
-            <thead><tr><th>Nom</th><th>Catégorie</th><th>Protéines</th><th>Lipides</th><th>Glucides</th><th>Énergie (kcal)</th><th>Notes</th></tr></thead>
+            <thead><tr><th>${t('sport.nutrition.ingredients.table.name')}</th><th>${t('sport.nutrition.ingredients.table.category')}</th><th>${t('sport.nutrition.ingredients.table.proteines')}</th><th>${t('sport.nutrition.ingredients.table.lipides')}</th><th>${t('sport.nutrition.ingredients.table.glucides')}</th><th>${t('sport.nutrition.ingredients.table.energie')}</th><th>${t('sport.nutrition.ingredients.table.notes')}</th></tr></thead>
             <tbody>
               ${list.map(ing => `
                 <tr>
                   <td><strong>${ing.name || '—'}</strong></td>
-                  <td>${ing.category ? `<span class="badge badge-info">${ing.category}</span>` : '—'}</td>
+                  <td>${ing.category ? `<span class="badge badge-info">${t(`sport.nutrition.ingredients.modal.category.${ing.category}`)}</span>` : '—'}</td>
                   <td>${renderMiniBar(ing.proteines_pct,'#2980B9')} ${ing.proteines_pct!=null?ing.proteines_pct+'%':'—'}</td>
                   <td>${renderMiniBar(ing.lipides_pct,'#E67E22')} ${ing.lipides_pct!=null?ing.lipides_pct+'%':'—'}</td>
                   <td>${renderMiniBar(ing.glucides_pct,'#27AE60')} ${ing.glucides_pct!=null?ing.glucides_pct+'%':'—'}</td>
@@ -541,7 +546,7 @@ async function loadIngredientsTab() {
             </tbody>
           </table>`}`;
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    el.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
@@ -554,45 +559,45 @@ function renderMiniBar(value, color) {
 
 function openIngredientModal() {
   const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = '+ Nouvel ingrédient';
+  document.getElementById('modal-title').textContent = t('sport.nutrition.ingredients.modal.title');
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = `
     <form id="form-ingredient">
       <div class="form-group">
-        <label class="form-label">Nom *</label>
-        <input type="text" class="form-control" name="name" required placeholder="ex: Blé, Maïs, Avoine...">
+        <label class="form-label">${t('sport.nutrition.ingredients.modal.name_label')}</label>
+        <input type="text" class="form-control" name="name" required placeholder="${t('sport.nutrition.ingredients.modal.name_placeholder')}">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Catégorie</label>
+          <label class="form-label">${t('sport.nutrition.ingredients.modal.category_label')}</label>
           <select class="form-control" name="category">
-            <option value="">—</option>
-            <option value="energie">Énergie</option>
-            <option value="depuratif">Dépuratif</option>
-            <option value="sport">Sport</option>
-            <option value="proteine">Protéine</option>
-            <option value="graisse">Graisse</option>
-            <option value="motivation">Motivation</option>
-            <option value="pre_concours">Pré-concours</option>
+            <option value="">${t('sport.nutrition.ingredients.modal.category_none')}</option>
+            <option value="energie">${t('sport.nutrition.ingredients.modal.category.energie')}</option>
+            <option value="depuratif">${t('sport.nutrition.ingredients.modal.category.depuratif')}</option>
+            <option value="sport">${t('sport.nutrition.ingredients.modal.category.sport')}</option>
+            <option value="proteine">${t('sport.nutrition.ingredients.modal.category.proteine')}</option>
+            <option value="graisse">${t('sport.nutrition.ingredients.modal.category.graisse')}</option>
+            <option value="motivation">${t('sport.nutrition.ingredients.modal.category.motivation')}</option>
+            <option value="pre_concours">${t('sport.nutrition.ingredients.modal.category.pre_concours')}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Énergie (kcal/100g)</label>
-          <input type="number" class="form-control" name="energie_kcal" step="1" min="0" placeholder="ex: 350">
+          <label class="form-label">${t('sport.nutrition.ingredients.modal.energie_label')}</label>
+          <input type="number" class="form-control" name="energie_kcal" step="1" min="0" placeholder="${t('sport.nutrition.ingredients.modal.energie_placeholder')}">
         </div>
       </div>
       <div class="form-row-3">
-        <div class="form-group"><label class="form-label">Protéines (%)</label><input type="number" class="form-control" name="proteines_pct" step="0.1" min="0" max="100"></div>
-        <div class="form-group"><label class="form-label">Lipides (%)</label><input type="number" class="form-control" name="lipides_pct" step="0.1" min="0" max="100"></div>
-        <div class="form-group"><label class="form-label">Glucides (%)</label><input type="number" class="form-control" name="glucides_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">${t('sport.nutrition.ingredients.modal.proteines_label')}</label><input type="number" class="form-control" name="proteines_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">${t('sport.nutrition.ingredients.modal.lipides_label')}</label><input type="number" class="form-control" name="lipides_pct" step="0.1" min="0" max="100"></div>
+        <div class="form-group"><label class="form-label">${t('sport.nutrition.ingredients.modal.glucides_label')}</label><input type="number" class="form-control" name="glucides_pct" step="0.1" min="0" max="100"></div>
       </div>
       <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea class="form-control" name="notes_eleveurs" rows="2" placeholder="Observations, source..."></textarea>
+        <label class="form-label">${t('sport.nutrition.ingredients.modal.notes_label')}</label>
+        <textarea class="form-control" name="notes_eleveurs" rows="2" placeholder="${t('sport.nutrition.ingredients.modal.notes_placeholder')}"></textarea>
       </div>
       <div class="modal-footer" style="padding:0;margin-top:16px;">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+        <button type="submit" class="btn btn-primary">${t('sport.nutrition.ingredients.modal.save_btn')}</button>
       </div>
     </form>`;
   overlay.style.display = 'flex';
@@ -606,9 +611,9 @@ function openIngredientModal() {
     btn.disabled = true; btn.innerHTML = '<span class="loader-inline"></span>';
     try {
       await SportAPI.createIngredient(data);
-      showToast('Ingrédient ajouté !', 'success');
+      showToast(t('sport.nutrition.ingredients.added'), 'success');
       closeModal(); loadIngredientsTab();
-    } catch (err) { showToast(err.message,'error'); btn.disabled=false; btn.textContent='Enregistrer'; }
+    } catch (err) { showToast(err.message,'error'); btn.disabled=false; btn.textContent=t('sport.nutrition.ingredients.modal.save_btn'); }
   });
 }
 
@@ -625,61 +630,61 @@ async function loadSupplementsTab() {
 
     el.innerHTML = `
       <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-        <button class="btn btn-primary btn-sm" onclick="openSupplementModal()">+ Ajouter un supplément</button>
+        <button class="btn btn-primary btn-sm" onclick="openSupplementModal()">${t('sport.nutrition.supplements.add_btn')}</button>
       </div>
       ${list.length === 0
-        ? `<div class="empty-state"><div class="empty-icon">💊</div><h3>Aucun supplément</h3><p>Gérez vos vitamines et suppléments.</p></div>`
+        ? `<div class="empty-state"><div class="empty-icon">💊</div><h3>${t('sport.nutrition.supplements.empty.title')}</h3><p>${t('sport.nutrition.supplements.empty.sub')}</p></div>`
         : `<table class="table-modern">
-            <thead><tr><th>Nom</th><th>Type</th><th>Dosage</th><th>Description</th></tr></thead>
+            <thead><tr><th>${t('sport.nutrition.supplements.table.name')}</th><th>${t('sport.nutrition.supplements.table.type')}</th><th>${t('sport.nutrition.supplements.table.dosage')}</th><th>${t('sport.nutrition.supplements.table.description')}</th></tr></thead>
             <tbody>
               ${list.map(s => `
                 <tr>
                   <td><strong>${s.name||'—'}</strong></td>
-                  <td>${s.type?`<span class="badge badge-purple">${s.type}</span>`:'—'}</td>
+                  <td>${s.type?`<span class="badge badge-purple">${t(`sport.nutrition.supplements.modal.type.${s.type}`)}</span>`:'—'}</td>
                   <td>${s.dosage||'—'}</td>
                   <td style="font-size:0.78rem;color:var(--text-light);">${s.description||''}</td>
                 </tr>`).join('')}
             </tbody>
           </table>`}`;
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    el.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
 
 function openSupplementModal() {
   const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = '+ Nouveau supplément';
+  document.getElementById('modal-title').textContent = t('sport.nutrition.supplements.modal.title');
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = `
     <form id="form-supplement">
       <div class="form-group">
-        <label class="form-label">Nom *</label>
-        <input type="text" class="form-control" name="name" required placeholder="ex: Électrolytes, Vitamine B12...">
+        <label class="form-label">${t('sport.nutrition.supplements.modal.name_label')}</label>
+        <input type="text" class="form-control" name="name" required placeholder="${t('sport.nutrition.supplements.modal.name_placeholder')}">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Type</label>
+          <label class="form-label">${t('sport.nutrition.supplements.modal.type_label')}</label>
           <select class="form-control" name="type">
-            <option value="">—</option>
-            <option value="electrolyte">Électrolyte</option>
-            <option value="vitamine">Vitamine</option>
-            <option value="probiotique">Probiotique</option>
-            <option value="autre">Autre</option>
+            <option value="">${t('sport.nutrition.supplements.modal.type_none')}</option>
+            <option value="electrolyte">${t('sport.nutrition.supplements.modal.type.electrolyte')}</option>
+            <option value="vitamine">${t('sport.nutrition.supplements.modal.type.vitamine')}</option>
+            <option value="probiotique">${t('sport.nutrition.supplements.modal.type.probiotique')}</option>
+            <option value="autre">${t('sport.nutrition.supplements.modal.type.autre')}</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Dosage recommandé</label>
-          <input type="text" class="form-control" name="dosage" placeholder="ex: 2g/kg">
+          <label class="form-label">${t('sport.nutrition.supplements.modal.dosage_label')}</label>
+          <input type="text" class="form-control" name="dosage" placeholder="${t('sport.nutrition.supplements.modal.dosage_placeholder')}">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Description / précautions</label>
-        <textarea class="form-control" name="description" rows="2" placeholder="Contre-indications, conditions..."></textarea>
+        <label class="form-label">${t('sport.nutrition.supplements.modal.description_label')}</label>
+        <textarea class="form-control" name="description" rows="2" placeholder="${t('sport.nutrition.supplements.modal.description_placeholder')}"></textarea>
       </div>
       <div class="modal-footer" style="padding:0;margin-top:16px;">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+        <button type="submit" class="btn btn-primary">${t('sport.nutrition.supplements.modal.save_btn')}</button>
       </div>
     </form>`;
   overlay.style.display = 'flex';
@@ -693,9 +698,9 @@ function openSupplementModal() {
     btn.disabled = true; btn.innerHTML = '<span class="loader-inline"></span>';
     try {
       await SportAPI.createSupplement(data);
-      showToast('Supplément ajouté !', 'success');
+      showToast(t('sport.nutrition.supplements.added'), 'success');
       closeModal(); loadSupplementsTab();
-    } catch (err) { showToast(err.message,'error'); btn.disabled=false; btn.textContent='Enregistrer'; }
+    } catch (err) { showToast(err.message,'error'); btn.disabled=false; btn.textContent=t('sport.nutrition.supplements.modal.save_btn'); }
   });
 }
 
@@ -708,13 +713,15 @@ const _DAY_LABELS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dim
 let _planDays = [[], [], [], [], [], [], []];
 // _planDays[i] = [{id:int, name:str, pct:float, locked:bool}]
 
+function _dayLabel(i) { return t('sport.nutrition.day_labels.' + i); }
+
 function _planDayToggleLock(dayIdx, mixIdx) {
   const items = _planDays[dayIdx];
   if (items[mixIdx].locked) {
     items[mixIdx].locked = false;
   } else {
     const unlocked = items.filter(m => !m.locked).length;
-    if (unlocked <= 2) { showToast('Il faut au moins 2 mélanges déverrouillés pour redistribuer', 'warning'); return; }
+    if (unlocked <= 2) { showToast(t('sport.nutrition.plans.min_unlocked_warning'), 'warning'); return; }
     items[mixIdx].locked = true;
   }
   _planRenderDayList(dayIdx);
@@ -789,22 +796,35 @@ function _planUpdateDayDOM(dayIdx) {
   if (totalEl) {
     const total = _planDays[dayIdx].reduce((s, m) => s + m.pct, 0);
     const ok = Math.abs(total - 100) < 0.05;
-    totalEl.textContent = `Total : ${total.toFixed(2)}%`;
+    totalEl.textContent = `${t('sport.nutrition.mixes.total_ingredients', { pct: total.toFixed(2) }).split(':')[0]}: ${total.toFixed(2)}%`;
     totalEl.style.color = ok ? 'var(--success)' : (total > 100 ? 'var(--danger)' : 'var(--warning)');
     totalEl.style.fontWeight = '600';
   }
 }
 
-/* ——— Groupe un plan selon son nom ——— */
+/* ——— Groupe un plan selon son nom (retourne une clé canonique) ——— */
+const PLAN_GROUP_KEYS = ['concours', 'inter_saison', 'elevage', 'retraites'];
+// Anciennes valeurs (FR, en dur) historiquement stockées dans le champ "goal"
+const PLAN_GROUP_KEY_TO_LEGACY_LABEL = {
+  concours: '🏋️ Concours', inter_saison: '🍂 Inter-Saison',
+  elevage: '🐣 Élevage', retraites: '🕊️ Retraités'
+};
+const PLAN_GROUP_LEGACY_LABEL_TO_KEY = Object.fromEntries(
+  Object.entries(PLAN_GROUP_KEY_TO_LEGACY_LABEL).map(([k, v]) => [v, k])
+);
+
+function _planGroupLabel(key) {
+  return t(`sport.nutrition.plans.groups.${key}`);
+}
+
 function _planGroupe(name, goal) {
-  // Priorité au champ goal s'il correspond exactement à une catégorie
-  const cats = ['🏋️ Concours', '🍂 Inter-Saison', '🐣 Élevage', '🕊️ Retraités'];
-  if (goal && cats.includes(goal)) return goal;
-  // Sinon déduction depuis le nom
-  if (/inter.sa[io]/i.test(name)) return '🍂 Inter-Saison';
-  if (/[eé]levage/i.test(name))   return '🐣 Élevage';
-  if (/retrait/i.test(name))      return '🕊️ Retraités';
-  return '🏋️ Concours';
+  // Priorité au champ goal s'il correspond exactement à une catégorie (anciennes valeurs FR)
+  if (goal && PLAN_GROUP_LEGACY_LABEL_TO_KEY[goal]) return PLAN_GROUP_LEGACY_LABEL_TO_KEY[goal];
+  // Sinon déduction depuis le nom (FR / NL / EN)
+  if (/inter.?sa[io]son|tussenseizoen|off.?season/i.test(name)) return 'inter_saison';
+  if (/[eé]levage|kweek|breeding/i.test(name))                  return 'elevage';
+  if (/retrait|gepensioneer|retired/i.test(name))               return 'retraites';
+  return 'concours';
 }
 
 let _plansList   = [];
@@ -824,10 +844,10 @@ async function _loadPlansTab() {
     if (_plansList.length === 0) {
       el.innerHTML = `
         <div style="display:flex;justify-content:flex-end;margin-bottom:14px;">
-          <button class="btn btn-primary btn-sm" onclick="openPlanModal()">+ Nouveau plan</button>
+          <button class="btn btn-primary btn-sm" onclick="openPlanModal()">${t('sport.nutrition.plans.create_btn')}</button>
         </div>
-        <div class="empty-state"><div class="empty-icon">📋</div><h3>Aucun plan</h3>
-          <p>Créez votre premier plan alimentaire hebdomadaire.</p></div>`;
+        <div class="empty-state"><div class="empty-icon">📋</div><h3>${t('sport.nutrition.plans.empty.title')}</h3>
+          <p>${t('sport.nutrition.plans.empty.sub')}</p></div>`;
       return;
     }
 
@@ -838,8 +858,8 @@ async function _loadPlansTab() {
       if (!groupes[g]) groupes[g] = [];
       groupes[g].push(p);
     });
-    const optGroups = Object.entries(groupes).map(([label, items]) =>
-      `<optgroup label="${label}">
+    const optGroups = Object.entries(groupes).map(([key, items]) =>
+      `<optgroup label="${_planGroupLabel(key)}">
         ${items.map(p => `<option value="${p.id}">${p.name}</option>`).join('')}
       </optgroup>`
     ).join('');
@@ -848,10 +868,10 @@ async function _loadPlansTab() {
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
         <select id="plan-selector" class="form-control"
           style="flex:1;min-width:220px;font-size:0.92rem;max-width:540px;">
-          <option value="">— Choisir un programme —</option>
+          <option value="">${t('sport.nutrition.plans.selector_placeholder')}</option>
           ${optGroups}
         </select>
-        <button class="btn btn-primary btn-sm" onclick="openPlanModal()">+ Nouveau plan</button>
+        <button class="btn btn-primary btn-sm" onclick="openPlanModal()">${t('sport.nutrition.plans.create_btn')}</button>
       </div>
 
       <div id="plan-detail-panel" style="display:none;">
@@ -866,10 +886,10 @@ async function _loadPlansTab() {
               style="font-size:0.75rem;display:none;"></span>
           </div>
           <div style="display:flex;gap:6px;flex-shrink:0;margin-left:12px;">
-            <button class="btn btn-sm btn-secondary" id="plan-btn-detail" title="Voir le détail complet" style="font-size:0.8rem;padding:4px 10px;">🔍 Détail</button>
-            <button class="btn btn-sm btn-icon" id="plan-btn-edit"   title="Modifier">✏️</button>
-            <button class="btn btn-sm btn-icon" id="plan-btn-dup"    title="Dupliquer">📋</button>
-            <button class="btn btn-sm btn-icon" id="plan-btn-delete" title="Supprimer">🗑️</button>
+            <button class="btn btn-sm btn-secondary" id="plan-btn-detail" title="${t('sport.nutrition.plans.detail_title')}" style="font-size:0.8rem;padding:4px 10px;">${t('sport.nutrition.plans.detail_btn')}</button>
+            <button class="btn btn-sm btn-icon" id="plan-btn-edit"   title="${t('sport.nutrition.plans.edit_title')}">✏️</button>
+            <button class="btn btn-sm btn-icon" id="plan-btn-dup"    title="${t('sport.nutrition.plans.duplicate_title')}">📋</button>
+            <button class="btn btn-sm btn-icon" id="plan-btn-delete" title="${t('sport.nutrition.plans.delete_title')}">🗑️</button>
           </div>
         </div>
 
@@ -883,7 +903,7 @@ async function _loadPlansTab() {
         <!-- Planning semaine -->
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
           <div style="padding:11px 16px;border-bottom:1px solid var(--border);
-            font-weight:600;font-size:0.88rem;">📅 Planning hebdomadaire type</div>
+            font-weight:600;font-size:0.88rem;">${t('sport.nutrition.plans.weekly_planning_title')}</div>
           <table style="width:100%;border-collapse:collapse;" id="plan-detail-week">
             <tbody></tbody>
           </table>
@@ -892,7 +912,7 @@ async function _loadPlansTab() {
 
       <div id="plan-empty-hint"
         style="text-align:center;padding:48px 20px;color:var(--text-light);font-size:0.9rem;">
-        Sélectionnez un programme dans la liste ci-dessus pour afficher ses détails.
+        ${t('sport.nutrition.plans.select_hint')}
       </div>`;
 
     document.getElementById('plan-selector').addEventListener('change', e => {
@@ -906,7 +926,7 @@ async function _loadPlansTab() {
     }
 
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    el.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
@@ -941,7 +961,7 @@ function _planAfficherDetail(planId) {
     if (!raw) return `
       <tr style="border-top:1px solid var(--border);">
         <td style="padding:9px 16px;font-weight:600;font-size:0.82rem;
-          color:var(--text-light);white-space:nowrap;width:90px;">${_DAY_LABELS[i]}</td>
+          color:var(--text-light);white-space:nowrap;width:90px;">${_dayLabel(i)}</td>
         <td style="padding:9px 16px;font-size:0.82rem;color:var(--text-light);font-style:italic;">—</td>
       </tr>`;
 
@@ -971,7 +991,7 @@ function _planAfficherDetail(planId) {
     return `
       <tr style="border-top:1px solid var(--border);">
         <td style="padding:9px 16px;font-weight:700;font-size:0.82rem;
-          white-space:nowrap;width:90px;">${_DAY_LABELS[i]}</td>
+          white-space:nowrap;width:90px;">${_dayLabel(i)}</td>
         <td style="padding:6px 12px;">${mixHtml}</td>
       </tr>`;
   }).join('');
@@ -983,8 +1003,8 @@ function _planOuvrirDetailComplet(planId) {
   if (!p) return;
 
   const usageLabels = {
-    recuperation: 'Récupération', entrainement: 'Entraînement',
-    pre_panier: 'Pré-panier',    enlogement:   'Enlogement',
+    recuperation: t('sport.nutrition.usage.recuperation'), entrainement: t('sport.nutrition.usage.entrainement'),
+    pre_panier: t('sport.nutrition.usage.pre_panier'),    enlogement:   t('sport.nutrition.usage.enlogement'),
   };
 
   const joursHtml = _DAY_NAMES.map((day, i) => {
@@ -1053,7 +1073,7 @@ function _planOuvrirDetailComplet(planId) {
       <div style="margin-bottom:16px;">
         <div style="font-weight:700;font-size:0.82rem;text-transform:uppercase;letter-spacing:0.5px;
           color:var(--accent);margin-bottom:6px;padding-bottom:4px;border-bottom:1px solid var(--border);">
-          ${_DAY_LABELS[i]}
+          ${_dayLabel(i)}
         </div>
         ${mixDetails}
       </div>`;
@@ -1068,14 +1088,14 @@ function _planOuvrirDetailComplet(planId) {
         white-space:pre-line;">${p.description}</div>` : ''}
 
     <div style="font-weight:600;font-size:0.9rem;margin-bottom:14px;
-      border-bottom:2px solid var(--border);padding-bottom:8px;">📅 Détail par jour</div>
+      border-bottom:2px solid var(--border);padding-bottom:8px;">${t('sport.nutrition.plans.detail.day_section_title')}</div>
 
-    ${joursHtml || '<div style="color:var(--text-light);font-style:italic;">Aucun mélange planifié.</div>'}
+    ${joursHtml || `<div style="color:var(--text-light);font-style:italic;">${t('sport.nutrition.plans.detail.no_mixes')}</div>`}
 
     <div style="text-align:right;margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
-      <button class="btn btn-secondary" onclick="_planExporterPDF(${p.id})">🖨️ Exporter PDF</button>
-      <button class="btn btn-primary" onclick="closeModal(); openPlanModal(${p.id})">✏️ Modifier</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('sport.nutrition.plans.detail.close')}</button>
+      <button class="btn btn-secondary" onclick="_planExporterPDF(${p.id})">${t('sport.nutrition.plans.detail.export_pdf')}</button>
+      <button class="btn btn-primary" onclick="closeModal(); openPlanModal(${p.id})">${t('sport.nutrition.plans.detail.edit')}</button>
     </div>`;
 
   const overlay = document.getElementById('modal-overlay');
@@ -1284,10 +1304,10 @@ async function duplicatePlan(planId) {
   try {
     const src = await SportAPI.getPlan(planId);
     const DAY_KEYS = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
-    const copy = { name: `${src.name} (copie)`, goal: src.goal || null, description: src.description || null };
+    const copy = { name: `${src.name} ${t('sport.nutrition.plans.copy_suffix')}`, goal: src.goal || null, description: src.description || null };
     DAY_KEYS.forEach(d => { copy[d] = src[d] || null; });
     const created = await SportAPI.createPlan(copy);
-    showToast('Plan alimentaire dupliqué !', 'success');
+    showToast(t('sport.nutrition.plans.duplicated'), 'success');
     await _loadPlansTab();
     if (created?.id) {
       const sel = document.getElementById('plan-selector');
@@ -1298,11 +1318,11 @@ async function duplicatePlan(planId) {
 
 function deletePlan(planId) {
   const plan = _plansList.find(p => p.id === planId);
-  const nom  = plan?.name || 'ce plan';
-  confirmDelete(`Supprimer définitivement <strong>${nom}</strong> ?`, async () => {
+  const nom  = plan?.name || t('sport.nutrition.plans.default_name');
+  confirmDelete(t('sport.nutrition.plans.delete_confirm', { name: nom }), async () => {
     try {
       await SportAPI.deletePlan(planId);
-      showToast('Plan supprimé.', 'success');
+      showToast(t('sport.nutrition.plans.deleted'), 'success');
       _loadPlansTab();
     } catch (err) { showToast(err.message, 'error'); }
   });
@@ -1311,7 +1331,7 @@ function deletePlan(planId) {
 async function openPlanModal(planId = null) {
   const overlay = document.getElementById('modal-overlay');
   const isEdit = planId != null;
-  document.getElementById('modal-title').textContent = isEdit ? '✏️ Modifier le plan alimentaire' : '+ Nouveau plan alimentaire';
+  document.getElementById('modal-title').textContent = isEdit ? t('sport.nutrition.plans.modal.title_edit') : t('sport.nutrition.plans.modal.title_new');
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = '<div class="loader-spinner"></div>';
   overlay.style.display = 'flex';
@@ -1346,49 +1366,49 @@ async function openPlanModal(planId = null) {
 
   const mixOpts = mixList.length
     ? mixList.map(m => `<option value="${m.id}" data-name="${m.name}">${m.name}</option>`).join('')
-    : '<option value="" disabled>Aucun mélange disponible</option>';
+    : `<option value="" disabled>${t('sport.nutrition.plans.modal.no_mix_available')}</option>`;
 
-  const goalOpts = ['', '🏋️ Concours', '🍂 Inter-Saison', '🐣 Élevage', '🕊️ Retraités'];
-  const goalLabels = { '':'—', '🏋️ Concours':'🏋️ Concours', '🍂 Inter-Saison':'🍂 Inter-Saison', '🐣 Élevage':'🐣 Élevage', '🕊️ Retraités':'🕊️ Retraités' };
+  const goalOpts = ['', ...PLAN_GROUP_KEYS.map(k => PLAN_GROUP_KEY_TO_LEGACY_LABEL[k])];
+  const goalLabels = Object.fromEntries(goalOpts.map(v => [v, v ? _planGroupLabel(PLAN_GROUP_LEGACY_LABEL_TO_KEY[v]) : '—']));
   const currentGoal = existingPlan?.goal || '';
 
   document.getElementById('modal-body').innerHTML = `
     <form id="form-plan">
       <div class="form-row">
         <div class="form-group" style="flex:2;">
-          <label class="form-label">Nom du plan *</label>
-          <input type="text" class="form-control" name="name" required placeholder="ex: Plan pré-saison 2026"
+          <label class="form-label">${t('sport.nutrition.plans.modal.name_label')}</label>
+          <input type="text" class="form-control" name="name" required placeholder="${t('sport.nutrition.plans.modal.name_placeholder')}"
             value="${existingPlan ? (existingPlan.name || '').replace(/"/g,'&quot;') : ''}">
         </div>
         <div class="form-group">
-          <label class="form-label">Objectif</label>
+          <label class="form-label">${t('sport.nutrition.plans.modal.goal_label')}</label>
           <select class="form-control" name="goal">
             ${goalOpts.map(v => `<option value="${v}"${v === currentGoal ? ' selected' : ''}>${goalLabels[v]}</option>`).join('')}
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Description</label>
-        <textarea class="form-control" name="description" rows="2" placeholder="Instructions générales...">${existingPlan?.description || ''}</textarea>
+        <label class="form-label">${t('sport.nutrition.plans.modal.description_label')}</label>
+        <textarea class="form-control" name="description" rows="2" placeholder="${t('sport.nutrition.plans.modal.description_placeholder')}">${existingPlan?.description || ''}</textarea>
       </div>
 
       <div style="margin:16px 0 8px;font-weight:600;font-size:0.92rem;border-top:1px solid var(--border);padding-top:12px;">
-        📅 Mélanges par jour de la semaine
+        ${t('sport.nutrition.plans.modal.days_title')}
       </div>
       <p style="font-size:0.77rem;color:var(--text-light);margin-bottom:12px;">
-        Pour chaque jour, ajoutez un ou plusieurs mélanges à distribuer. Aucun mélange = jeûne / eau seule.
+        ${t('sport.nutrition.plans.modal.days_help')}
       </p>
 
       <div id="plan-days-form">
         ${_DAY_LABELS.map((label, idx) => `
           <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px;background:var(--bg-secondary);border-radius:8px;">
-            <div style="min-width:78px;font-weight:600;font-size:0.88rem;padding-top:6px;">${label}</div>
+            <div style="min-width:78px;font-weight:600;font-size:0.88rem;padding-top:6px;">${_dayLabel(idx)}</div>
             <div style="flex:1;">
               <div id="plan-day-tags-${idx}" style="margin-bottom:6px;"></div>
               <div id="plan-day-total-${idx}" style="font-size:0.82rem;margin-bottom:5px;"></div>
               <div style="display:flex;gap:6px;">
                 <select class="form-control form-control-sm plan-day-sel" data-day="${idx}" style="flex:1;">
-                  <option value="">— Ajouter un mélange —</option>
+                  <option value="">${t('sport.nutrition.plans.modal.mix_select_placeholder')}</option>
                   ${mixOpts}
                 </select>
                 <button type="button" class="btn btn-secondary btn-sm plan-day-add" data-day="${idx}">+</button>
@@ -1400,8 +1420,8 @@ async function openPlanModal(planId = null) {
       <div id="plan-week-summary" style="margin-top:10px;"></div>
 
       <div class="modal-footer" style="padding:0;margin-top:18px;">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-        <button type="submit" class="btn btn-primary">${isEdit ? 'Enregistrer' : 'Créer le plan'}</button>
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+        <button type="submit" class="btn btn-primary">${isEdit ? t('sport.nutrition.plans.modal.save_btn') : t('sport.nutrition.plans.modal.create_btn')}</button>
       </div>
     </form>`;
 
@@ -1416,7 +1436,7 @@ async function openPlanModal(planId = null) {
       if (!opt.value) return;
       const id = parseInt(opt.value), name = opt.dataset.name;
       if (_planDays[day].find(m => m.id === id)) {
-        showToast('Ce mélange est déjà dans ce jour', 'warning'); return;
+        showToast(t('sport.nutrition.plans.already_in_day'), 'warning'); return;
       }
       _planDays[day].push({ id, name, pct: 0, locked: false });
       _planDayRebalanceEqual(day);
@@ -1433,7 +1453,7 @@ async function openPlanModal(planId = null) {
       if (_planDays[i].length === 0) continue;
       const total = _planDays[i].reduce((s, m) => s + m.pct, 0);
       if (Math.abs(total - 100) > 0.5) {
-        showToast(`${_DAY_LABELS[i]} : total des mélanges doit être 100% (actuellement ${total.toFixed(2)}%)`, 'warning');
+        showToast(t('sport.nutrition.plans.day_total_warning', { day: _dayLabel(i), pct: total.toFixed(2) }), 'warning');
         return;
       }
     }
@@ -1447,16 +1467,16 @@ async function openPlanModal(planId = null) {
     try {
       if (isEdit) {
         await SportAPI.updatePlan(planId, data);
-        showToast('Plan alimentaire mis à jour !', 'success');
+        showToast(t('sport.nutrition.plans.updated'), 'success');
       } else {
         await SportAPI.createPlan(data);
-        showToast('Plan alimentaire créé !', 'success');
+        showToast(t('sport.nutrition.plans.created'), 'success');
       }
       closeModal(); _loadPlansTab();
     } catch (err) {
       showToast(err.message, 'error');
       submitBtn.disabled = false;
-      submitBtn.textContent = isEdit ? 'Enregistrer' : 'Créer le plan';
+      submitBtn.textContent = isEdit ? t('sport.nutrition.plans.modal.save_btn') : t('sport.nutrition.plans.modal.create_btn');
     }
   });
 }
@@ -1466,7 +1486,7 @@ function _planRenderDayList(dayIdx) {
   if (!el) return;
 
   if (_planDays[dayIdx].length === 0) {
-    el.innerHTML = '<div style="font-size:0.77rem;color:var(--text-light);font-style:italic;padding:2px 0;">Aucun mélange — jeûne / eau</div>';
+    el.innerHTML = `<div style="font-size:0.77rem;color:var(--text-light);font-style:italic;padding:2px 0;">${t('sport.nutrition.plans.no_mixes_day')}</div>`;
     const totalEl = document.getElementById(`plan-day-total-${dayIdx}`);
     if (totalEl) totalEl.textContent = '';
     return;
@@ -1475,14 +1495,14 @@ function _planRenderDayList(dayIdx) {
   const unlockedCount = _planDays[dayIdx].filter(m => !m.locked).length;
   el.innerHTML = _planDays[dayIdx].map((m, i) => {
     const canLock    = !m.locked && unlockedCount > 2;
-    const lockDisabled = !m.locked && !canLock ? 'disabled title="2 mélanges déverrouillés minimum"' : '';
+    const lockDisabled = !m.locked && !canLock ? `disabled title="${t('sport.nutrition.plans.min_unlocked_title')}"` : '';
     const maxVal     = m.locked ? 100 : _planDayMaxForMix(dayIdx, i);
     return `
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:5px;flex-wrap:wrap;${m.locked ? 'opacity:0.75;' : ''}">
       <button type="button" class="btn btn-sm btn-icon plan-mix-lock"
         data-day="${dayIdx}" data-idx="${i}" ${lockDisabled}
         style="font-size:1rem;padding:2px 5px;${m.locked ? 'color:var(--accent);' : 'color:var(--text-light);'}"
-        title="${m.locked ? 'Déverrouiller' : 'Verrouiller'}">${m.locked ? '🔒' : '🔓'}</button>
+        title="${m.locked ? t('sport.nutrition.plans.unlock') : t('sport.nutrition.plans.lock')}">${m.locked ? '🔒' : '🔓'}</button>
       <span style="min-width:90px;font-size:0.83rem;">🔀 ${m.name}</span>
       <input type="range" min="0" max="${maxVal}" step="0.01" value="${m.pct}"
         class="plan-mix-slider" data-day="${dayIdx}" data-idx="${i}"
@@ -1539,12 +1559,12 @@ function _planRenderSummary() {
   if (!el) return;
   if (!_planDays.some(d => d.length > 0)) { el.innerHTML = ''; return; }
   el.innerHTML = `
-    <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">📊 Résumé hebdomadaire :</div>
+    <div style="font-size:0.85rem;font-weight:600;margin-bottom:6px;">${t('sport.nutrition.plans.summary_title')}</div>
     <table style="width:100%;font-size:0.78rem;border-collapse:collapse;">
       <tbody>
         ${_DAY_LABELS.map((label, i) => `
           <tr>
-            <td style="font-weight:600;padding:3px 8px;white-space:nowrap;">${label}</td>
+            <td style="font-weight:600;padding:3px 8px;white-space:nowrap;">${_dayLabel(i)}</td>
             <td style="padding:3px 8px;">${_planDays[i].length
               ? _planDays[i].map(m => {
                   const total = _planDays[i].reduce((s,x) => s + x.pct, 0);
@@ -1601,19 +1621,19 @@ async function _loadAffectationTab() {
     ).join('');
 
     const statuts = [
-      { value: 'actif',        label: 'Actif' },
-      { value: 'reproducteur', label: 'Reproducteur' },
-      { value: 'concours',     label: 'Concours' },
-      { value: 'retraite',     label: 'Retraite' },
+      { value: 'actif',        label: t('sport.nutrition.affectation.statut.actif') },
+      { value: 'reproducteur', label: t('sport.nutrition.affectation.statut.reproducteur') },
+      { value: 'concours',     label: t('sport.nutrition.affectation.statut.concours') },
+      { value: 'retraite',     label: t('sport.nutrition.affectation.statut.retraite') },
     ];
 
     el.innerHTML = `
       <!-- Section A : Choix des pigeons -->
       <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;margin-bottom:12px;">
-        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">Section A — Choix des pigeons</div>
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">${t('sport.nutrition.affectation.section_a_title')}</div>
         <div style="display:flex;gap:20px;margin-bottom:12px;">
-          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="aff-mode" value="groupe" checked> Mode Groupe</label>
-          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="aff-mode" value="individuel"> Mode Individuel</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="aff-mode" value="groupe" checked> ${t('sport.nutrition.affectation.mode_group')}</label>
+          <label style="cursor:pointer;display:flex;align-items:center;gap:6px;"><input type="radio" name="aff-mode" value="individuel"> ${t('sport.nutrition.affectation.mode_individual')}</label>
         </div>
         <!-- Groupe -->
         <div id="aff-group-section">
@@ -1624,22 +1644,22 @@ async function _loadAffectationTab() {
                 ${s.label}
               </label>`).join('')}
           </div>
-          <div id="aff-group-count" style="font-size:0.82rem;color:var(--text-light);">0 pigeon sélectionné</div>
+          <div id="aff-group-count" style="font-size:0.82rem;color:var(--text-light);">${t('sport.nutrition.affectation.selected_count', { count: 0 })}</div>
         </div>
         <!-- Individuel -->
         <div id="aff-individual-section" style="display:none;">
           <input type="search" id="aff-indiv-search" class="form-control form-control-sm"
-            placeholder="Filtrer par bague ou nom..." style="margin-bottom:8px;">
+            placeholder="${t('sport.nutrition.affectation.search_placeholder')}" style="margin-bottom:8px;">
           <div id="aff-indiv-list" style="max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:6px;padding:4px;background:var(--bg-card);color:var(--text);"></div>
-          <div id="aff-indiv-count" style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">0 pigeon sélectionné</div>
+          <div id="aff-indiv-count" style="font-size:0.82rem;color:var(--text-light);margin-top:6px;">${t('sport.nutrition.affectation.selected_count', { count: 0 })}</div>
         </div>
       </div>
 
       <!-- Section B : Plan -->
       <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;margin-bottom:12px;">
-        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">Section B — Plan alimentaire</div>
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">${t('sport.nutrition.affectation.section_b_title')}</div>
         <select id="aff-plan-select" class="form-control" style="margin-bottom:10px;">
-          <option value="">— Choisir un plan —</option>
+          <option value="">${t('sport.nutrition.affectation.plan_select_placeholder')}</option>
           ${planOpts}
         </select>
         <div id="aff-plan-preview"></div>
@@ -1647,25 +1667,25 @@ async function _loadAffectationTab() {
 
       <!-- Section C : Période -->
       <div style="background:var(--bg-secondary);border-radius:10px;padding:16px;margin-bottom:12px;">
-        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">Section C — Période</div>
+        <div style="font-weight:600;font-size:0.92rem;margin-bottom:10px;">${t('sport.nutrition.affectation.section_c_title')}</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
           <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-size:0.8rem;">Date de début *</label>
+            <label class="form-label" style="font-size:0.8rem;">${t('sport.nutrition.affectation.date_debut_label')}</label>
             <input type="date" id="aff-date-debut" class="form-control" style="width:160px;">
           </div>
           <div class="form-group" id="aff-date-fin-wrap" style="margin:0;">
-            <label class="form-label" style="font-size:0.8rem;">Date de fin</label>
+            <label class="form-label" style="font-size:0.8rem;">${t('sport.nutrition.affectation.date_fin_label')}</label>
             <input type="date" id="aff-date-fin" class="form-control" style="width:160px;">
           </div>
           <div class="form-group" id="aff-duree-wrap" style="margin:0;">
-            <label class="form-label" style="font-size:0.8rem;">Durée (semaines)</label>
-            <input type="number" id="aff-duree" class="form-control" min="1" step="1" style="width:110px;" placeholder="ex: 4">
+            <label class="form-label" style="font-size:0.8rem;">${t('sport.nutrition.affectation.duree_label')}</label>
+            <input type="number" id="aff-duree" class="form-control" min="1" step="1" style="width:110px;" placeholder="${t('sport.nutrition.affectation.duree_placeholder')}">
           </div>
           <div class="form-group" style="margin:0;">
-            <label class="form-label" style="font-size:0.8rem;">Reconductible</label>
+            <label class="form-label" style="font-size:0.8rem;">${t('sport.nutrition.affectation.reconductible_label')}</label>
             <div style="display:flex;align-items:center;gap:6px;height:38px;">
               <input type="checkbox" id="aff-reconductible" style="width:16px;height:16px;cursor:pointer;">
-              <span style="font-size:0.82rem;color:var(--text-light);">Pas de date de fin</span>
+              <span style="font-size:0.82rem;color:var(--text-light);">${t('sport.nutrition.affectation.no_end_date')}</span>
             </div>
           </div>
         </div>
@@ -1673,12 +1693,12 @@ async function _loadAffectationTab() {
 
       <!-- Section D : Bouton Affecter -->
       <div style="margin-bottom:24px;">
-        <button class="btn btn-primary" id="aff-btn-submit">🎯 Affecter →</button>
+        <button class="btn btn-primary" id="aff-btn-submit">${t('sport.nutrition.affectation.submit_btn')}</button>
       </div>
 
       <!-- Liste des affectations existantes -->
       <div style="border-top:1px solid var(--border);padding-top:16px;">
-        <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">📋 Affectations enregistrées</div>
+        <div style="font-weight:600;margin-bottom:10px;font-size:0.92rem;">${t('sport.nutrition.affectation.registered_title')}</div>
         <div id="aff-list">
           ${_renderAffectationsList(Array.isArray(existingAff) ? existingAff : [], _affPlanMap, _affAllPigeonsLookup)}
         </div>
@@ -1706,7 +1726,7 @@ async function _loadAffectationTab() {
         });
         const n = _affSelectedIds.size;
         document.getElementById('aff-group-count').textContent =
-          `${n} pigeon${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`;
+          t('sport.nutrition.affectation.selected_count', { count: n });
       });
     });
 
@@ -1740,7 +1760,7 @@ async function _loadAffectationTab() {
     document.getElementById('aff-btn-submit').addEventListener('click', _affShowConfirmation);
 
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    el.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
@@ -1756,7 +1776,7 @@ function _affRenderIndivList(filter) {
     : _affAllPigeons;
 
   if (filtered.length === 0) {
-    el.innerHTML = '<div style="padding:8px;font-size:0.82rem;color:var(--text-light);">Aucun pigeon trouvé.</div>';
+    el.innerHTML = `<div style="padding:8px;font-size:0.82rem;color:var(--text-light);">${t('sport.nutrition.affectation.no_pigeon_found')}</div>`;
     return;
   }
 
@@ -1773,7 +1793,7 @@ function _affRenderIndivList(filter) {
       else _affSelectedIds.delete(e.target.value);
       const n = _affSelectedIds.size;
       const cnt = document.getElementById('aff-indiv-count');
-      if (cnt) cnt.textContent = `${n} pigeon${n > 1 ? 's' : ''} sélectionné${n > 1 ? 's' : ''}`;
+      if (cnt) cnt.textContent = t('sport.nutrition.affectation.selected_count', { count: n });
     });
   });
 }
@@ -1786,7 +1806,7 @@ function _affRenderPlanPreview() {
   el.innerHTML = `
     <table style="width:100%;font-size:0.75rem;border-collapse:collapse;margin-top:4px;background:var(--bg-card);color:var(--text);border-radius:6px;overflow:hidden;border:1px solid var(--border);">
       <thead><tr style="background:var(--bg-secondary);">
-        ${_DAY_LABELS.map(d => `<th style="padding:4px 5px;text-align:center;font-size:0.72rem;font-weight:600;">${d.substring(0, 3)}.</th>`).join('')}
+        ${_DAY_LABELS.map((d, i) => `<th style="padding:4px 5px;text-align:center;font-size:0.72rem;font-weight:600;">${_dayLabel(i).substring(0, 3)}.</th>`).join('')}
       </tr></thead>
       <tbody><tr>
         ${_DAY_NAMES.map(day => {
@@ -1794,7 +1814,7 @@ function _affRenderPlanPreview() {
           try {
             if (p[day]) names = JSON.parse(p[day]).map(item => {
               const id = typeof item === 'object' ? item.id : item;
-              return _affMixMap[id] || `Mél.#${id}`;
+              return _affMixMap[id] || t('sport.nutrition.affectation.mix_fallback', { id });
             });
           } catch {}
           return `<td style="padding:4px 5px;text-align:center;vertical-align:top;">
@@ -1826,13 +1846,13 @@ function _affSyncPeriod(changed) {
 
 async function _affShowConfirmation() {
   const pigeonIds  = Array.from(_affSelectedIds);
-  if (pigeonIds.length === 0) { showToast('Sélectionnez au moins un pigeon', 'warning'); return; }
+  if (pigeonIds.length === 0) { showToast(t('sport.nutrition.affectation.select_pigeon_warning'), 'warning'); return; }
 
   const planId = document.getElementById('aff-plan-select').value;
-  if (!planId) { showToast('Sélectionnez un plan alimentaire', 'warning'); return; }
+  if (!planId) { showToast(t('sport.nutrition.affectation.select_plan_warning'), 'warning'); return; }
 
   const dateDebut = document.getElementById('aff-date-debut').value;
-  if (!dateDebut) { showToast('Sélectionnez une date de début', 'warning'); return; }
+  if (!dateDebut) { showToast(t('sport.nutrition.affectation.select_date_warning'), 'warning'); return; }
 
   const reconductible = document.getElementById('aff-reconductible').checked;
   const dateFin = reconductible ? null : (document.getElementById('aff-date-fin').value || null);
@@ -1844,8 +1864,8 @@ async function _affShowConfirmation() {
 
   const plan = _affPlanMap[parseInt(planId)];
   const periodStr = dateFin
-    ? `du ${formatDate(dateDebut)} au ${formatDate(dateFin)}`
-    : `à partir du ${formatDate(dateDebut)} (reconductible)`;
+    ? t('sport.nutrition.affectation.period_range', { debut: formatDate(dateDebut), fin: formatDate(dateFin) })
+    : t('sport.nutrition.affectation.period_recurring', { debut: formatDate(dateDebut) });
 
   const eligibleCount = pigeonIds.length;
   const pigeonsHtml = pigeonIds.map(pid => {
@@ -1855,24 +1875,24 @@ async function _affShowConfirmation() {
   }).join('');
 
   const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent = '✅ Confirmer l\'affectation';
+  document.getElementById('modal-title').textContent = t('sport.nutrition.affectation.confirm.title');
   document.getElementById('modal').className = 'modal';
   document.getElementById('modal-body').innerHTML = `
     <div style="background:var(--bg-secondary);border-radius:8px;padding:16px;margin-bottom:16px;">
-      <div style="margin-bottom:8px;">📋 <strong>Plan :</strong> ${plan ? plan.name : '#' + planId}</div>
-      <div style="margin-bottom:8px;">🕊️ <strong>Pigeons :</strong>
-        ${eligibleCount} pigeon${eligibleCount > 1 ? 's' : ''} affecté${eligibleCount > 1 ? 's' : ''}
-        <span style="font-size:0.8rem;color:var(--text-light);"> — les affectations précédentes seront remplacées</span>
+      <div style="margin-bottom:8px;"><strong>${t('sport.nutrition.affectation.confirm.plan_label')}</strong> ${plan ? plan.name : '#' + planId}</div>
+      <div style="margin-bottom:8px;"><strong>${t('sport.nutrition.affectation.confirm.pigeons_label')}</strong>
+        ${t('sport.nutrition.affectation.confirm.pigeons_count', { count: eligibleCount })}
+        <span style="font-size:0.8rem;color:var(--text-light);"> ${t('sport.nutrition.affectation.confirm.replace_notice')}</span>
       </div>
-      <div style="margin-bottom:12px;">📅 <strong>Période :</strong> ${periodStr}</div>
+      <div style="margin-bottom:12px;"><strong>${t('sport.nutrition.affectation.confirm.period_label')}</strong> ${periodStr}</div>
       <details style="font-size:0.82rem;">
-        <summary style="cursor:pointer;color:var(--text-light);user-select:none;">Détail des pigeons (${pigeonIds.length})</summary>
+        <summary style="cursor:pointer;color:var(--text-light);user-select:none;">${t('sport.nutrition.affectation.confirm.details_summary', { count: pigeonIds.length })}</summary>
         <div style="margin-top:6px;max-height:160px;overflow-y:auto;">${pigeonsHtml}</div>
       </details>
     </div>
     <div class="modal-footer" style="padding:0;">
-      <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button type="button" class="btn btn-primary" id="aff-confirm-btn">Confirmer l'affectation</button>
+      <button type="button" class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button type="button" class="btn btn-primary" id="aff-confirm-btn">${t('sport.nutrition.affectation.confirm.confirm_btn')}</button>
     </div>
   `;
   overlay.style.display = 'flex';
@@ -1892,19 +1912,19 @@ async function _affShowConfirmation() {
         groupe:       groupeVal,
       });
       const n = eligibleCount;
-      showToast(`${n} affectation${n > 1 ? 's' : ''} créée${n > 1 ? 's' : ''} !`, 'success');
+      showToast(t('sport.nutrition.affectation.created', { count: n }), 'success');
       closeModal();
       _loadAffectationTab();
     } catch (err) {
       showToast(err.message, 'error');
-      btn.disabled = false; btn.textContent = 'Confirmer l\'affectation';
+      btn.disabled = false; btn.textContent = t('sport.nutrition.affectation.confirm.confirm_btn');
     }
   });
 }
 
 function _renderAffectationsList(affList, planMap, pigeonList) {
   if (!affList.length) {
-    return '<div style="font-size:0.85rem;color:var(--text-light);">Aucune affectation enregistrée.</div>';
+    return `<div style="font-size:0.85rem;color:var(--text-light);">${t('sport.nutrition.affectation.list.none')}</div>`;
   }
 
   const pigeonMap = Object.fromEntries(pigeonList.map(p => [p.id, p]));
@@ -1937,21 +1957,21 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
   const blocGroupe = Object.values(groupesMap).length === 0 ? '' : `
     <div style="font-weight:600;font-size:0.85rem;color:var(--text-light);
       text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">
-      👥 Affectations par groupe
+      ${t('sport.nutrition.affectation.list.group_title')}
     </div>
     <div style="overflow-x:auto;margin-bottom:20px;">
       <table class="table-modern" style="font-size:0.82rem;">
         <thead>
-          <tr><th>Groupe</th><th>Plan</th><th>Pigeons</th><th>Début</th><th>Fin</th><th></th></tr>
+          <tr><th>${t('sport.nutrition.affectation.list.group_table.groupe')}</th><th>${t('sport.nutrition.affectation.list.group_table.plan')}</th><th>${t('sport.nutrition.affectation.list.group_table.pigeons')}</th><th>${t('sport.nutrition.affectation.list.group_table.debut')}</th><th>${t('sport.nutrition.affectation.list.group_table.fin')}</th><th></th></tr>
         </thead>
         <tbody>
           ${Object.values(groupesMap).map(g => `
             <tr>
               <td><strong>${g.groupe}</strong></td>
-              <td>${g.plan ? g.plan.name : 'Plan #' + g.plan_id}</td>
+              <td>${g.plan ? g.plan.name : t('sport.nutrition.affectation.list.plan_fallback', { id: g.plan_id })}</td>
               <td>
                 <span class="badge badge-secondary" style="cursor:pointer;"
-                  title="${g.pigeons.join(', ')}">${g.pigeons.length} pigeon${g.pigeons.length > 1 ? 's' : ''}
+                  title="${g.pigeons.join(', ')}">${t('sport.nutrition.affectation.list.pigeons_count', { count: g.pigeons.length })}
                 </span>
                 <span style="font-size:0.75rem;color:var(--text-light);margin-left:4px;">
                   ${g.pigeons.slice(0, 3).join(', ')}${g.pigeons.length > 3 ? '…' : ''}
@@ -1962,7 +1982,7 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
               <td>
                 <button class="btn btn-sm btn-icon"
                   onclick="deleteAffectationsGroupe([${g.ids.join(',')}])"
-                  title="Supprimer le groupe">🗑️</button>
+                  title="${t('sport.nutrition.affectation.list.delete_group_title')}">🗑️</button>
               </td>
             </tr>`).join('')}
         </tbody>
@@ -1973,12 +1993,12 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
   const blocIndiv = individuelles.length === 0 ? '' : `
     <div style="font-weight:600;font-size:0.85rem;color:var(--text-light);
       text-transform:uppercase;letter-spacing:0.04em;margin-bottom:8px;">
-      👤 Affectations individuelles
+      ${t('sport.nutrition.affectation.list.individual_title')}
     </div>
     <div style="overflow-x:auto;">
       <table class="table-modern" style="font-size:0.82rem;">
         <thead>
-          <tr><th>Pigeon</th><th>Plan</th><th>Début</th><th>Fin</th><th></th></tr>
+          <tr><th>${t('sport.nutrition.affectation.list.individual_table.pigeon')}</th><th>${t('sport.nutrition.affectation.list.individual_table.plan')}</th><th>${t('sport.nutrition.affectation.list.individual_table.debut')}</th><th>${t('sport.nutrition.affectation.list.individual_table.fin')}</th><th></th></tr>
         </thead>
         <tbody>
           ${individuelles.map(a => {
@@ -1986,18 +2006,18 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
             const plan   = a.plan || planMap[a.plan_id];
             const statutBadge = (() => {
               const s = (pigeon?.statut || '').toLowerCase();
-              if (s === 'perdu')  return ' <span class="badge" style="background:#E67E22;color:#fff;font-size:0.68rem;">Perdu</span>';
-              if (s === 'decede') return ' <span class="badge" style="background:#7F8C8D;color:#fff;font-size:0.68rem;">Décédé</span>';
+              if (s === 'perdu')  return ` <span class="badge" style="background:#E67E22;color:#fff;font-size:0.68rem;">${t('sport.nutrition.affectation.list.statut_perdu')}</span>`;
+              if (s === 'decede') return ` <span class="badge" style="background:#7F8C8D;color:#fff;font-size:0.68rem;">${t('sport.nutrition.affectation.list.statut_decede')}</span>`;
               return '';
             })();
             return `
               <tr>
                 <td>${pigeon ? pigeon.matricule + statutBadge
                   : `<span style="color:var(--danger);font-size:0.78rem;">${a.pigeon_id}</span>`}</td>
-                <td>${plan ? plan.name : 'Plan #' + a.plan_id}</td>
+                <td>${plan ? plan.name : t('sport.nutrition.affectation.list.plan_fallback', { id: a.plan_id })}</td>
                 <td>${formatDate(a.date_debut)}</td>
                 <td>${a.date_fin ? formatDate(a.date_fin) : '♾️'}</td>
-                <td><button class="btn btn-sm btn-icon" onclick="deleteAffectation(${a.id})" title="Supprimer">🗑️</button></td>
+                <td><button class="btn btn-sm btn-icon" onclick="deleteAffectation(${a.id})" title="${t('sport.nutrition.affectation.list.delete_title')}">🗑️</button></td>
               </tr>`;
           }).join('')}
         </tbody>
@@ -2006,23 +2026,23 @@ function _renderAffectationsList(affList, planMap, pigeonList) {
 
   return (blocGroupe || blocIndiv)
     ? blocGroupe + blocIndiv
-    : '<div style="font-size:0.85rem;color:var(--text-light);">Aucune affectation enregistrée.</div>';
+    : `<div style="font-size:0.85rem;color:var(--text-light);">${t('sport.nutrition.affectation.list.none')}</div>`;
 }
 
 async function deleteAffectationsGroupe(ids) {
-  if (!confirm(`Supprimer le groupe (${ids.length} affectation${ids.length > 1 ? 's' : ''}) ?`)) return;
+  if (!confirm(t('sport.nutrition.affectation.delete_group_confirm', { count: ids.length }))) return;
   try {
     await Promise.all(ids.map(id => SportAPI.deleteAffectation(id)));
-    showToast('Groupe supprimé.', 'success');
+    showToast(t('sport.nutrition.affectation.group_deleted'), 'success');
     _loadAffectationTab();
   } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function deleteAffectation(id) {
-  if (!confirm('Supprimer cette affectation ?')) return;
+  if (!confirm(t('sport.nutrition.affectation.delete_confirm'))) return;
   try {
     await SportAPI.deleteAffectation(id);
-    showToast('Affectation supprimée.', 'success');
+    showToast(t('sport.nutrition.affectation.deleted'), 'success');
     _loadAffectationTab();
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -2061,9 +2081,9 @@ function _isoWeekLabel(semaine) {
   const week = parseInt(semaine.split('-W')[1]);
   const monday = _isoWeekMonday(semaine);
   const sunday = new Date(monday.getTime() + 6 * 86400000);
-  const mStr = monday.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric' });
-  const sStr = sunday.toLocaleDateString('fr-FR', { day: '2-digit', month: 'long' });
-  return `Semaine ${week} — ${mStr} au ${sStr}`;
+  const mStr = monday.toLocaleDateString(getLocaleCode(), { day: '2-digit', month: 'long', year: 'numeric' });
+  const sStr = sunday.toLocaleDateString(getLocaleCode(), { day: '2-digit', month: 'long' });
+  return t('sport.nutrition.calendar.week_label', { week, debut: mStr, fin: sStr });
 }
 
 async function _loadCalendarTab() {
@@ -2072,10 +2092,10 @@ async function _loadCalendarTab() {
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <button class="btn btn-secondary btn-sm" id="cal2-prev">← Préc.</button>
+      <button class="btn btn-secondary btn-sm" id="cal2-prev">${t('sport.nutrition.calendar.prev')}</button>
       <span id="cal2-label" style="font-weight:600;font-size:0.88rem;flex:1;text-align:center;"></span>
-      <button class="btn btn-secondary btn-sm" id="cal2-today">Aujourd'hui</button>
-      <button class="btn btn-secondary btn-sm" id="cal2-next">Suiv. →</button>
+      <button class="btn btn-secondary btn-sm" id="cal2-today">${t('sport.nutrition.calendar.today')}</button>
+      <button class="btn btn-secondary btn-sm" id="cal2-next">${t('sport.nutrition.calendar.next')}</button>
     </div>
     <div id="cal2-table"><div class="loader-spinner"></div></div>
   `;
@@ -2109,20 +2129,19 @@ async function _cal2Load() {
     const rows = await SportAPI.getAffectationsCalendrier(_calNewWeek);
     el.innerHTML = _cal2RenderTable(Array.isArray(rows) ? rows : []);
   } catch (err) {
-    el.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    el.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
 
 function _cal2RenderTable(rows) {
   const dayKeys   = ['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
-  const dayLabels = ['Lun.','Mar.','Mer.','Jeu.','Ven.','Sam.','Dim.'];
 
   if (rows.length === 0) {
     return `<div class="empty-state">
       <div class="empty-icon">📅</div>
-      <h3>Aucune affectation cette semaine</h3>
-      <p>Créez des affectations dans l'onglet <strong>🎯 Affectation</strong> pour les voir ici.</p>
+      <h3>${t('sport.nutrition.calendar.empty.title')}</h3>
+      <p>${t('sport.nutrition.calendar.empty.sub')}</p>
     </div>`;
   }
 
@@ -2131,8 +2150,8 @@ function _cal2RenderTable(rows) {
       <table class="table-modern" style="width:100%;">
         <thead>
           <tr>
-            <th style="min-width:160px;position:sticky;left:0;background:var(--bg-secondary);color:var(--text);">Pigeon / Groupe</th>
-            <th>Plan alimentaire</th>
+            <th style="min-width:160px;position:sticky;left:0;background:var(--bg-secondary);color:var(--text);">${t('sport.nutrition.calendar.table.pigeon_group')}</th>
+            <th>${t('sport.nutrition.calendar.table.plan')}</th>
           </tr>
         </thead>
         <tbody>
@@ -2162,7 +2181,7 @@ function _cal2RenderTable(rows) {
                              ? `<button class="btn btn-sm btn-secondary"
                                   style="padding:2px 10px;font-size:0.75rem;"
                                   onclick="_planOuvrirDetailComplet(${row.plan_id})">
-                                  🔍 Voir détail
+                                  ${t('sport.nutrition.calendar.detail_btn')}
                                 </button>`
                              : ''}
                          </div>`

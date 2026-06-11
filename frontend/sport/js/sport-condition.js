@@ -11,18 +11,18 @@ async function loadCondition() {
   content.innerHTML = `
     <!-- Sélecteur pigeon -->
     <div class="pigeon-select-bar">
-      <label>💪 Pigeon :</label>
+      <label>${t('sport.condition.pigeon_label')}</label>
       <select class="form-control" id="condition-pigeon-select">
-        <option value="">Choisir un pigeon...</option>
+        <option value="">${t('sport.choose_pigeon_placeholder')}</option>
       </select>
-      <button class="btn btn-primary btn-sm" id="btn-load-condition" disabled>Analyser</button>
+      <button class="btn btn-primary btn-sm" id="btn-load-condition" disabled>${t('sport.condition.btn_analyze')}</button>
     </div>
 
     <div id="condition-content">
       <div class="empty-state">
         <div class="empty-icon">💪</div>
-        <h3>Sélectionnez un pigeon</h3>
-        <p>La condition sportive détaillée s'affichera ici.</p>
+        <h3>${t('sport.condition.empty.title')}</h3>
+        <p>${t('sport.condition.empty.sub')}</p>
       </div>
     </div>
   `;
@@ -115,8 +115,8 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
       <div class="alert-card critical" style="margin-bottom:16px;">
         <span class="alert-icon">🚨</span>
         <div class="alert-content">
-          <div class="alert-title">Risque de surcharge détecté ! (${indices.fatigue}%)</div>
-          <div class="alert-text">Ce pigeon présente des signes de fatigue élevée. Réduisez l'intensité des entraînements et assurez une récupération complète.</div>
+          <div class="alert-title">${t('sport.condition.alert.title', { pct: indices.fatigue })}</div>
+          <div class="alert-text">${t('sport.condition.alert.text')}</div>
         </div>
       </div>` : ''}
 
@@ -124,22 +124,22 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
           <div>
-            <div class="card-title">📊 Indices de condition sportive</div>
-            <div class="card-subtitle">${lastSnap ? `Snapshot du ${formatDatetime(lastSnap.created_at)}` : 'Données en temps réel'}</div>
+            <div class="card-title">${t('sport.condition.indices_title')}</div>
+            <div class="card-subtitle">${lastSnap ? t('sport.condition.snapshot_date', { date: formatDatetime(lastSnap.created_at) }) : t('sport.condition.realtime_data')}</div>
           </div>
-          <button class="btn btn-sm btn-ghost" id="btn-new-snapshot">🔄 Nouveau snapshot</button>
+          <button class="btn btn-sm btn-ghost" id="btn-new-snapshot">${t('sport.condition.btn_new_snapshot')}</button>
         </div>
 
         ${Object.values(indices).some(v => v != null) ? `
           <div class="gauge-grid">
-            ${indices.recovery != null ? renderProgressRing(indices.recovery, 10, 'Récupération (7j)', '#2980B9') : ''}
-            ${indices.condition != null ? renderProgressRing(indices.condition, 10, 'Condition (7j)', '#27AE60') : ''}
-            ${indices.regularity != null ? renderProgressRing(indices.regularity, 10, 'Régularité', '#8E44AD') : ''}
-            ${indices.fatigue != null ? renderProgressRing(indices.fatigue, 100, 'Risque fatigue', indices.fatigue > 70 ? '#E74C3C' : '#E67E22') : ''}
-            ${indices.training_load != null ? renderProgressRing(indices.training_load, 30, 'Charge (30j)', '#E67E22') : ''}
+            ${indices.recovery != null ? renderProgressRing(indices.recovery, 10, t('sport.condition.gauges.recovery'), '#2980B9') : ''}
+            ${indices.condition != null ? renderProgressRing(indices.condition, 10, t('sport.condition.gauges.condition'), '#27AE60') : ''}
+            ${indices.regularity != null ? renderProgressRing(indices.regularity, 10, t('sport.condition.gauges.regularity'), '#8E44AD') : ''}
+            ${indices.fatigue != null ? renderProgressRing(indices.fatigue, 100, t('sport.condition.gauges.fatigue'), indices.fatigue > 70 ? '#E74C3C' : '#E67E22') : ''}
+            ${indices.training_load != null ? renderProgressRing(indices.training_load, 30, t('sport.condition.gauges.training_load'), '#E67E22') : ''}
           </div>` : `
           <div class="empty-state" style="padding:24px;">
-            <p>Aucun indice disponible. Créez un snapshot pour obtenir les données de condition.</p>
+            <p>${t('sport.condition.no_indices')}</p>
           </div>`}
       </div>
 
@@ -147,8 +147,8 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
       <div class="dashboard-row">
         <div class="card flex-1">
           <div class="card-header">
-            <div class="card-title">📈 Tendances</div>
-            <div class="card-subtitle">Évolution 90 derniers jours</div>
+            <div class="card-title">${t('sport.condition.trends.title')}</div>
+            <div class="card-subtitle">${t('sport.condition.trends.subtitle')}</div>
           </div>
           ${renderTendances(sessions, pigeonId)}
         </div>
@@ -156,8 +156,8 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
         <!-- Intégration santé -->
         <div class="card flex-1">
           <div class="card-header">
-            <div class="card-title">🏥 Impact santé sur la condition</div>
-            <div class="card-subtitle">Événements médicaux récents (90j)</div>
+            <div class="card-title">${t('sport.condition.health_impact.title')}</div>
+            <div class="card-subtitle">${t('sport.condition.health_impact.subtitle')}</div>
           </div>
           ${renderHealthImpact(recentHealth)}
         </div>
@@ -166,7 +166,7 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
       <!-- Dernières séances -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">🏃 Performances récentes</div>
+          <div class="card-title">${t('sport.condition.recent_perfs.title')}</div>
         </div>
         ${renderRecentPerfs(sessions, pigeonId)}
       </div>
@@ -176,20 +176,20 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
     document.getElementById('btn-new-snapshot').addEventListener('click', async () => {
       const btn = document.getElementById('btn-new-snapshot');
       btn.disabled = true;
-      btn.innerHTML = '<span class="loader-inline"></span> Analyse...';
+      btn.innerHTML = `<span class="loader-inline"></span> ${t('sport.condition.analyzing')}`;
       try {
         await AIAPI.buildSnapshot(pigeonId);
-        showToast('Snapshot créé avec succès !', 'success');
+        showToast(t('sport.condition.snapshot_created'), 'success');
         loadConditionForPigeon(pigeonId, pigeon);
       } catch (err) {
         showToast(err.message, 'error');
         btn.disabled = false;
-        btn.textContent = '🔄 Nouveau snapshot';
+        btn.textContent = t('sport.condition.btn_new_snapshot');
       }
     });
 
   } catch (err) {
-    container.innerHTML = `<div class="card"><p style="color:var(--danger);">Erreur : ${err.message}</p></div>`;
+    container.innerHTML = `<div class="card"><p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p></div>`;
     showToast(err.message, 'error');
   }
 }
@@ -197,7 +197,7 @@ async function loadConditionForPigeon(pigeonId, pigeon) {
 /* ——— Tendances sur les séances ——— */
 function renderTendances(sessions, pigeonId) {
   if (sessions.length < 2) {
-    return '<p style="color:var(--text-light);font-size:0.85rem;">Pas assez de séances pour calculer les tendances.</p>';
+    return `<p style="color:var(--text-light);font-size:0.85rem;">${t('sport.condition.trends.not_enough')}</p>`;
   }
 
   // Trier par date (session_date vient du nouveau endpoint history)
@@ -218,9 +218,9 @@ function renderTendances(sessions, pigeonId) {
   const avgPrev = prev30.length > 0 ? prev30.reduce((a, b) => a + b, 0) / prev30.length : null;
 
   const metrics = [
-    { label: 'Récupération moy. (90j)', val: avg30, prev: avgPrev, unit: '/10', dec: 1 },
-    { label: 'Nb séances (30j)', val: sorted.filter(s => inWindow(s, 0, 30)).length, prev: sorted.filter(s => inWindow(s, 30, 60)).length, unit: '', dec: 0 },
-    { label: 'Nb séances (90j)', val: sorted.filter(s => inWindow(s, 0, 90)).length, prev: null, unit: '', dec: 0 }
+    { label: t('sport.condition.trends.metrics.recovery_avg'), val: avg30, prev: avgPrev, unit: '/10', dec: 1 },
+    { label: t('sport.condition.trends.metrics.sessions_30'), val: sorted.filter(s => inWindow(s, 0, 30)).length, prev: sorted.filter(s => inWindow(s, 30, 60)).length, unit: '', dec: 0 },
+    { label: t('sport.condition.trends.metrics.sessions_90'), val: sorted.filter(s => inWindow(s, 0, 90)).length, prev: null, unit: '', dec: 0 }
   ];
 
   return metrics.map(m => {
@@ -243,7 +243,7 @@ function renderTendances(sessions, pigeonId) {
           ${deltaStr ? `<div class="tendance-delta" style="color:${arrowClass === 'up' ? 'var(--success)' : arrowClass === 'down' ? 'var(--danger)' : 'var(--text-light)'};">${deltaStr}</div>` : ''}
         </div>
       </div>`;
-  }).join('') || '<p style="color:var(--text-light);font-size:0.85rem;">Données insuffisantes.</p>';
+  }).join('') || `<p style="color:var(--text-light);font-size:0.85rem;">${t('sport.condition.trends.insufficient')}</p>`;
 }
 
 /* ——— Impact santé sur la condition ——— */
@@ -253,8 +253,8 @@ function renderHealthImpact(healthEvents) {
       <div class="alert-card success">
         <span class="alert-icon">✅</span>
         <div class="alert-content">
-          <div class="alert-title">Aucun événement médical récent</div>
-          <div class="alert-text">Condition non impactée par des soins.</div>
+          <div class="alert-title">${t('sport.condition.health_impact.none_title')}</div>
+          <div class="alert-text">${t('sport.condition.health_impact.none_text')}</div>
         </div>
       </div>`;
   }
@@ -265,17 +265,17 @@ function renderHealthImpact(healthEvents) {
 
     // Estimer l'impact selon le type et l'ancienneté
     let impact = '';
-    if (isBad && daysAgo <= 7) impact = 'Impact récent probable sur la condition';
-    else if (isBad && daysAgo <= 30) impact = 'Récupération médicale en cours';
-    else if (isBad && daysAgo <= 60) impact = 'Événement récent, surveiller les performances';
-    else if (isBad) impact = 'Événement ancien, impact probablement résorbé';
+    if (isBad && daysAgo <= 7) impact = t('sport.condition.health_impact.impact.recent');
+    else if (isBad && daysAgo <= 30) impact = t('sport.condition.health_impact.impact.recovering');
+    else if (isBad && daysAgo <= 60) impact = t('sport.condition.health_impact.impact.monitor');
+    else if (isBad) impact = t('sport.condition.health_impact.impact.resolved');
 
     return `
       <div style="display:flex;align-items:flex-start;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
         <span style="font-size:1.1rem;">${isBad ? '🔴' : '🟢'}</span>
         <div>
-          <div style="font-size:0.85rem;font-weight:600;">${h.type || h.evenement || 'Événement'}</div>
-          <div style="font-size:0.75rem;color:var(--text-light);">Il y a ${daysAgo} jour(s) · ${formatDate(h.date || h.created_at)}</div>
+          <div style="font-size:0.85rem;font-weight:600;">${h.type || h.evenement || t('sport.condition.health_impact.event_default')}</div>
+          <div style="font-size:0.75rem;color:var(--text-light);">${t('sport.condition.health_impact.days_ago', { count: daysAgo })} · ${formatDate(h.date || h.created_at)}</div>
           ${impact ? `<div style="font-size:0.75rem;color:${isBad ? 'var(--danger)' : 'var(--success)'};font-style:italic;margin-top:2px;">→ ${impact}</div>` : ''}
         </div>
       </div>`;
@@ -285,7 +285,7 @@ function renderHealthImpact(healthEvents) {
 /* ——— Performances récentes ——— */
 function renderRecentPerfs(sessions, pigeonId) {
   if (sessions.length === 0) {
-    return '<div class="empty-state"><p>Aucune séance enregistrée.</p></div>';
+    return `<div class="empty-state"><p>${t('sport.condition.recent_perfs.empty')}</p></div>`;
   }
 
   const sorted = [...sessions]
@@ -296,12 +296,12 @@ function renderRecentPerfs(sessions, pigeonId) {
     <table class="table-modern">
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Distance</th>
-          <th>Récupération</th>
-          <th>Condition</th>
-          <th>Motivation</th>
+          <th>${t('sport.condition.recent_perfs.table.date')}</th>
+          <th>${t('sport.condition.recent_perfs.table.type')}</th>
+          <th>${t('sport.condition.recent_perfs.table.distance')}</th>
+          <th>${t('sport.condition.recent_perfs.table.recovery')}</th>
+          <th>${t('sport.condition.recent_perfs.table.condition')}</th>
+          <th>${t('sport.condition.recent_perfs.table.motivation')}</th>
         </tr>
       </thead>
       <tbody>

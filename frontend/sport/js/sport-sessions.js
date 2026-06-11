@@ -10,7 +10,7 @@ async function loadSessions() {
   const btn = document.getElementById('btn-add');
   if (btn) {
     btn.style.display = '';
-    btn.textContent = '+ Nouvelle séance';
+    btn.textContent = t('sport.sessions.btn_new');
     btn.onclick = () => openCreateSessionModal();
   }
 
@@ -22,16 +22,16 @@ async function loadSessions() {
       <!-- Filtres -->
       <div class="card" style="margin-bottom:16px;padding:14px 18px;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-          <label style="font-weight:600;font-size:0.85rem;">Filtrer :</label>
+          <label style="font-weight:600;font-size:0.85rem;">${t('sport.sessions.filter.label')}</label>
           <select class="form-control" style="width:auto;" id="filter-type">
-            <option value="">Tous les types</option>
-            <option value="loft">Loft</option>
-            <option value="toss">Lancer</option>
-            <option value="race">Concours</option>
+            <option value="">${t('sport.sessions.filter.all_types')}</option>
+            <option value="loft">${t('sport.session_type.loft')}</option>
+            <option value="toss">${t('sport.session_type.toss')}</option>
+            <option value="race">${t('sport.session_type.race')}</option>
           </select>
-          <input type="date" class="form-control" style="width:auto;" id="filter-date-from" placeholder="Du">
-          <input type="date" class="form-control" style="width:auto;" id="filter-date-to" placeholder="Au">
-          <button class="btn btn-secondary btn-sm" id="btn-filter-reset">Réinitialiser</button>
+          <input type="date" class="form-control" style="width:auto;" id="filter-date-from" placeholder="${t('sport.sessions.filter.from')}">
+          <input type="date" class="form-control" style="width:auto;" id="filter-date-to" placeholder="${t('sport.sessions.filter.to')}">
+          <button class="btn btn-secondary btn-sm" id="btn-filter-reset">${t('sport.sessions.filter.reset')}</button>
         </div>
       </div>
 
@@ -39,8 +39,8 @@ async function loadSessions() {
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">🏃 Séances d'entraînement</div>
-            <div class="card-subtitle" id="sessions-count">${list.length} séance(s)</div>
+            <div class="card-title">${t('sport.sessions.title')}</div>
+            <div class="card-subtitle" id="sessions-count">${t('sport.sessions.count', { count: list.length })}</div>
           </div>
         </div>
         <div id="sessions-table-wrap">
@@ -62,7 +62,7 @@ async function loadSessions() {
         return true;
       });
       document.getElementById('sessions-table-wrap').innerHTML = renderSessionsTable(filtered);
-      document.getElementById('sessions-count').textContent = `${filtered.length} séance(s)`;
+      document.getElementById('sessions-count').textContent = t('sport.sessions.count', { count: filtered.length });
       attachSessionRowClicks();
     };
 
@@ -79,7 +79,7 @@ async function loadSessions() {
     attachSessionRowClicks();
 
   } catch (err) {
-    content.innerHTML = `<div class="card"><p style="color:var(--danger);">Erreur : ${err.message}</p></div>`;
+    content.innerHTML = `<div class="card"><p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p></div>`;
     showToast(err.message, 'error');
   }
 }
@@ -88,7 +88,7 @@ async function loadSessions() {
 function fmtDistance(distKm) {
   if (distKm == null) return '—';
   const m = Math.round(distKm * 1000);
-  return m.toLocaleString('fr-FR') + ' m';
+  return m.toLocaleString(getLocaleCode()) + ' m';
 }
 
 /* ——— Rendu tableau séances ——— */
@@ -96,8 +96,8 @@ function renderSessionsTable(list) {
   if (list.length === 0) {
     return `<div class="empty-state">
       <div class="empty-icon">🏃</div>
-      <h3>Aucune séance trouvée</h3>
-      <p>Créez votre première séance ou modifiez les filtres.</p>
+      <h3>${t('sport.sessions.empty.title')}</h3>
+      <p>${t('sport.sessions.empty.sub')}</p>
     </div>`;
   }
 
@@ -105,15 +105,15 @@ function renderSessionsTable(list) {
     <table class="table-modern">
       <thead>
         <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Distance</th>
-          <th>Météo</th>
-          <th>Temp.</th>
-          <th>Vent</th>
-          <th>Pigeons</th>
-          <th>Récup. moy.</th>
-          <th>Actions</th>
+          <th>${t('sport.sessions.table.date')}</th>
+          <th>${t('sport.sessions.table.type')}</th>
+          <th>${t('sport.sessions.table.distance')}</th>
+          <th>${t('sport.sessions.table.meteo')}</th>
+          <th>${t('sport.sessions.table.temp')}</th>
+          <th>${t('sport.sessions.table.vent')}</th>
+          <th>${t('sport.sessions.table.pigeons')}</th>
+          <th>${t('sport.sessions.table.recup')}</th>
+          <th>${t('sport.sessions.table.actions')}</th>
         </tr>
       </thead>
       <tbody>
@@ -126,7 +126,7 @@ function renderSessionsTable(list) {
               <td>${formatDate(s.date)}</td>
               <td>
                 ${sessionTypeBadge(s.session_type)}
-                ${isConcours ? '<br><span style="font-size:11px;color:var(--text-light);">via Concours Colomb</span>' : ''}
+                ${isConcours ? `<br><span style="font-size:11px;color:var(--text-light);">${t('sport.sessions.via_concours')}</span>` : ''}
               </td>
               <td>${fmtDistance(s.distance_km)}</td>
               <td>${s.weather || '—'}</td>
@@ -136,9 +136,9 @@ function renderSessionsTable(list) {
               <td>${avgRec != null ? renderScoreBar(avgRec) : '<span style="color:var(--text-light)">—</span>'}</td>
               <td>
                 ${isConcours
-                  ? `<a href="../index.html#concours" class="btn btn-sm btn-secondary" title="Géré dans Colomb">🏠 Colomb</a>`
-                  : `<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openSessionDetail(${s.id})">Détail</button>
-                     <button class="btn btn-sm btn-icon" title="Supprimer" onclick="event.stopPropagation();deleteSession(${s.id})">🗑️</button>`
+                  ? `<a href="../index.html#concours" class="btn btn-sm btn-secondary" title="${t('sport.sessions.managed_in_colomb')}">🏠 ${t('sport.sessions.btn_colomb')}</a>`
+                  : `<button class="btn btn-sm btn-ghost" onclick="event.stopPropagation();openSessionDetail(${s.id})">${t('sport.sessions.btn_detail')}</button>
+                     <button class="btn btn-sm btn-icon" title="${t('sport.sessions.btn_delete')}" onclick="event.stopPropagation();deleteSession(${s.id})">🗑️</button>`
                 }
               </td>
             </tr>`;
@@ -164,10 +164,10 @@ function attachSessionRowClicks() {
 
 /* ——— Supprimer une séance ——— */
 async function deleteSession(id) {
-  if (!confirm('Supprimer cette séance ? Cette action est irréversible.')) return;
+  if (!confirm(t('sport.sessions.delete_confirm'))) return;
   try {
     await SportAPI.deleteSession(id);
-    showToast('Séance supprimée.', 'success');
+    showToast(t('sport.sessions.deleted'), 'success');
     loadSessions();
   } catch (err) {
     showToast(err.message, 'error');
@@ -181,71 +181,70 @@ function openCreateSessionModal() {
   const body = document.getElementById('modal-body');
   const modal = document.getElementById('modal');
 
-  title.textContent = '+ Nouvelle séance';
+  title.textContent = t('sport.sessions.btn_new');
   modal.className = 'modal';
 
   const today = new Date().toISOString().split('T')[0];
   body.innerHTML = `
     <div style="background:#EBF5FB;border:1px solid #AED6F1;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:#1A5276;">
-      🏆 Les séances de <strong>Concours</strong> sont gérées depuis l'accueil <strong>Colomb</strong>
-      (module Concours). Elles apparaissent ici automatiquement en lecture seule.
+      ${t('sport.sessions.form.concours_banner')}
     </div>
     <form id="form-session">
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Date *</label>
+          <label class="form-label">${t('sport.sessions.form.date_label')}</label>
           <input type="date" class="form-control" name="date" value="${today}" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Type de séance *</label>
+          <label class="form-label">${t('sport.sessions.form.type_label')}</label>
           <select class="form-control" name="session_type" required>
-            <option value="loft">Loft</option>
-            <option value="toss">Lancer</option>
+            <option value="loft">${t('sport.session_type.loft')}</option>
+            <option value="toss">${t('sport.session_type.toss')}</option>
           </select>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Distance (m)</label>
-          <input type="number" class="form-control" name="distance_m" step="100" min="0" placeholder="ex: 50000">
+          <label class="form-label">${t('sport.sessions.form.distance_label')}</label>
+          <input type="number" class="form-control" name="distance_m" step="100" min="0" placeholder="${t('sport.sessions.form.distance_placeholder')}">
         </div>
         <div class="form-group">
-          <label class="form-label">Météo</label>
+          <label class="form-label">${t('sport.sessions.form.weather_label')}</label>
           <select class="form-control" name="weather">
             <option value="">—</option>
-            <option value="ensoleillé">Ensoleillé</option>
-            <option value="nuageux">Nuageux</option>
-            <option value="couvert">Couvert</option>
-            <option value="pluie">Pluie</option>
-            <option value="vent">Vent fort</option>
-            <option value="brouillard">Brouillard</option>
+            <option value="ensoleillé">${t('sport.sessions.weather.ensoleille')}</option>
+            <option value="nuageux">${t('sport.sessions.weather.nuageux')}</option>
+            <option value="couvert">${t('sport.sessions.weather.couvert')}</option>
+            <option value="pluie">${t('sport.sessions.weather.pluie')}</option>
+            <option value="vent">${t('sport.sessions.weather.vent_fort')}</option>
+            <option value="brouillard">${t('sport.sessions.weather.brouillard')}</option>
           </select>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Température (°C)</label>
-          <input type="number" class="form-control" name="temperature" step="0.5" placeholder="ex: 18">
+          <label class="form-label">${t('sport.sessions.form.temperature_label')}</label>
+          <input type="number" class="form-control" name="temperature" step="0.5" placeholder="${t('sport.sessions.form.temperature_placeholder')}">
         </div>
         <div class="form-group">
-          <label class="form-label">Vent</label>
+          <label class="form-label">${t('sport.sessions.form.wind_label')}</label>
           <select class="form-control" name="wind">
             <option value="">—</option>
-            <option value="calme">Calme</option>
-            <option value="léger">Léger</option>
-            <option value="modéré">Modéré</option>
-            <option value="fort">Fort</option>
-            <option value="très fort">Très fort</option>
+            <option value="calme">${t('sport.sessions.wind.calme')}</option>
+            <option value="léger">${t('sport.sessions.wind.leger')}</option>
+            <option value="modéré">${t('sport.sessions.wind.modere')}</option>
+            <option value="fort">${t('sport.sessions.wind.fort')}</option>
+            <option value="très fort">${t('sport.sessions.wind.tres_fort')}</option>
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea class="form-control" name="notes" rows="3" placeholder="Observations, conditions particulières..."></textarea>
+        <label class="form-label">${t('sport.sessions.form.notes_label')}</label>
+        <textarea class="form-control" name="notes" rows="3" placeholder="${t('sport.sessions.form.notes_placeholder')}"></textarea>
       </div>
       <div class="modal-footer" style="padding:0;margin-top:16px;">
-        <button type="button" class="btn btn-secondary" id="btn-modal-cancel">Annuler</button>
-        <button type="submit" class="btn btn-primary">Créer la séance</button>
+        <button type="button" class="btn btn-secondary" id="btn-modal-cancel">${t('common.cancel')}</button>
+        <button type="submit" class="btn btn-primary">${t('sport.sessions.form.submit_create')}</button>
       </div>
     </form>`;
 
@@ -274,17 +273,17 @@ function openCreateSessionModal() {
 
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="loader-inline"></span> Création...';
+    submitBtn.innerHTML = `<span class="loader-inline"></span> ${t('sport.sessions.form.creating')}`;
 
     try {
       await SportAPI.createSession(data);
-      showToast('Séance créée avec succès !', 'success');
+      showToast(t('sport.sessions.form.created'), 'success');
       closeModal();
       loadSessions();
     } catch (err) {
       showToast(err.message, 'error');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Créer la séance';
+      submitBtn.textContent = t('sport.sessions.form.submit_create');
     }
   });
 }
@@ -296,7 +295,7 @@ async function openSessionDetail(sessionId) {
   const body = document.getElementById('modal-body');
   const modal = document.getElementById('modal');
 
-  title.textContent = 'Détail de la séance';
+  title.textContent = t('sport.sessions.detail.loading_title');
   modal.className = 'modal modal-lg';
   body.innerHTML = '<div class="loader-spinner"></div>';
   overlay.style.display = 'flex';
@@ -322,14 +321,14 @@ async function openSessionDetail(sessionId) {
     const pigeonMap = {};
     pigeons.forEach(p => pigeonMap[p.id] = p);
 
-    title.textContent = `Séance du ${formatDate(session.date)} — ${sessionTypeBadge(session.session_type)}`;
+    title.innerHTML = `${t('sport.session_detail.title', { date: formatDate(session.date) })} — ${sessionTypeBadge(session.session_type)}`;
 
     const bannerConcours = session.session_type === 'race' ? `
       <div style="background:#EBF5FB;border:1px solid #AED6F1;border-radius:8px;padding:10px 14px;
                   margin-bottom:16px;font-size:13px;color:#1A5276;display:flex;align-items:center;gap:8px;">
-        🏆 Cette séance est un <strong>concours</strong> géré depuis l'accueil Colomb.
+        ${t('sport.sessions.detail.concours_banner')}
         <a href="../index.html#concours" style="margin-left:auto;font-weight:600;color:#2980B9;">
-          Aller aux Concours →
+          ${t('sport.sessions.detail.concours_link')}
         </a>
       </div>` : '';
 
@@ -339,7 +338,7 @@ async function openSessionDetail(sessionId) {
       <div style="display:flex;gap:20px;flex-wrap:wrap;margin-bottom:20px;">
         ${session.distance_km != null ? `<div class="stat-card stat-blue" style="flex:1;min-width:120px;">
           <div class="stat-icon">📏</div>
-          <div class="stat-value">${Math.round(session.distance_km * 1000).toLocaleString('fr-FR')}</div>
+          <div class="stat-value">${Math.round(session.distance_km * 1000).toLocaleString(getLocaleCode())}</div>
           <div class="stat-label">m</div>
         </div>` : ''}
         ${session.temperature != null ? `<div class="stat-card stat-orange" style="flex:1;min-width:120px;">
@@ -350,43 +349,43 @@ async function openSessionDetail(sessionId) {
         ${session.weather ? `<div class="stat-card" style="flex:1;min-width:120px;">
           <div class="stat-icon">🌤️</div>
           <div class="stat-value" style="font-size:1rem;">${session.weather}</div>
-          <div class="stat-label">Météo</div>
+          <div class="stat-label">${t('sport.sessions.table.meteo')}</div>
         </div>` : ''}
         ${session.wind ? `<div class="stat-card" style="flex:1;min-width:120px;">
           <div class="stat-icon">💨</div>
           <div class="stat-value" style="font-size:1rem;">${session.wind}</div>
-          <div class="stat-label">Vent</div>
+          <div class="stat-label">${t('sport.sessions.table.vent')}</div>
         </div>` : ''}
       </div>
 
       ${session.notes ? `<div class="alert-card info" style="margin-bottom:16px;">
         <span class="alert-icon">📝</span>
         <div class="alert-content">
-          <div class="alert-title">Notes</div>
+          <div class="alert-title">${t('sport.sessions.form.notes_label')}</div>
           <div class="alert-text">${session.notes}</div>
         </div>
       </div>` : ''}
 
       <!-- Résultats -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <h3 style="font-size:1rem;font-weight:600;">Résultats pigeons (${results.length})</h3>
-        <button class="btn btn-primary btn-sm" id="btn-add-result">+ Ajouter résultat</button>
+        <h3 style="font-size:1rem;font-weight:600;">${t('sport.sessions.detail.results_title', { count: results.length })}</h3>
+        <button class="btn btn-primary btn-sm" id="btn-add-result">${t('sport.sessions.detail.btn_add_result')}</button>
       </div>
 
       ${results.length === 0
-        ? '<div class="empty-state"><div class="empty-icon">🕊️</div><h3>Aucun résultat</h3><p>Ajoutez les performances des pigeons.</p></div>'
+        ? `<div class="empty-state"><div class="empty-icon">🕊️</div><h3>${t('sport.sessions.detail.empty_results.title')}</h3><p>${t('sport.sessions.detail.empty_results.sub')}</p></div>`
         : `<div style="overflow-x:auto;">
           <table class="table-modern">
             <thead>
               <tr>
-                <th>Pigeon</th>
-                <th>Retour (min)</th>
-                <th>Rang</th>
-                <th>Récupération</th>
-                <th>Hydratation</th>
-                <th>Condition</th>
-                <th>Motivation</th>
-                <th>Santé</th>
+                <th>${t('sport.sessions.detail.table.pigeon')}</th>
+                <th>${t('sport.sessions.detail.table.return_time')}</th>
+                <th>${t('sport.sessions.detail.table.rank')}</th>
+                <th>${t('sport.sessions.detail.table.recovery')}</th>
+                <th>${t('sport.sessions.detail.table.hydration')}</th>
+                <th>${t('sport.sessions.detail.table.condition')}</th>
+                <th>${t('sport.sessions.detail.table.motivation')}</th>
+                <th>${t('sport.sessions.detail.table.health')}</th>
               </tr>
             </thead>
             <tbody>
@@ -399,8 +398,8 @@ async function openSessionDetail(sessionId) {
                   return (Date.now() - d) < 30 * 24 * 3600 * 1000;
                 });
                 const healthBadge = recentHealth.length > 0
-                  ? `<span class="badge badge-warning" title="${recentHealth[0].type || 'Traitement récent'}">⚠️ Suivi</span>`
-                  : `<span class="badge badge-success">✅ OK</span>`;
+                  ? `<span class="badge badge-warning" title="${recentHealth[0].type || t('sport.sessions.detail.health.recent_treatment')}">${t('sport.sessions.detail.health.suivi')}</span>`
+                  : `<span class="badge badge-success">${t('sport.sessions.detail.health.ok')}</span>`;
 
                 return `
                   <tr>
@@ -425,7 +424,7 @@ async function openSessionDetail(sessionId) {
     document.getElementById('btn-add-result').onclick = () => openAddResultModal(sessionId, pigeons);
 
   } catch (err) {
-    body.innerHTML = `<p style="color:var(--danger);">Erreur : ${err.message}</p>`;
+    body.innerHTML = `<p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p>`;
     showToast(err.message, 'error');
   }
 }
@@ -437,7 +436,7 @@ function openAddResultModal(sessionId, pigeons) {
   const modal = document.getElementById('modal');
   modal.className = 'modal';
 
-  title.textContent = '+ Ajouter un résultat pigeon';
+  title.textContent = t('sport.sessions.result_modal.title');
 
   const pigeonOptions = pigeons.map(p =>
     `<option value="${p.id}">${p.matricule}${p.nom ? ' — ' + p.nom : ''}</option>`
@@ -446,49 +445,49 @@ function openAddResultModal(sessionId, pigeons) {
   body.innerHTML = `
     <form id="form-result">
       <div class="form-group">
-        <label class="form-label">Pigeon *</label>
+        <label class="form-label">${t('sport.sessions.result_modal.pigeon_label')}</label>
         <select class="form-control" name="pigeon_id" required>
-          <option value="">Choisir un pigeon...</option>
+          <option value="">${t('sport.choose_pigeon_placeholder')}</option>
           ${pigeonOptions}
         </select>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Temps de retour (min)</label>
-          <input type="number" class="form-control" name="return_time" step="1" min="0" placeholder="ex: 45">
+          <label class="form-label">${t('sport.sessions.result_modal.return_time_label')}</label>
+          <input type="number" class="form-control" name="return_time" step="1" min="0" placeholder="${t('sport.sessions.result_modal.return_time_placeholder')}">
         </div>
         <div class="form-group">
-          <label class="form-label">Rang interne</label>
-          <input type="number" class="form-control" name="internal_rank" step="1" min="1" placeholder="ex: 1">
+          <label class="form-label">${t('sport.sessions.result_modal.rank_label')}</label>
+          <input type="number" class="form-control" name="internal_rank" step="1" min="1" placeholder="${t('sport.sessions.result_modal.rank_placeholder')}">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Score récupération (0-10)</label>
+          <label class="form-label">${t('sport.sessions.result_modal.recovery_label')}</label>
           <input type="number" class="form-control" name="recovery_score" step="0.5" min="0" max="10" placeholder="0–10">
         </div>
         <div class="form-group">
-          <label class="form-label">Score hydratation (0-10)</label>
+          <label class="form-label">${t('sport.sessions.result_modal.hydration_label')}</label>
           <input type="number" class="form-control" name="hydration_score" step="0.5" min="0" max="10" placeholder="0–10">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Score condition (0-10)</label>
+          <label class="form-label">${t('sport.sessions.result_modal.condition_label')}</label>
           <input type="number" class="form-control" name="condition_score" step="0.5" min="0" max="10" placeholder="0–10">
         </div>
         <div class="form-group">
-          <label class="form-label">Score motivation (0-10)</label>
+          <label class="form-label">${t('sport.sessions.result_modal.motivation_label')}</label>
           <input type="number" class="form-control" name="motivation_score" step="0.5" min="0" max="10" placeholder="0–10">
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Notes</label>
-        <textarea class="form-control" name="notes" rows="2" placeholder="Observations..."></textarea>
+        <label class="form-label">${t('sport.sessions.form.notes_label')}</label>
+        <textarea class="form-control" name="notes" rows="2" placeholder="${t('sport.sessions.result_modal.notes_placeholder')}"></textarea>
       </div>
       <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
-        <button type="button" class="btn btn-secondary" onclick="openSessionDetail(${sessionId})">← Retour</button>
-        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <button type="button" class="btn btn-secondary" onclick="openSessionDetail(${sessionId})">${t('sport.sessions.result_modal.back')}</button>
+        <button type="submit" class="btn btn-primary">${t('sport.sessions.result_modal.submit')}</button>
       </div>
     </form>`;
 
@@ -498,7 +497,7 @@ function openAddResultModal(sessionId, pigeons) {
     const data = Object.fromEntries(fd.entries());
 
     // pigeon_id est un UUID (string) — ne pas parser en int
-    if (!data.pigeon_id) { showToast('Veuillez sélectionner un pigeon.', 'error'); return; }
+    if (!data.pigeon_id) { showToast(t('sport.sessions.result_modal.select_pigeon_required'), 'error'); return; }
     ['return_time', 'internal_rank'].forEach(k => {
       if (data[k] !== '') data[k] = parseFloat(data[k]);
       else delete data[k];
@@ -512,16 +511,16 @@ function openAddResultModal(sessionId, pigeons) {
 
     const submitBtn = e.target.querySelector('[type=submit]');
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="loader-inline"></span> Enregistrement...';
+    submitBtn.innerHTML = `<span class="loader-inline"></span> ${t('sport.sessions.result_modal.saving')}`;
 
     try {
       await SportAPI.addResult(sessionId, data);
-      showToast('Résultat enregistré !', 'success');
+      showToast(t('sport.sessions.result_modal.saved'), 'success');
       openSessionDetail(sessionId);
     } catch (err) {
       showToast(err.message, 'error');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Enregistrer';
+      submitBtn.textContent = t('sport.sessions.result_modal.submit');
     }
   });
 }

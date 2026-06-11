@@ -7,15 +7,15 @@ let calState = {
   concours: [],
 };
 
-const SESSION_TYPE_LABELS = {
-  loft:  '🏠 Loft',
-  toss:  '🚀 Lancer',
-  race:  '🏆 Concours',
-};
+function sessionTypeLabel(type) {
+  return t(`calendrier.session_type.${type}`) !== `calendrier.session_type.${type}`
+    ? t(`calendrier.session_type.${type}`)
+    : t('calendrier.session_type.default');
+}
 
 async function loadCalendrier() {
   const content = document.getElementById('content');
-  content.innerHTML = '<div class="loading">Chargement...</div>';
+  content.innerHTML = `<div class="loading">${t('common.loading')}</div>`;
 
   const [sessions, concours] = await Promise.all([
     apiFetch('/sport/sessions').catch(() => []),
@@ -34,9 +34,15 @@ function renderCalendrier() {
   const content = document.getElementById('content');
   const { annee, mois } = calState;
 
-  const nomsMois = ['Janvier','Février','Mars','Avril','Mai','Juin',
-                    'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-  const nomJours = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const locale = getLocaleCode();
+  const nomsMois = Array.from({ length: 12 }, (_, i) => {
+    const nom = new Date(2000, i, 1).toLocaleDateString(locale, { month: 'long' });
+    return nom.charAt(0).toUpperCase() + nom.slice(1);
+  });
+  const nomJours = Array.from({ length: 7 }, (_, i) => {
+    const nom = new Date(2024, 0, 1 + i).toLocaleDateString(locale, { weekday: 'short' });
+    return nom.charAt(0).toUpperCase() + nom.slice(1);
+  });
 
   // Index des événements par date YYYY-MM-DD
   const evParDate = {};
@@ -45,8 +51,8 @@ function renderCalendrier() {
     const d = (s.date || '').slice(0, 10);
     if (!d) return;
     if (!evParDate[d]) evParDate[d] = [];
-    const label = SESSION_TYPE_LABELS[s.session_type] || 'Séance';
-    const dist = s.distance_km ? ` — ${Math.round(s.distance_km * 1000).toLocaleString('fr-FR')} m` : '';
+    const label = sessionTypeLabel(s.session_type);
+    const dist = s.distance_km ? ` — ${Math.round(s.distance_km * 1000).toLocaleString(getLocaleCode())} m` : '';
     evParDate[d].push({ type: 'seance', label: label + dist, detail: s });
   });
 
@@ -115,12 +121,12 @@ function renderCalendrier() {
     .sort(([a], [b]) => a.localeCompare(b));
 
   const listeMois = evMois.length === 0
-    ? `<p style="color:var(--text-light); font-size:14px;">Aucun événement ce mois.</p>`
+    ? `<p style="color:var(--text-light); font-size:14px;">${t('calendrier.no_events')}</p>`
     : evMois.map(([date, evs]) => `
         <div style="margin-bottom:12px;">
           <div style="font-size:13px; font-weight:600; color:var(--text-light);
             text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">
-            ${new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' })}
+            ${new Date(date + 'T12:00:00').toLocaleDateString(locale, { weekday:'long', day:'numeric', month:'long' })}
           </div>
           ${evs.map(ev => `
             <div style="display:flex; align-items:center; gap:8px; padding:6px 10px;
@@ -136,24 +142,24 @@ function renderCalendrier() {
     <div style="display:flex; align-items:center; justify-content:space-between;
       background:var(--bg-card); border-radius:10px; padding:16px 24px;
       box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--border);">
-      <button class="btn btn-secondary" onclick="calChangerMois(-1)" style="padding:8px 16px;">← Précédent</button>
+      <button class="btn btn-secondary" onclick="calChangerMois(-1)" style="padding:8px 16px;">${t('calendrier.prev')}</button>
       <h2 style="font-family:'Playfair Display',serif; font-size:22px;">
         ${nomsMois[mois]} ${annee}
       </h2>
-      <button class="btn btn-secondary" onclick="calChangerMois(1)" style="padding:8px 16px;">Suivant →</button>
+      <button class="btn btn-secondary" onclick="calChangerMois(1)" style="padding:8px 16px;">${t('calendrier.next')}</button>
     </div>
 
     <!-- Légende -->
     <div style="display:flex; gap:16px; margin-bottom:16px; font-size:13px;">
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2980B9;margin-right:4px;"></span>Séance d'entraînement</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C4963A;margin-right:4px;"></span>Concours</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2980B9;margin-right:4px;"></span>${t('calendrier.legend.session')}</span>
+      <span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#C4963A;margin-right:4px;"></span>${t('calendrier.legend.concours')}</span>
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 2.5fr; gap:20px; align-items:start;">
 
       <!-- Liste événements du mois -->
       <div class="card">
-        <div class="card-title">Événements — ${nomsMois[mois]}</div>
+        <div class="card-title">${t('calendrier.events_title', { mois: nomsMois[mois] })}</div>
         ${listeMois}
       </div>
 
@@ -186,7 +192,7 @@ function calAfficherJour(dateStr) {
   calState.sessions.forEach(s => {
     const d = (s.date || '').slice(0, 10);
     if (d === dateStr) {
-      const label = SESSION_TYPE_LABELS[s.session_type] || 'Séance';
+      const label = sessionTypeLabel(s.session_type);
       evs.push({ type: 'seance', label, detail: s });
     }
   });
@@ -196,7 +202,7 @@ function calAfficherJour(dateStr) {
   });
   if (!evs.length) return;
 
-  const dateAff = new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR',
+  const dateAff = new Date(dateStr + 'T12:00:00').toLocaleDateString(getLocaleCode(),
     { weekday:'long', day:'numeric', month:'long', year:'numeric' });
 
   const html = `
@@ -210,14 +216,14 @@ function calAfficherJour(dateStr) {
         ${ev.type === 'concours' && ev.detail.lieu_lacher
           ? `<div style="font-size:13px; color:var(--text-light);">📍 ${ev.detail.lieu_lacher}${ev.detail.distance_m ? ' — ' + (ev.detail.distance_m/1000).toFixed(0) + ' km' : ''}</div>` : ''}
         ${ev.type === 'seance' && ev.detail.distance_km
-          ? `<div style="font-size:13px; color:var(--text-light);">📏 ${Math.round(ev.detail.distance_km * 1000).toLocaleString('fr-FR')} m</div>` : ''}
+          ? `<div style="font-size:13px; color:var(--text-light);">📏 ${Math.round(ev.detail.distance_km * 1000).toLocaleString(getLocaleCode())} m</div>` : ''}
         ${ev.detail.weather
           ? `<div style="font-size:13px; color:var(--text-light);">🌤️ ${ev.detail.weather}</div>` : ''}
         ${ev.detail.notes && !ev.detail.notes.includes('[SEED')
           ? `<div style="font-size:13px; color:var(--text-light);">${ev.detail.notes}</div>` : ''}
       </div>`).join('')}
     <div style="text-align:right; margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.close')}</button>
     </div>`;
 
   openModal(`📅 ${dateAff}`, html);

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Colomb Sport</title>
+  <title data-i18n="sport.app_title">Colomb Sport</title>
   <link rel="icon" type="image/png" href="../images/Logo_Colomb.png">
   <link rel="stylesheet" href="sport.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet">
@@ -18,40 +18,46 @@
       <span class="logo-text">Colomb Sport</span>
     </div>
 
-    <a href="../index.html" class="sidebar-back">
+    <a href="../index.html" class="sidebar-back" data-i18n="sport.nav.back">
       ← Retour Élevage
     </a>
 
     <nav class="sidebar-nav">
-      <div class="nav-section">Général</div>
+      <div class="nav-section" data-i18n="sport.nav.section_general">Général</div>
       <a href="#" class="nav-item active" data-page="dashboard">
-        <span class="nav-icon">🏆</span><span>Dashboard</span>
+        <span class="nav-icon">🏆</span><span data-i18n="sport.nav.dashboard">Dashboard</span>
       </a>
       <a href="#" class="nav-item" data-page="sessions">
-        <span class="nav-icon">🏃</span><span>Séances</span>
+        <span class="nav-icon">🏃</span><span data-i18n="sport.nav.sessions">Séances</span>
       </a>
       <a href="#" class="nav-item" data-page="history">
-        <span class="nav-icon">📊</span><span>Historique pigeon</span>
+        <span class="nav-icon">📊</span><span data-i18n="sport.nav.history">Historique pigeon</span>
       </a>
 
-      <div class="nav-section">Nutrition</div>
+      <div class="nav-section" data-i18n="sport.nav.section_nutrition">Nutrition</div>
       <a href="#" class="nav-item" data-page="nutrition">
-        <span class="nav-icon">🌾</span><span>Nutrition</span>
+        <span class="nav-icon">🌾</span><span data-i18n="sport.nav.nutrition">Nutrition</span>
       </a>
-      <div class="nav-section">Intelligence</div>
+      <div class="nav-section" data-i18n="sport.nav.section_intelligence">Intelligence</div>
       <a href="#" class="nav-item" data-page="analytics">
-        <span class="nav-icon">📈</span><span>Analytics</span>
+        <span class="nav-icon">📈</span><span data-i18n="sport.nav.analytics">Analytics</span>
       </a>
       <a href="#" class="nav-item" data-page="ai">
-        <span class="nav-icon">🤖</span><span>Recommandations IA</span>
+        <span class="nav-icon">🤖</span><span data-i18n="sport.nav.ai">Recommandations IA</span>
       </a>
       <a href="#" class="nav-item" data-page="condition">
-        <span class="nav-icon">💪</span><span>Condition sportive</span>
+        <span class="nav-icon">💪</span><span data-i18n="sport.nav.condition">Condition sportive</span>
       </a>
       <a href="#" class="nav-item" data-page="colony">
-        <span class="nav-icon">🕊️</span><span>Monitoring colonie</span>
+        <span class="nav-icon">🕊️</span><span data-i18n="sport.nav.colony">Monitoring colonie</span>
       </a>
     </nav>
+
+    <div class="lang-switcher" style="display:flex;gap:4px;padding:8px 16px;">
+      <button data-lang-switch="fr" title="Français" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;padding:2px;border-radius:4px;">🇫🇷</button>
+      <button data-lang-switch="nl" title="Nederlands" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;padding:2px;border-radius:4px;">🇧🇪</button>
+      <button data-lang-switch="en" title="English" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:0.5;padding:2px;border-radius:4px;">🇬🇧</button>
+    </div>
   </aside>
 
   <!-- Overlay mobile -->
@@ -61,15 +67,15 @@
   <main class="main">
     <header class="topbar">
       <div style="display:flex;align-items:center;gap:12px;">
-        <button class="hamburger" id="hamburger" aria-label="Menu">
+        <button class="hamburger" id="hamburger" data-i18n-aria-label="a11y.menu" aria-label="Menu">
           <span></span><span></span><span></span>
         </button>
-        <h1 class="page-title" id="page-title">Dashboard Sport</h1>
+        <h1 class="page-title" id="page-title" data-i18n="sport.page.dashboard.title">Dashboard Sport</h1>
       </div>
       <div class="topbar-actions">
-        <input type="text" class="search-input" id="search-input" placeholder="Rechercher...">
-        <button id="btn-theme-sport" aria-label="Basculer le thème" title="Mode sombre / clair">🌙</button>
-        <button class="btn btn-primary" id="btn-add" style="display:none;">+ Ajouter</button>
+        <input type="text" class="search-input" id="search-input" data-i18n-placeholder="sport.search.placeholder" placeholder="Rechercher...">
+        <button id="btn-theme-sport" data-i18n-aria-label="a11y.theme_toggle" aria-label="Basculer le thème" data-i18n-title="a11y.theme_toggle" title="Mode sombre / clair">🌙</button>
+        <button class="btn btn-primary" id="btn-add" style="display:none;" data-i18n="common.add">+ Ajouter</button>
       </div>
     </header>
 
@@ -82,8 +88,8 @@
   <div class="modal-overlay" id="modal-overlay" style="display:none;">
     <div class="modal" id="modal">
       <div class="modal-header">
-        <h2 id="modal-title">Titre</h2>
-        <button id="modal-close">✕</button>
+        <h2 id="modal-title" data-i18n="modal.title_default">Titre</h2>
+        <button id="modal-close" data-i18n-aria-label="a11y.close" aria-label="Fermer">✕</button>
       </div>
       <div class="modal-body" id="modal-body"></div>
     </div>
@@ -93,6 +99,7 @@
   <div id="toast-container"></div>
 
   <!-- Scripts (ordre de chargement important) -->
+  <script src="../js/i18n.js"></script>
   <script src="js/sport-api.js"></script>
   <script src="js/sport-dashboard.js"></script>
   <script src="js/sport-sessions.js"></script>

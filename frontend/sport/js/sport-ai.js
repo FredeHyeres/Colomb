@@ -20,19 +20,19 @@ async function loadAIRecommendations() {
   content.innerHTML = `
     <!-- Sélecteur de pigeon -->
     <div class="pigeon-select-bar">
-      <label>🤖 Pigeon analysé :</label>
+      <label>${t('sport.ai.pigeon_label')}</label>
       <select class="form-control" id="ai-pigeon-select">
-        <option value="">Choisir un pigeon...</option>
+        <option value="">${t('sport.choose_pigeon_placeholder')}</option>
       </select>
-      <button class="btn btn-primary btn-sm" id="btn-load-ai" disabled>Charger l'analyse</button>
-      <button class="btn btn-ghost btn-sm" id="btn-generate-ai" disabled title="Lancer une analyse IA complète">⚡ Analyser maintenant</button>
+      <button class="btn btn-primary btn-sm" id="btn-load-ai" disabled>${t('sport.ai.btn_load')}</button>
+      <button class="btn btn-ghost btn-sm" id="btn-generate-ai" disabled title="${t('sport.ai.btn_generate_title')}">${t('sport.ai.btn_generate')}</button>
     </div>
 
     <div id="ai-content">
       <div class="empty-state">
         <div class="empty-icon">🤖</div>
-        <h3>Sélectionnez un pigeon</h3>
-        <p>Les recommandations IA s'afficheront ici.</p>
+        <h3>${t('sport.ai.empty.title')}</h3>
+        <p>${t('sport.ai.empty.sub')}</p>
       </div>
     </div>
   `;
@@ -62,16 +62,16 @@ async function loadAIRecommendations() {
     const pigeonId = select.value;
     const btn = document.getElementById('btn-generate-ai');
     btn.disabled = true;
-    btn.innerHTML = '<span class="loader-inline"></span> Analyse en cours...';
+    btn.innerHTML = `<span class="loader-inline"></span> ${t('sport.ai.analyzing')}`;
     try {
       await AIAPI.generateRecommendations(pigeonId);
-      showToast('Analyse IA générée !', 'success');
+      showToast(t('sport.ai.analysis_generated'), 'success');
       loadAIForPigeon(pigeonId);
     } catch (err) {
-      showToast(err.message || 'Erreur lors de l\'analyse', 'error');
+      showToast(err.message || t('sport.ai.analysis_error'), 'error');
     } finally {
       btn.disabled = false;
-      btn.textContent = '⚡ Analyser maintenant';
+      btn.textContent = t('sport.ai.btn_generate');
     }
   });
 }
@@ -105,11 +105,11 @@ async function loadAIForPigeon(pigeonId) {
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
           <div>
-            <div class="card-title">⚠️ Recommandations actives (${actives.length})</div>
-            <div class="card-subtitle">Alertes et conseils en attente de résolution</div>
+            <div class="card-title">${t('sport.ai.active_recs.title', { count: actives.length })}</div>
+            <div class="card-subtitle">${t('sport.ai.active_recs.subtitle')}</div>
           </div>
           <div style="display:flex;gap:8px;">
-            ${resolved.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="toggleResolvedRecs()">Voir résolues (${resolved.length})</button>` : ''}
+            ${resolved.length > 0 ? `<button class="btn btn-sm btn-secondary" onclick="toggleResolvedRecs()">${t('sport.ai.active_recs.show_resolved', { count: resolved.length })}</button>` : ''}
           </div>
         </div>
 
@@ -119,7 +119,7 @@ async function loadAIForPigeon(pigeonId) {
 
         <div id="resolved-recs" style="display:none;">
           <hr style="margin:16px 0;border-color:var(--border);">
-          <h4 style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">Recommandations résolues</h4>
+          <h4 style="font-size:0.85rem;color:var(--text-light);margin-bottom:10px;">${t('sport.ai.active_recs.resolved_title')}</h4>
           ${renderRecommendations(resolved, pigeonId, true)}
         </div>
       </div>
@@ -128,25 +128,25 @@ async function loadAIForPigeon(pigeonId) {
       <div class="card" style="margin-bottom:16px;">
         <div class="card-header">
           <div>
-            <div class="card-title">📊 Snapshot sportif</div>
-            <div class="card-subtitle">${lastSnap ? `Dernière analyse : ${formatDatetime(lastSnap.created_at)}` : 'Aucun snapshot disponible'}</div>
+            <div class="card-title">${t('sport.ai.snapshot.title')}</div>
+            <div class="card-subtitle">${lastSnap ? t('sport.ai.snapshot.last_analysis', { date: formatDatetime(lastSnap.created_at) }) : t('sport.ai.snapshot.none')}</div>
           </div>
-          <button class="btn btn-sm btn-ghost" id="btn-build-snapshot">🔄 Créer snapshot</button>
+          <button class="btn btn-sm btn-ghost" id="btn-build-snapshot">${t('sport.ai.snapshot.btn_create')}</button>
         </div>
 
         ${lastSnap ? renderSnapshot(lastSnap) : `
           <div class="empty-state" style="padding:30px;">
             <div class="empty-icon">📊</div>
-            <h3>Aucun snapshot</h3>
-            <p>Créez un snapshot pour obtenir les indices de condition sportive.</p>
+            <h3>${t('sport.ai.snapshot.empty.title')}</h3>
+            <p>${t('sport.ai.snapshot.empty.sub')}</p>
           </div>`}
       </div>
 
       <!-- Section 3 : Event store -->
       <div class="card">
         <div class="card-header">
-          <div class="card-title">📋 Événements sport (${eventList.length})</div>
-          <div class="card-subtitle">Historique des événements enregistrés par l'IA</div>
+          <div class="card-title">${t('sport.ai.events.title', { count: eventList.length })}</div>
+          <div class="card-subtitle">${t('sport.ai.events.subtitle')}</div>
         </div>
         ${renderEventStore(eventList)}
       </div>
@@ -159,12 +159,12 @@ async function loadAIForPigeon(pigeonId) {
       btn.innerHTML = '<span class="loader-inline"></span>';
       try {
         await AIAPI.buildSnapshot(pigeonId);
-        showToast('Snapshot créé !', 'success');
+        showToast(t('sport.ai.snapshot.created'), 'success');
         loadAIForPigeon(pigeonId);
       } catch (err) {
         showToast(err.message, 'error');
         btn.disabled = false;
-        btn.textContent = '🔄 Créer snapshot';
+        btn.textContent = t('sport.ai.snapshot.btn_create');
       }
     });
 
@@ -176,12 +176,12 @@ async function loadAIForPigeon(pigeonId) {
         btn.innerHTML = '<span class="loader-inline"></span>';
         try {
           await AIAPI.resolveRecommendation(recId);
-          showToast('Recommandation marquée comme résolue.', 'success');
+          showToast(t('sport.ai.rec_marked_resolved'), 'success');
           loadAIForPigeon(pigeonId);
         } catch (err) {
           showToast(err.message, 'error');
           btn.disabled = false;
-          btn.textContent = '✅ Résoudre';
+          btn.textContent = t('sport.ai.btn_resolve');
         }
       });
     });
@@ -197,7 +197,7 @@ async function loadAIForPigeon(pigeonId) {
     });
 
   } catch (err) {
-    container.innerHTML = `<div class="card">${renderEmptyState('⚠️', 'Erreur de chargement', err.message)}</div>`;
+    container.innerHTML = `<div class="card">${renderEmptyState('⚠️', t('sport.ai.load_error_title'), err.message)}</div>`;
     showToast(err.message, 'error');
   }
 }
@@ -206,25 +206,25 @@ async function loadAIForPigeon(pigeonId) {
 function renderRecommendations(recs, pigeonId, resolved, snapId = null) {
   if (recs.length === 0) {
     return resolved
-      ? '<p style="color:var(--text-light);font-size:0.85rem;">Aucune recommandation résolue.</p>'
+      ? `<p style="color:var(--text-light);font-size:0.85rem;">${t('sport.ai.recs.none_resolved')}</p>`
       : `<div class="alert-card success">
           <span class="alert-icon">✅</span>
           <div class="alert-content">
-            <div class="alert-title">Aucune alerte active</div>
-            <div class="alert-text">Ce pigeon est en bonne condition selon l'IA.</div>
+            <div class="alert-title">${t('sport.ai.recs.none_active_title')}</div>
+            <div class="alert-text">${t('sport.ai.recs.none_active_text')}</div>
           </div>
         </div>`;
   }
 
   const recMap = {
-    concours:           { cls: 'success',  icon: '🏆', label: 'Concours' },
-    entrainement_leger: { cls: 'info',     icon: '🏃', label: 'Entraînement' },
-    repos:              { cls: 'warning',  icon: '⚠️', label: 'Repos' },
-    reforme:            { cls: 'critical', icon: '🚨', label: 'Réforme' },
+    concours:           { cls: 'success',  icon: '🏆', label: t('sport.ai.rec_types.concours') },
+    entrainement_leger: { cls: 'info',     icon: '🏃', label: t('sport.ai.rec_types.entrainement_leger') },
+    repos:              { cls: 'warning',  icon: '⚠️', label: t('sport.ai.rec_types.repos') },
+    reforme:            { cls: 'critical', icon: '🚨', label: t('sport.ai.rec_types.reforme') },
   };
 
   return recs.map(r => {
-    const s = recMap[r.recommendation] || { cls: 'info', icon: 'ℹ️', label: 'Info' };
+    const s = recMap[r.recommendation] || { cls: 'info', icon: 'ℹ️', label: t('sport.ai.rec_types.info') };
     return `
       <div class="alert-card ${s.cls}" style="margin-bottom:10px;">
         <span class="alert-icon">${s.icon}</span>
@@ -233,23 +233,23 @@ function renderRecommendations(recs, pigeonId, resolved, snapId = null) {
             <div>
               <div class="alert-title">
                 <span class="badge ${s.cls === 'critical' ? 'badge-danger' : s.cls === 'warning' ? 'badge-warning' : 'badge-info'}" style="margin-right:6px;">${s.label}</span>
-                ${r.title || r.recommendation_type || 'Recommandation'}
+                ${r.title || r.recommendation_type || t('sport.ai.rec_default_title')}
               </div>
               <div class="alert-text" style="margin-top:4px;">${r.message || r.content || ''}</div>
               ${r.action ? `<div style="font-size:0.78rem;color:var(--text);font-weight:500;margin-top:4px;">→ ${r.action}</div>` : ''}
               <div style="font-size:0.72rem;color:var(--text-light);margin-top:6px;">
                 ${formatDate(r.created_at)}
-                ${resolved && r.resolved_at ? ` · Résolu le ${formatDate(r.resolved_at)}` : ''}
+                ${resolved && r.resolved_at ? ` · ${t('sport.ai.resolved_on', { date: formatDate(r.resolved_at) })}` : ''}
               </div>
             </div>
             ${!resolved ? `
               <div style="display:flex;gap:6px;flex-shrink:0;">
-                <button class="btn btn-sm btn-success btn-resolve-rec" data-rec-id="${r.id}">✅ Résoudre</button>
+                <button class="btn btn-sm btn-success btn-resolve-rec" data-rec-id="${r.id}">${t('sport.ai.btn_resolve')}</button>
                 <button class="btn btn-sm btn-primary btn-outcome-rec"
                   data-rec-id="${r.id}"
                   data-pigeon-id="${pigeonId}"
                   data-snap-id="${snapId || ''}"
-                >📝 Outcome</button>
+                >${t('sport.ai.btn_outcome')}</button>
               </div>` : ''}
           </div>
         </div>
@@ -267,17 +267,17 @@ function renderSnapshot(snap) {
     : null;
 
   const indices = [
-    { label: 'Récupération (7j)', color: '#2980B9', max: 10, val: f.recovery_avg_7d },
-    { label: 'Condition (7j)',    color: '#27AE60', max: 10, val: f.condition_avg_7d },
-    { label: 'Régularité',        color: '#8E44AD', max: 10, val: f.regularity_index },
-    { label: 'Risque fatigue',    color: '#E74C3C', max: 100, val: fatigueVal },
-    { label: 'Charge (30j)',      color: '#E67E22', max: 30,  val: f.training_load_30d },
+    { label: t('sport.ai.snapshot.indices.recovery'), color: '#2980B9', max: 10, val: f.recovery_avg_7d },
+    { label: t('sport.ai.snapshot.indices.condition'), color: '#27AE60', max: 10, val: f.condition_avg_7d },
+    { label: t('sport.ai.snapshot.indices.regularity'), color: '#8E44AD', max: 10, val: f.regularity_index },
+    { label: t('sport.ai.snapshot.indices.fatigue'), color: '#E74C3C', max: 100, val: fatigueVal },
+    { label: t('sport.ai.snapshot.indices.load'), color: '#E67E22', max: 30,  val: f.training_load_30d },
   ];
 
   const available = indices.filter(i => i.val != null);
 
   if (available.length === 0) {
-    return renderEmptyState('📊', 'Snapshot sans données exploitables', 'Relancez une analyse après avoir enregistré des séances.');
+    return renderEmptyState('📊', t('sport.ai.snapshot.no_data.title'), t('sport.ai.snapshot.no_data.sub'));
   }
 
   return `
@@ -286,7 +286,7 @@ function renderSnapshot(snap) {
     </div>
     ${f.data_quality ? `
       <div style="margin-top:12px;padding:12px;background:var(--bg);border-radius:8px;font-size:0.82rem;color:var(--text-light);">
-        Qualité des données : <strong>${f.data_quality}</strong> · ${f.training_load_30d ?? 0} séances (30j) · Tendance récupération : ${f.recovery_trend ?? '—'} · Risque fatigue : ${f.fatigue_risk ?? '—'}
+        ${t('sport.ai.snapshot.data_quality', { quality: f.data_quality, load: f.training_load_30d ?? 0, trend: f.recovery_trend ?? '—', fatigue: f.fatigue_risk ?? '—' })}
       </div>` : ''}
   `;
 }
@@ -294,7 +294,7 @@ function renderSnapshot(snap) {
 /* ——— Rendu event store ——— */
 function renderEventStore(events) {
   if (events.length === 0) {
-    return renderEmptyState('📋', 'Aucun événement enregistré', 'Les événements apparaîtront automatiquement lors des analyses.');
+    return renderEmptyState('📋', t('sport.ai.events.empty.title'), t('sport.ai.events.empty.sub'));
   }
 
   const sorted = [...events].sort((a, b) => new Date(b.timestamp || b.created_at) - new Date(a.timestamp || a.created_at));
@@ -310,37 +310,37 @@ function renderEventStore(events) {
   return `
     <div class="timeline">
       ${sorted.slice(0, 20).map(e => {
-        const t = typeMap[e.event_type || e.type] || { icon: '📌', color: 'var(--text-light)' };
+        const typeInfo = typeMap[e.event_type || e.type] || { icon: '📌', color: 'var(--text-light)' };
         return `
           <div class="timeline-item">
-            <div class="timeline-dot" style="background:${t.color};"></div>
+            <div class="timeline-dot" style="background:${typeInfo.color};"></div>
             <div class="timeline-date">${formatDatetime(e.timestamp || e.created_at)}</div>
-            <div class="timeline-title">${t.icon} ${e.event_type || e.type || 'Événement'}</div>
+            <div class="timeline-title">${typeInfo.icon} ${e.event_type || e.type || t('sport.ai.events.default_label')}</div>
             ${e.description || e.message ? `<div class="timeline-desc">${e.description || e.message}</div>` : ''}
             ${e.data ? `<div class="timeline-desc" style="font-family:monospace;font-size:0.72rem;">${JSON.stringify(e.data).slice(0, 100)}...</div>` : ''}
           </div>`;
       }).join('')}
-      ${events.length > 20 ? `<p style="text-align:center;color:var(--text-light);font-size:0.78rem;margin-top:8px;">+ ${events.length - 20} événements plus anciens</p>` : ''}
+      ${events.length > 20 ? `<p style="text-align:center;color:var(--text-light);font-size:0.78rem;margin-top:8px;">${t('sport.ai.events.more_old', { count: events.length - 20 })}</p>` : ''}
     </div>`;
 }
 
 /* ——— Modale Outcome après concours ——— */
 async function openOutcomeModal(recId, pigeonId, snapId) {
   // Récupérer les infos de la reco pour le sous-titre
-  let recTitle = 'Recommandation';
+  let recTitle = t('sport.ai.rec_default_title');
   let recLabel = '';
   try {
     const recs = await AIAPI.getRecommendations(pigeonId).catch(() => []);
     const rec = (Array.isArray(recs) ? recs : []).find(r => r.id === recId);
     if (rec) {
       const recMap = {
-        concours:           { label: 'Concours' },
-        entrainement_leger: { label: 'Entraînement' },
-        repos:              { label: 'Repos' },
-        reforme:            { label: 'Réforme' },
+        concours:           { label: t('sport.ai.rec_types.concours') },
+        entrainement_leger: { label: t('sport.ai.rec_types.entrainement_leger') },
+        repos:              { label: t('sport.ai.rec_types.repos') },
+        reforme:            { label: t('sport.ai.rec_types.reforme') },
       };
       recLabel = (recMap[rec.recommendation] || {}).label || rec.recommendation || '';
-      recTitle = rec.title || rec.recommendation || 'Recommandation';
+      recTitle = rec.title || rec.recommendation || t('sport.ai.rec_default_title');
     }
   } catch (_) {}
 
@@ -350,66 +350,66 @@ async function openOutcomeModal(recId, pigeonId, snapId) {
   overlay.className = 'outcome-modal-overlay';
   overlay.innerHTML = `
     <div class="outcome-modal" role="dialog" aria-modal="true">
-      <h3>📝 Résultat après concours</h3>
+      <h3>${t('sport.ai.outcome_modal.title')}</h3>
       <div class="modal-subtitle">
-        Recommandation : ${recLabel ? `<span class="badge badge-info" style="margin-right:4px;">${recLabel}</span>` : ''}${recTitle}
+        ${t('sport.ai.outcome_modal.subtitle_prefix')}${recLabel ? `<span class="badge badge-info" style="margin-right:4px;">${recLabel}</span>` : ''}${recTitle}
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">Outcome de la recommandation</div>
+        <div class="form-section-title">${t('sport.ai.outcome_modal.section_outcome')}</div>
         <div class="form-group">
-          <label>Résultat <span style="color:var(--danger);">*</span></label>
+          <label>${t('sport.ai.outcome_modal.result_label')} <span style="color:var(--danger);">*</span></label>
           <select class="form-control" id="om-outcome">
-            <option value="">— Choisir —</option>
-            <option value="confirme">✅ Confirmée — le pigeon était prêt</option>
-            <option value="infirme">❌ Infirmée — la reco était mauvaise</option>
-            <option value="partiel">⚠️ Partielle — résultat mitigé</option>
+            <option value="">${t('sport.ai.outcome_modal.choose')}</option>
+            <option value="confirme">${t('sport.ai.outcome_modal.confirme')}</option>
+            <option value="infirme">${t('sport.ai.outcome_modal.infirme')}</option>
+            <option value="partiel">${t('sport.ai.outcome_modal.partiel')}</option>
           </select>
-          <div id="om-outcome-error" style="color:var(--danger);font-size:0.8rem;margin-top:4px;display:none;">Veuillez choisir un résultat.</div>
+          <div id="om-outcome-error" style="color:var(--danger);font-size:0.8rem;margin-top:4px;display:none;">${t('sport.ai.outcome_modal.result_required')}</div>
         </div>
         <div class="form-group">
-          <label>Date du résultat</label>
+          <label>${t('sport.ai.outcome_modal.result_date_label')}</label>
           <input type="date" class="form-control" id="om-outcome-date" value="${today}">
         </div>
         <div class="form-group">
-          <label>Observations</label>
-          <textarea class="form-control" id="om-outcome-notes" rows="2" placeholder="Vos observations..."></textarea>
+          <label>${t('sport.ai.outcome_modal.notes_label')}</label>
+          <textarea class="form-control" id="om-outcome-notes" rows="2" placeholder="${t('sport.ai.outcome_modal.notes_placeholder')}"></textarea>
         </div>
       </div>
 
       <div class="form-section">
-        <div class="form-section-title">Lier un résultat concours <span style="font-weight:400;text-transform:none;letter-spacing:0;">(optionnel)</span></div>
+        <div class="form-section-title">${t('sport.ai.outcome_modal.section_link_concours')} <span style="font-weight:400;text-transform:none;letter-spacing:0;">${t('sport.ai.outcome_modal.optional')}</span></div>
         <div class="form-group">
-          <label>Date du concours</label>
+          <label>${t('sport.ai.outcome_modal.concours_date_label')}</label>
           <input type="date" class="form-control" id="om-concours-date" value="${today}">
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="form-group">
-            <label>Distance (km)</label>
-            <input type="number" class="form-control" id="om-distance" step="0.1" min="0" placeholder="ex: 150.5">
+            <label>${t('sport.ai.outcome_modal.distance_label')}</label>
+            <input type="number" class="form-control" id="om-distance" step="0.1" min="0" placeholder="${t('sport.ai.outcome_modal.distance_placeholder')}">
           </div>
           <div class="form-group">
-            <label>Position d'arrivée</label>
-            <input type="number" class="form-control" id="om-classement" min="1" placeholder="ex: 3">
+            <label>${t('sport.ai.outcome_modal.classement_label')}</label>
+            <input type="number" class="form-control" id="om-classement" min="1" placeholder="${t('sport.ai.outcome_modal.classement_placeholder')}">
           </div>
         </div>
         <div class="form-group">
-          <label>Nombre de pigeons engagés</label>
-          <input type="number" class="form-control" id="om-nb-partants" min="1" placeholder="ex: 120">
+          <label>${t('sport.ai.outcome_modal.nb_partants_label')}</label>
+          <input type="number" class="form-control" id="om-nb-partants" min="1" placeholder="${t('sport.ai.outcome_modal.nb_partants_placeholder')}">
         </div>
       </div>
 
       <label class="share-block" for="om-share">
         <input type="checkbox" id="om-share">
         <div>
-          <div style="font-size:0.88rem;font-weight:500;">Partager ce feedback de façon anonyme pour améliorer l'IA collective</div>
-          <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">Aucune donnée personnelle transmise — uniquement les scores numériques</div>
+          <div style="font-size:0.88rem;font-weight:500;">${t('sport.ai.outcome_modal.share_label')}</div>
+          <div style="font-size:0.75rem;color:var(--text-light);margin-top:2px;">${t('sport.ai.outcome_modal.share_sub')}</div>
         </div>
       </label>
 
       <div class="modal-footer">
-        <button class="btn btn-ghost" id="om-cancel">Annuler</button>
-        <button class="btn btn-primary" id="om-save">Enregistrer →</button>
+        <button class="btn btn-ghost" id="om-cancel">${t('common.cancel')}</button>
+        <button class="btn btn-primary" id="om-save">${t('sport.ai.outcome_modal.save')}</button>
       </div>
     </div>
   `;
@@ -440,7 +440,7 @@ async function openOutcomeModal(recId, pigeonId, snapId) {
 
     const saveBtn = overlay.querySelector('#om-save');
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span class="loader-inline"></span> Enregistrement...';
+    saveBtn.innerHTML = `<span class="loader-inline"></span> ${t('sport.ai.outcome_modal.saving')}`;
 
     try {
       await AIAPI.resolveRecommendationWithOutcome(recId, {
@@ -449,9 +449,9 @@ async function openOutcomeModal(recId, pigeonId, snapId) {
         outcome_date: outcomeDate || null,
       });
     } catch (err) {
-      showToast(err.message || 'Erreur lors de la résolution', 'error');
+      showToast(err.message || t('sport.ai.outcome_modal.resolve_error'), 'error');
       saveBtn.disabled = false;
-      saveBtn.textContent = 'Enregistrer →';
+      saveBtn.textContent = t('sport.ai.outcome_modal.save');
       return;
     }
 
@@ -470,11 +470,11 @@ async function openOutcomeModal(recId, pigeonId, snapId) {
           share_anonymized:  share,
         });
       } catch (err) {
-        showToast('Feedback résultat non enregistré : ' + (err.message || 'erreur'), 'warning');
+        showToast(t('sport.ai.outcome_modal.feedback_not_saved', { error: err.message || t('sport.ai.outcome_modal.feedback_error_default') }), 'warning');
       }
     }
 
-    showToast('Feedback enregistré !', 'success');
+    showToast(t('sport.ai.outcome_modal.feedback_saved'), 'success');
     close();
     loadAIForPigeon(pigeonId);
   });

@@ -22,12 +22,12 @@ async function loadPigeons() {
     content.innerHTML = `
       <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
         <button class="btn btn-secondary" onclick="ouvrirImportPigeons()"
-          style="white-space:nowrap;">⬆️ Importer CSV</button>
+          style="white-space:nowrap;">${t('pigeons.import_btn')}</button>
       </div>
       <div class="empty-state">
         <div class="empty-state-icon">🕊️</div>
-        <div class="empty-state-text">Aucun pigeon enregistré</div>
-        <div class="empty-state-sub">Commencez par ajouter vos premiers pigeons ou importez une liste CSV</div>
+        <div class="empty-state-text">${t('pigeons.empty.title')}</div>
+        <div class="empty-state-sub">${t('pigeons.empty.sub')}</div>
       </div>`;
     return;
   }
@@ -53,39 +53,39 @@ async function loadPigeons() {
       display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
       <select class="form-control" style="width:auto;" id="f-lignee-filtre"
         onchange="changerFiltre('lignee_id', this.value)">
-        <option value="">Toutes les lignées</option>
+        <option value="">${t('pigeons.filter.all_lignees')}</option>
         ${lignees.map(l =>
           `<option value="${l.id}">${l.nom}</option>`
         ).join('')}
       </select>
       <select class="form-control" style="width:auto;" id="f-statut-filtre"
         onchange="changerFiltre('statut', this.value)">
-        <option value="">Tous les statuts</option>
-        <option value="actif">Actif</option>
-        <option value="reproducteur">Reproducteur</option>
-        <option value="concours">Concours</option>
-        <option value="retraite">Retraité</option>
-        <option value="perdu">Perdu</option>
-        <option value="decede">Décédé</option>
+        <option value="">${t('pigeons.filter.all_status')}</option>
+        <option value="actif">${t('status.actif')}</option>
+        <option value="reproducteur">${t('status.reproducteur')}</option>
+        <option value="concours">${t('status.concours')}</option>
+        <option value="retraite">${t('status.retraite')}</option>
+        <option value="perdu">${t('status.perdu')}</option>
+        <option value="decede">${t('status.decede')}</option>
       </select>
       <select class="form-control" style="width:auto;" id="f-sexe-filtre"
         onchange="changerFiltre('sexe', this.value)">
-        <option value="">Tous les sexes</option>
-        <option value="male">♂️ Mâle</option>
-        <option value="femelle">♀️ Femelle</option>
+        <option value="">${t('pigeons.filter.all_sexes')}</option>
+        <option value="male">${t('gender.male')}</option>
+        <option value="femelle">${t('gender.female')}</option>
       </select>
       <select class="form-control" style="width:auto;" id="f-annee-filtre"
         onchange="changerFiltre('annee', this.value)">
-        <option value="">Toutes les années</option>
+        <option value="">${t('pigeons.filter.all_years')}</option>
         ${annees.map(a => `<option value="${a}">${a}</option>`).join('')}
       </select>
       <button class="btn btn-secondary" onclick="reinitialiserFiltres()"
-        style="white-space:nowrap;">✕ Réinitialiser</button>
+        style="white-space:nowrap;">${t('pigeons.filter.reset')}</button>
       <div style="margin-left:auto; display:flex; gap:8px;">
         <button class="btn btn-secondary" onclick="ouvrirImportPigeons()"
-          style="white-space:nowrap;">⬆️ Importer CSV</button>
+          style="white-space:nowrap;">${t('pigeons.import_btn')}</button>
         <button class="btn btn-secondary" onclick="exporterCSVPigeons()"
-          style="white-space:nowrap;">⬇️ Exporter CSV</button>
+          style="white-space:nowrap;">${t('pigeons.export_btn')}</button>
       </div>
     </div>
 
@@ -99,19 +99,19 @@ async function loadPigeons() {
         <table>
           <thead>
             <tr>
-              <th>Photo</th>
+              <th>${t('pigeons.table.photo')}</th>
               <th class="triable" id="th-matricule"
-                onclick="changerTri('matricule')">Matricule</th>
+                onclick="changerTri('matricule')">${t('pigeons.table.matricule')}</th>
               <th class="triable" id="th-annee_naissance"
-                onclick="changerTri('annee_naissance')">Année</th>
+                onclick="changerTri('annee_naissance')">${t('pigeons.table.annee')}</th>
               <th class="triable" id="th-sexe"
-                onclick="changerTri('sexe')">Sexe</th>
+                onclick="changerTri('sexe')">${t('pigeons.table.sexe')}</th>
               <th class="triable" id="th-lignee"
-                onclick="changerTri('lignee')">Lignée</th>
-              <th>Case</th>
+                onclick="changerTri('lignee')">${t('pigeons.table.lignee')}</th>
+              <th>${t('pigeons.table.case')}</th>
               <th class="triable" id="th-statut"
-                onclick="changerTri('statut')">Statut</th>
-              <th>Actions</th>
+                onclick="changerTri('statut')">${t('pigeons.table.statut')}</th>
+              <th>${t('pigeons.table.actions')}</th>
             </tr>
           </thead>
           <tbody id="pigeons-tbody"></tbody>
@@ -169,8 +169,8 @@ function appliquerFiltresEtTri() {
   const cpt = document.getElementById('pigeons-compteur');
   if (cpt) {
     cpt.textContent = affiches === total
-      ? `${total} pigeon${total > 1 ? 's' : ''}`
-      : `${affiches} pigeon${affiches > 1 ? 's' : ''} sur ${total}`;
+      ? t('pigeons.count.all', { count: total, total })
+      : t('pigeons.count.filtered', { count: affiches, affiches, total });
   }
 
   const { page, pageSize } = pigeonState;
@@ -181,8 +181,8 @@ function appliquerFiltresEtTri() {
 
   // 4. Indicateurs d'entête
   const LABELS = {
-    matricule: 'Matricule', annee_naissance: 'Année',
-    sexe: 'Sexe', lignee: 'Lignée', statut: 'Statut',
+    matricule: t('pigeons.table.matricule'), annee_naissance: t('pigeons.table.annee'),
+    sexe: t('pigeons.table.sexe'), lignee: t('pigeons.table.lignee'), statut: t('pigeons.table.statut'),
   };
   Object.keys(LABELS).forEach(col => {
     const th = document.getElementById(`th-${col}`);
@@ -202,12 +202,12 @@ function appliquerFiltresEtTri() {
     } else {
       paginationEl.innerHTML = `
         <button class="btn btn-secondary" onclick="pigeonChangerPage(${currentPage - 1})"
-          ${currentPage === 0 ? 'disabled' : ''} style="padding:6px 14px;">← Précédent</button>
+          ${currentPage === 0 ? 'disabled' : ''} style="padding:6px 14px;">${t('pigeons.pagination.prev')}</button>
         <span style="font-size:13px; color:var(--text-light);">
-          Page ${currentPage + 1} / ${totalPagesNow}
+          ${t('pigeons.pagination.page_of', { current: currentPage + 1, total: totalPagesNow })}
         </span>
         <button class="btn btn-secondary" onclick="pigeonChangerPage(${currentPage + 1})"
-          ${currentPage >= totalPagesNow - 1 ? 'disabled' : ''} style="padding:6px 14px;">Suivant →</button>`;
+          ${currentPage >= totalPagesNow - 1 ? 'disabled' : ''} style="padding:6px 14px;">${t('pigeons.pagination.next')}</button>`;
     }
   }
 
@@ -222,7 +222,7 @@ function appliquerFiltresEtTri() {
         <td>${pigeonPhoto(p.photo, p.matricule)}</td>
         <td><strong>${p.matricule}</strong></td>
         <td>${p.annee_naissance}</td>
-        <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
+        <td>${p.sexe === 'male' ? t('gender.male') : t('gender.female')}</td>
         <td>${lignee
           ? `<span style="${style.badge}">${lignee.nom}</span>`
           : '<span style="color:var(--text-light)">—</span>'}</td>
@@ -251,23 +251,23 @@ function appliquerFiltresEtTri() {
 
 // ===== IMPORT CSV =====
 function ouvrirImportPigeons() {
-  openModal('Importer des pigeons (CSV)', `
+  openModal(t('pigeons.import.modal_title'), `
     <p style="font-size:14px; margin-bottom:12px; color:var(--text-light);">
-      Le fichier CSV doit utiliser <strong>;</strong> comme séparateur avec les colonnes :<br>
-      <code style="font-size:12px;">matricule ; annee_naissance ; sexe ; couleur_plumage ; statut ; colombier_case ; notes</code>
+      ${t('pigeons.import.intro')}<br>
+      <code style="font-size:12px;">${t('pigeons.import.columns')}</code>
     </p>
     <p style="font-size:13px; margin-bottom:16px; color:var(--text-light);">
-      Valeurs sexe : <code>male</code> / <code>femelle</code><br>
-      Valeurs statut : <code>actif</code> · <code>reproducteur</code> · <code>concours</code> · <code>retraite</code> · <code>perdu</code> · <code>decede</code>
+      ${t('pigeons.import.sexe_values')}<br>
+      ${t('pigeons.import.statut_values')}
     </p>
     <div class="form-group">
-      <label class="form-label">Fichier CSV</label>
+      <label class="form-label">${t('pigeons.import.file_label')}</label>
       <input type="file" accept=".csv,.txt" class="form-control" id="csv-pigeons-file">
     </div>
     <div id="import-result" style="margin-top:12px;"></div>
     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="executerImportPigeons()">Importer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="btn btn-primary" onclick="executerImportPigeons()">${t('pigeons.import.submit')}</button>
     </div>
   `);
 }
@@ -275,7 +275,7 @@ function ouvrirImportPigeons() {
 async function executerImportPigeons() {
   const input = document.getElementById('csv-pigeons-file');
   if (!input || !input.files[0]) {
-    showNotification('Sélectionnez un fichier CSV', 'danger'); return;
+    showNotification(t('pigeons.import.select_file'), 'danger'); return;
   }
   const formData = new FormData();
   formData.append('file', input.files[0]);
@@ -286,37 +286,37 @@ async function executerImportPigeons() {
     resultEl.innerHTML = `
       <div style="background:var(--bg); border-radius:8px; padding:12px;">
         <div style="color:var(--success); font-weight:600; margin-bottom:8px;">
-          ✅ ${data.importes} pigeon${data.importes > 1 ? 's' : ''} importé${data.importes > 1 ? 's' : ''}
+          ${t('pigeons.import.success', { count: data.importes, n: data.importes })}
         </div>
         ${data.erreurs.length ? `
           <div style="color:var(--danger); font-size:13px;">
-            <div style="font-weight:600; margin-bottom:4px;">⚠️ ${data.erreurs.length} ligne${data.erreurs.length > 1 ? 's' : ''} ignorée${data.erreurs.length > 1 ? 's' : ''} :</div>
+            <div style="font-weight:600; margin-bottom:4px;">⚠️ ${t('pigeons.import.errors_count', { count: data.erreurs.length, n: data.erreurs.length })}</div>
             ${data.erreurs.map(e => `<div style="margin-left:12px;">• ${e}</div>`).join('')}
           </div>` : ''}
       </div>`;
-    if (data.importes > 0) { showNotification(`${data.importes} pigeon(s) importé(s) ✅`); loadPigeons(); }
+    if (data.importes > 0) { showNotification(t('pigeons.import.success', { count: data.importes, n: data.importes })); loadPigeons(); }
   } catch (err) {
-    showNotification('Erreur lors de l\'import', 'danger');
+    showNotification(t('pigeons.import.error_generic'), 'danger');
   }
 }
 
 function ouvrirImportPerformances() {
-  openModal('Importer des performances (CSV)', `
+  openModal(t('performances.import.modal_title'), `
     <p style="font-size:14px; margin-bottom:12px; color:var(--text-light);">
-      Colonnes requises (séparateur <strong>;</strong>) :<br>
-      <code style="font-size:12px;">date ; pigeon_matricule ; nom_concours ; distance_km ; classement ; nb_pigeons_engages ; vitesse_m_min ; notes</code>
+      ${t('performances.import.intro')}<br>
+      <code style="font-size:12px;">${t('performances.import.columns')}</code>
     </p>
     <p style="font-size:13px; margin-bottom:16px; color:var(--text-light);">
-      Format date : <code>YYYY-MM-DD</code> (ex: 2024-05-12)
+      ${t('performances.import.date_format')}
     </p>
     <div class="form-group">
-      <label class="form-label">Fichier CSV</label>
+      <label class="form-label">${t('performances.import.file_label')}</label>
       <input type="file" accept=".csv,.txt" class="form-control" id="csv-perfs-file">
     </div>
     <div id="import-perf-result" style="margin-top:12px;"></div>
     <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:16px;">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="executerImportPerformances()">Importer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="btn btn-primary" onclick="executerImportPerformances()">${t('performances.import.submit')}</button>
     </div>
   `);
 }
@@ -324,7 +324,7 @@ function ouvrirImportPerformances() {
 async function executerImportPerformances() {
   const input = document.getElementById('csv-perfs-file');
   if (!input || !input.files[0]) {
-    showNotification('Sélectionnez un fichier CSV', 'danger'); return;
+    showNotification(t('performances.import.select_file'), 'danger'); return;
   }
   const formData = new FormData();
   formData.append('file', input.files[0]);
@@ -335,17 +335,17 @@ async function executerImportPerformances() {
     resultEl.innerHTML = `
       <div style="background:var(--bg); border-radius:8px; padding:12px;">
         <div style="color:var(--success); font-weight:600; margin-bottom:8px;">
-          ✅ ${data.importes} performance${data.importes > 1 ? 's' : ''} importée${data.importes > 1 ? 's' : ''}
+          ${t('performances.import.success', { count: data.importes, n: data.importes })}
         </div>
         ${data.erreurs.length ? `
           <div style="color:var(--danger); font-size:13px;">
-            <div style="font-weight:600; margin-bottom:4px;">⚠️ ${data.erreurs.length} ligne${data.erreurs.length > 1 ? 's' : ''} ignorée${data.erreurs.length > 1 ? 's' : ''} :</div>
+            <div style="font-weight:600; margin-bottom:4px;">⚠️ ${t('performances.import.errors_count', { count: data.erreurs.length, n: data.erreurs.length })}</div>
             ${data.erreurs.map(e => `<div style="margin-left:12px;">• ${e}</div>`).join('')}
           </div>` : ''}
       </div>`;
-    if (data.importes > 0) { showNotification(`${data.importes} performance(s) importée(s) ✅`); loadPerformances(); }
+    if (data.importes > 0) { showNotification(t('performances.import.success', { count: data.importes, n: data.importes })); loadPerformances(); }
   } catch (err) {
-    showNotification('Erreur lors de l\'import', 'danger');
+    showNotification(t('performances.import.error_generic'), 'danger');
   }
 }
 
@@ -444,7 +444,7 @@ async function openDetailPigeon(id) {
         <div style="margin-top:10px; text-align:center;">
           <label class="btn btn-secondary"
             style="padding:6px 12px; font-size:12px; cursor:pointer;">
-            📷 Photo
+            ${t('pigeons.detail.photo_btn')}
             <input type="file" accept="image/*" style="display:none;"
               onchange="uploadPhoto('${p.id}', this)">
           </label>
@@ -455,22 +455,22 @@ async function openDetailPigeon(id) {
           font-size:22px; margin-bottom:14px;">${p.matricule}</h3>
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px;">
           <div><span style="color:var(--text-light); font-size:11px;
-            text-transform:uppercase;">Année</span><br>
+            text-transform:uppercase;">${t('pigeons.detail.field.annee')}</span><br>
             <strong>${p.annee_naissance}</strong></div>
           <div><span style="color:var(--text-light); font-size:11px;
-            text-transform:uppercase;">Sexe</span><br>
-            ${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</div>
+            text-transform:uppercase;">${t('pigeons.detail.field.sexe')}</span><br>
+            ${p.sexe === 'male' ? t('gender.male') : t('gender.female')}</div>
           <div><span style="color:var(--text-light); font-size:11px;
-            text-transform:uppercase;">Statut</span><br>
+            text-transform:uppercase;">${t('pigeons.detail.field.statut')}</span><br>
             ${badgeStatut(p.statut)}</div>
           <div><span style="color:var(--text-light); font-size:11px;
-            text-transform:uppercase;">Case</span><br>
+            text-transform:uppercase;">${t('pigeons.detail.field.case')}</span><br>
             ${p.colombier_case || '—'}</div>
           <div><span style="color:var(--text-light); font-size:11px;
-            text-transform:uppercase;">Couleur</span><br>
+            text-transform:uppercase;">${t('pigeons.detail.field.couleur')}</span><br>
             ${p.couleur_plumage || '—'}</div>
           <div><span style="color:var(--text-light); font-size:11px;
-            text-transform:uppercase;">Lignée</span><br>
+            text-transform:uppercase;">${t('pigeons.detail.field.lignee')}</span><br>
             ${lignee
               ? `<span style="background:${lignee.couleur_label}; color:white;
                    padding:4px 12px; border-radius:12px; font-weight:600;
@@ -482,51 +482,51 @@ async function openDetailPigeon(id) {
 
   // ── Section notes ──────────────────────────────────────────────────────────
   const sectionNotes = section(`
-    ${titreSection('📝 Notes')}
+    ${titreSection(t('pigeons.detail.section.notes'))}
     <div style="border-left:3px solid var(--accent); padding:10px 14px;
       background:white; border-radius:0 8px 8px 0; font-size:14px;
       color:${p.notes ? 'var(--text)' : 'var(--text-light)'};">
-      ${p.notes ? p.notes.replace(/\n/g, '<br>') : 'Aucune note'}
+      ${p.notes ? p.notes.replace(/\n/g, '<br>') : t('pigeons.detail.no_note')}
     </div>`);
 
   // ── Section généalogie ────────────────────────────────────────────────────
   const sectionGenea = section(`
-    ${titreSection('🌳 Généalogie')}
+    ${titreSection(t('pigeons.detail.section.genealogy'))}
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
       <div style="background:white; border-radius:8px; padding:12px;
         border:1px solid var(--border);">
         <div style="font-size:11px; color:var(--text-light);
-          margin-bottom:4px;">PÈRE ♂️</div>
+          margin-bottom:4px;">${t('pigeons.detail.pere')}</div>
         <div style="font-weight:600;">
           ${p.pere
             ? `<span style="cursor:pointer; color:var(--accent);"
                  onclick="closeModal(); setTimeout(()=>openDetailPigeon('${p.pere.id}'),150);">
                  ${p.pere.matricule}</span>`
-            : 'Inconnu'}
+            : t('pigeons.detail.unknown_male')}
         </div>
       </div>
       <div style="background:white; border-radius:8px; padding:12px;
         border:1px solid var(--border);">
         <div style="font-size:11px; color:var(--text-light);
-          margin-bottom:4px;">MÈRE ♀️</div>
+          margin-bottom:4px;">${t('pigeons.detail.mere')}</div>
         <div style="font-weight:600;">
           ${p.mere
             ? `<span style="cursor:pointer; color:var(--accent);"
                  onclick="closeModal(); setTimeout(()=>openDetailPigeon('${p.mere.id}'),150);">
                  ${p.mere.matricule}</span>`
-            : 'Inconnue'}
+            : t('pigeons.detail.unknown_female')}
         </div>
       </div>
     </div>`);
 
   // ── Section performances ──────────────────────────────────────────────────
   const sectionPerfs = section(`
-    ${titreSection(`🏆 Performances (${perfsTriees.length} concours)`)}
+    ${titreSection(t('pigeons.detail.section.performances', { count: perfsTriees.length }))}
     ${perfsTriees.length === 0
       ? `<div style="color:var(--text-light); font-size:14px;">
-           Aucune performance enregistrée</div>`
+           ${t('pigeons.detail.no_perf')}</div>`
       : tableCompact(
-          ['Date', 'Concours', 'Dist.', 'Class.', 'Vitesse'],
+          [t('pigeons.detail.perf_table.date'), t('pigeons.detail.perf_table.concours'), t('pigeons.detail.perf_table.dist'), t('pigeons.detail.perf_table.class'), t('pigeons.detail.perf_table.vitesse')],
           perfsTriees.map(pf => `
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:8px;">${fmtDate(pf.date)}</td>
@@ -540,12 +540,12 @@ async function openDetailPigeon(id) {
 
   // ── Section santé ─────────────────────────────────────────────────────────
   const sectionSante = section(`
-    ${titreSection(`🏥 Suivi santé (${santeTriee.length} événements)`)}
+    ${titreSection(t('pigeons.detail.section.health', { count: santeTriee.length }))}
     ${santeTriee.length === 0
       ? `<div style="color:var(--text-light); font-size:14px;">
-           Aucun événement santé enregistré</div>`
+           ${t('pigeons.detail.no_health')}</div>`
       : tableCompact(
-          ['Date', 'Type', 'Description', 'Produit'],
+          [t('pigeons.detail.health_table.date'), t('pigeons.detail.health_table.type'), t('pigeons.detail.health_table.description'), t('pigeons.detail.health_table.produit')],
           santeTriee.map(ev => `
             <tr style="border-bottom:1px solid var(--border);">
               <td style="padding:8px;">${fmtDate(ev.date)}</td>
@@ -565,19 +565,19 @@ async function openDetailPigeon(id) {
     ${sectionPerfs}
     ${sectionSante}
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('pigeons.detail.btn.close')}</button>
       <button class="btn btn-secondary" onclick="exportFichePDF('${p.id}')">
-        🖨️ Imprimer
+        ${t('pigeons.detail.btn.print')}
       </button>
       <button class="btn btn-secondary"
         onclick="closeModal(); setTimeout(()=>{ document.getElementById('modal').style.width='560px'; openPedigree('${p.id}'); },150);">
-        🌳 Pedigree
+        ${t('pigeons.detail.btn.pedigree')}
       </button>
       <button class="btn btn-secondary" onclick="openTimeline('${p.id}', '${p.matricule}')">
-        📋 Historique
+        ${t('pigeons.detail.btn.history')}
       </button>
       <button class="btn btn-primary" onclick="openEditPigeon('${p.id}')">
-        ✏️ Modifier
+        ${t('pigeons.detail.btn.edit')}
       </button>
     </div>`;
 
@@ -617,7 +617,7 @@ async function openTimeline(id, matricule) {
   const couleurs = { concours: '#C4963A', sante: '#27AE60' };
 
   const html = evenements.length === 0
-    ? `<p style="color:var(--text-light); text-align:center; padding:32px 0;">Aucun événement enregistré.</p>`
+    ? `<p style="color:var(--text-light); text-align:center; padding:32px 0;">${t('pigeons.timeline.no_events')}</p>`
     : `<div style="position:relative; padding-left:24px;">
         <div style="position:absolute; left:8px; top:0; bottom:0; width:2px;
           background:var(--border);"></div>
@@ -639,11 +639,11 @@ async function openTimeline(id, matricule) {
           </div>`).join('')}
       </div>
       <div style="text-align:right; margin-top:16px;">
-        <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+        <button class="btn btn-secondary" onclick="closeModal()">${t('pigeons.timeline.close')}</button>
       </div>`;
 
   setTimeout(() => {
-    openModal(`📋 Historique — ${matricule}`, html);
+    openModal(t('pigeons.timeline.title', { matricule }), html);
     document.getElementById('modal').style.width = '600px';
   }, 150);
 }
@@ -659,11 +659,11 @@ async function uploadPhoto(id, input) {
       method: 'POST',
       body: formData
     });
-    showNotification('Photo mise à jour ✅');
+    showNotification(t('pigeons.photo.updated'));
     closeModal();
     loadPigeons();
   } catch (err) {
-    showNotification('Erreur upload photo', 'danger');
+    showNotification(t('pigeons.photo.error'), 'danger');
   }
 }
 
@@ -671,7 +671,7 @@ async function uploadPhoto(id, input) {
 async function openAddPigeon() {
   const lignees = await apiFetch('/lignees/');
   const pigeons = await apiFetch('/pigeons/');
-  openModal('Ajouter un pigeon', formPigeon({}, lignees, pigeons));
+  openModal(t('pigeons.form.add_title'), formPigeon({}, lignees, pigeons));
 }
 
 async function openEditPigeon(id) {
@@ -680,7 +680,7 @@ async function openEditPigeon(id) {
     apiFetch('/lignees/'),
     apiFetch('/pigeons/')
   ]);
-  openModal('Modifier le pigeon', formPigeon(pigeon, lignees, pigeons));
+  openModal(t('pigeons.form.edit_title'), formPigeon(pigeon, lignees, pigeons));
 }
 
 function formPigeon(p = {}, lignees = [], pigeons = []) {
@@ -701,63 +701,63 @@ function formPigeon(p = {}, lignees = [], pigeons = []) {
   return `
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Matricule *</label>
+        <label class="form-label">${t('pigeons.form.matricule_label')}</label>
         <input type="text" class="form-control" id="f-matricule"
-          value="${p.matricule || ''}" placeholder="ex: 166548-24-F">
+          value="${p.matricule || ''}" placeholder="${t('pigeons.form.matricule_placeholder')}">
       </div>
       <div class="form-group">
-        <label class="form-label">Année de naissance *</label>
+        <label class="form-label">${t('pigeons.form.annee_label')}</label>
         <input type="number" class="form-control" id="f-annee"
-          value="${p.annee_naissance || new Date().getFullYear()}" 
+          value="${p.annee_naissance || new Date().getFullYear()}"
           min="2000" max="2099">
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Sexe *</label>
+        <label class="form-label">${t('pigeons.form.sexe_label')}</label>
         <select class="form-control" id="f-sexe">
           <option value="male" ${p.sexe === 'male' ? 'selected' : ''}>
-            ♂️ Mâle</option>
+            ${t('gender.male')}</option>
           <option value="femelle" ${p.sexe === 'femelle' ? 'selected' : ''}>
-            ♀️ Femelle</option>
+            ${t('gender.female')}</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Statut</label>
+        <label class="form-label">${t('pigeons.form.statut_label')}</label>
         <select class="form-control" id="f-statut">
           <option value="actif" ${p.statut === 'actif' ? 'selected' : ''}>
-            Actif</option>
-          <option value="reproducteur" 
+            ${t('status.actif')}</option>
+          <option value="reproducteur"
             ${p.statut === 'reproducteur' ? 'selected' : ''}>
-            Reproducteur</option>
+            ${t('status.reproducteur')}</option>
           <option value="concours" ${p.statut === 'concours' ? 'selected' : ''}>
-            Concours</option>
+            ${t('status.concours')}</option>
           <option value="retraite" ${p.statut === 'retraite' ? 'selected' : ''}>
-            Retraité</option>
+            ${t('status.retraite')}</option>
           <option value="perdu" ${p.statut === 'perdu' ? 'selected' : ''}>
-            Perdu</option>
+            ${t('status.perdu')}</option>
           <option value="decede" ${p.statut === 'decede' ? 'selected' : ''}>
-            Décédé</option>
+            ${t('status.decede')}</option>
         </select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Couleur du plumage</label>
+        <label class="form-label">${t('pigeons.form.couleur_label')}</label>
         <input type="text" class="form-control" id="f-couleur"
-          value="${p.couleur_plumage || ''}" 
-          placeholder="ex: Bleu barré">
+          value="${p.couleur_plumage || ''}"
+          placeholder="${t('pigeons.form.couleur_placeholder')}">
       </div>
       <div class="form-group">
-        <label class="form-label">Case colombier</label>
+        <label class="form-label">${t('pigeons.form.case_label')}</label>
         <input type="text" class="form-control" id="f-case"
-          value="${p.colombier_case || ''}" placeholder="ex: Case 12">
+          value="${p.colombier_case || ''}" placeholder="${t('pigeons.form.case_placeholder')}">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Lignée</label>
+      <label class="form-label">${t('pigeons.form.lignee_label')}</label>
       <select class="form-control" id="f-lignee">
-        <option value="">— Sans lignée —</option>
+        <option value="">${t('pigeons.form.no_lignee')}</option>
         ${lignees.map(l => `
           <option value="${l.id}" ${p.lignee_id === l.id ? 'selected' : ''}>
             ${l.nom}
@@ -766,30 +766,30 @@ function formPigeon(p = {}, lignees = [], pigeons = []) {
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Père ♂️</label>
+        <label class="form-label">${t('pigeons.form.pere_label')}</label>
         <select class="form-control" id="f-pere">
-          <option value="">— Inconnu —</option>
+          <option value="">${t('pigeons.form.unknown_pere')}</option>
           ${malesOptions}
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Mère ♀️</label>
+        <label class="form-label">${t('pigeons.form.mere_label')}</label>
         <select class="form-control" id="f-mere">
-          <option value="">— Inconnue —</option>
+          <option value="">${t('pigeons.form.unknown_mere')}</option>
           ${femellesOptions}
         </select>
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Notes</label>
+      <label class="form-label">${t('pigeons.form.notes_label')}</label>
       <textarea class="form-control" id="f-notes" rows="3"
-        placeholder="Observations, caractéristiques..."
+        placeholder="${t('pigeons.form.notes_placeholder')}"
       >${p.notes || ''}</textarea>
     </div>
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
       <button class="btn btn-primary" onclick="savePigeon('${p.id || ''}')">
-        ${p.id ? '💾 Modifier' : '➕ Créer'}
+        ${p.id ? t('common.save_edit') : t('common.create')}
       </button>
     </div>`;
 }
@@ -810,7 +810,7 @@ async function savePigeon(id = '') {
   };
 
   if (!data.matricule) {
-    showNotification('Le matricule est obligatoire', 'danger');
+    showNotification(t('pigeons.msg.matricule_required'), 'danger');
     return;
   }
 
@@ -820,13 +820,13 @@ async function savePigeon(id = '') {
         method: 'PUT',
         body: JSON.stringify(data)
       });
-      showNotification('Pigeon modifié avec succès ✅');
+      showNotification(t('pigeons.msg.updated'));
     } else {
       await apiFetch('/pigeons/', {
         method: 'POST',
         body: JSON.stringify(data)
       });
-      showNotification('Pigeon créé avec succès ✅');
+      showNotification(t('pigeons.msg.created'));
     }
     closeModal();
     loadPigeons();
@@ -837,16 +837,16 @@ async function savePigeon(id = '') {
 
 // ===== SUPPRIMER =====
 function deletePigeon(id, matricule) {
-  confirmDelete(`Supprimer définitivement le pigeon <strong>${matricule}</strong> ?`, async () => {
+  confirmDelete(t('pigeons.msg.delete_confirm', { matricule }), async () => {
   try {
     await apiFetch(`/pigeons/${id}`, { method: 'DELETE' });
-    showNotification(`Pigeon "${matricule}" supprimé`);
+    showNotification(t('pigeons.msg.deleted', { matricule }));
     loadPigeons();
   } catch (err) {
     if (err.status === 409 || (err.message && err.message.includes('affectations nutritionnelles'))) {
       _showPigeonBlockedDialog(id, matricule, err.message);
     } else {
-      showNotification(err.message || 'Erreur lors de la suppression', 'error');
+      showNotification(err.message || t('pigeons.msg.delete_error'), 'error');
       console.error(err);
     }
   }
@@ -859,16 +859,16 @@ function _showPigeonBlockedDialog(id, matricule) {
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:12px;padding:28px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
       <div style="font-size:2rem;text-align:center;margin-bottom:12px;">⚠️</div>
-      <h3 style="font-size:1.05rem;font-weight:700;text-align:center;margin-bottom:10px;">Suppression impossible</h3>
+      <h3 style="font-size:1.05rem;font-weight:700;text-align:center;margin-bottom:10px;">${t('pigeons.msg.blocked.title')}</h3>
       <p style="font-size:0.88rem;color:#555;line-height:1.5;margin-bottom:6px;">
-        Le pigeon <strong>${matricule}</strong> possède des affectations nutritionnelles actives.
+        ${t('pigeons.msg.blocked.has_assignments', { matricule })}
       </p>
       <p style="font-size:0.88rem;color:#555;line-height:1.5;margin-bottom:20px;">
-        Pour le retirer du suivi tout en conservant l'historique, marquez-le comme <strong>Perdu</strong>.
+        ${t('pigeons.msg.blocked.suggestion')}
       </p>
       <div style="display:flex;gap:10px;justify-content:flex-end;">
-        <button id="dlg-cancel"  style="padding:8px 18px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;font-size:0.88rem;">Annuler</button>
-        <button id="dlg-perdu"   style="padding:8px 18px;border:none;border-radius:6px;background:#E67E22;color:#fff;cursor:pointer;font-size:0.88rem;font-weight:600;">Marquer comme Perdu</button>
+        <button id="dlg-cancel"  style="padding:8px 18px;border:1px solid #ccc;border-radius:6px;background:#fff;cursor:pointer;font-size:0.88rem;">${t('common.cancel')}</button>
+        <button id="dlg-perdu"   style="padding:8px 18px;border:none;border-radius:6px;background:#E67E22;color:#fff;cursor:pointer;font-size:0.88rem;font-weight:600;">${t('pigeons.msg.blocked.mark_lost_btn')}</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -883,10 +883,10 @@ function _showPigeonBlockedDialog(id, matricule) {
         method: 'PUT',
         body: JSON.stringify({ statut: 'perdu' }),
       });
-      showNotification(`Pigeon "${matricule}" marqué comme Perdu`);
+      showNotification(t('pigeons.msg.blocked.marked_lost', { matricule }));
       loadPigeons();
     } catch (err2) {
-      showNotification(err2.message || 'Erreur lors de la mise à jour', 'error');
+      showNotification(err2.message || t('pigeons.msg.blocked.update_error'), 'error');
     } finally {
       close();
     }
@@ -903,9 +903,22 @@ function badgeClassement(n) {
     3: `background:#CD7F32; color:#fff;`,
   };
   const style = styles[n] || 'background:#95A5A6; color:#fff;';
-  const label = n === 1 ? `${n}er` : `${n}ème`;
+  const label = ordinalLabel(n);
   return `<span style="display:inline-block; padding:2px 10px; border-radius:12px;
     font-weight:700; font-size:12px; ${style}">${label}</span>`;
+}
+
+function ordinalLabel(n) {
+  const lang = getCurrentLang();
+  if (lang === 'en') {
+    const j = n % 10, k = n % 100;
+    if (j === 1 && k !== 11) return `${n}st`;
+    if (j === 2 && k !== 12) return `${n}nd`;
+    if (j === 3 && k !== 13) return `${n}rd`;
+    return `${n}th`;
+  }
+  if (lang === 'nl') return `${n}e`;
+  return n === 1 ? `${n}er` : `${n}ème`;
 }
 
 function fmtDate(iso) {
@@ -928,12 +941,12 @@ async function loadPerformances() {
     content.innerHTML = `
       <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
         <button class="btn btn-secondary" onclick="ouvrirImportPerformances()"
-          style="white-space:nowrap;">⬆️ Importer CSV</button>
+          style="white-space:nowrap;">${t('performances.import_btn')}</button>
       </div>
       <div class="empty-state">
         <div class="empty-state-icon">🏆</div>
-        <div class="empty-state-text">Aucune performance enregistrée</div>
-        <div class="empty-state-sub">Ajoutez des résultats de concours ou importez une liste CSV</div>
+        <div class="empty-state-text">${t('performances.empty.title')}</div>
+        <div class="empty-state-sub">${t('performances.empty.sub')}</div>
       </div>`;
     return;
   }
@@ -941,24 +954,24 @@ async function loadPerformances() {
   content.innerHTML = `
     <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:12px;">
       <button class="btn btn-secondary" onclick="ouvrirImportPerformances()"
-        style="white-space:nowrap;">⬆️ Importer CSV</button>
+        style="white-space:nowrap;">${t('performances.import_btn')}</button>
       <button class="btn btn-secondary"
         onclick="window.location.href='${API_URL}/performances/export/csv'"
-        style="white-space:nowrap;">⬇️ Exporter CSV</button>
+        style="white-space:nowrap;">${t('performances.export_btn')}</button>
     </div>
     <div class="card">
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Pigeon</th>
-              <th>Concours</th>
-              <th>Date</th>
-              <th>Distance</th>
-              <th>Classement</th>
-              <th>Vitesse (m/min)</th>
-              <th>Engagés</th>
-              <th>Actions</th>
+              <th>${t('performances.table.pigeon')}</th>
+              <th>${t('performances.table.concours')}</th>
+              <th>${t('performances.table.date')}</th>
+              <th>${t('performances.table.distance')}</th>
+              <th>${t('performances.table.classement')}</th>
+              <th>${t('performances.table.vitesse')}</th>
+              <th>${t('performances.table.engages')}</th>
+              <th>${t('performances.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -996,51 +1009,51 @@ async function loadPerformances() {
 async function openAddPerformance() {
   const pigeons = await apiFetch('/pigeons/');
   const today = new Date().toISOString().split('T')[0];
-  openModal('🏆 Ajouter une performance', `
+  openModal(t('performances.add.modal_title'), `
     <div class="form-group">
-      <label class="form-label">Pigeon *</label>
+      <label class="form-label">${t('performances.add.pigeon_label')}</label>
       <select class="form-control" id="fp-pigeon">
-        <option value="">— Choisir un pigeon —</option>
+        <option value="">${t('performances.add.choose_pigeon')}</option>
         ${pigeons.map(p => `<option value="${p.id}">${p.matricule}</option>`).join('')}
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label">Nom du concours *</label>
+      <label class="form-label">${t('performances.add.concours_label')}</label>
       <input type="text" class="form-control" id="fp-nom"
-        placeholder="ex: Grand Prix Marseille">
+        placeholder="${t('performances.add.concours_placeholder')}">
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Date *</label>
+        <label class="form-label">${t('performances.add.date_label')}</label>
         <input type="date" class="form-control" id="fp-date" value="${today}">
       </div>
       <div class="form-group">
-        <label class="form-label">Distance (km)</label>
-        <input type="number" class="form-control" id="fp-distance" min="0" placeholder="ex: 320">
+        <label class="form-label">${t('performances.add.distance_label')}</label>
+        <input type="number" class="form-control" id="fp-distance" min="0" placeholder="${t('performances.add.distance_placeholder')}">
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Classement</label>
-        <input type="number" class="form-control" id="fp-classement" min="1" placeholder="ex: 3">
+        <label class="form-label">${t('performances.add.classement_label')}</label>
+        <input type="number" class="form-control" id="fp-classement" min="1" placeholder="${t('performances.add.classement_placeholder')}">
       </div>
       <div class="form-group">
-        <label class="form-label">Vitesse (m/min)</label>
-        <input type="number" class="form-control" id="fp-vitesse" step="0.1" min="0" placeholder="ex: 1456.2">
+        <label class="form-label">${t('performances.add.vitesse_label')}</label>
+        <input type="number" class="form-control" id="fp-vitesse" step="0.1" min="0" placeholder="${t('performances.add.vitesse_placeholder')}">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Pigeons engagés</label>
-      <input type="number" class="form-control" id="fp-engages" min="1" placeholder="ex: 245">
+      <label class="form-label">${t('performances.add.engages_label')}</label>
+      <input type="number" class="form-control" id="fp-engages" min="1" placeholder="${t('performances.add.engages_placeholder')}">
     </div>
     <div class="form-group">
-      <label class="form-label">Notes</label>
+      <label class="form-label">${t('performances.add.notes_label')}</label>
       <textarea class="form-control" id="fp-notes" rows="2"
-        placeholder="Observations..."></textarea>
+        placeholder="${t('performances.add.notes_placeholder')}"></textarea>
     </div>
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="savePerformance()">➕ Créer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="btn btn-primary" onclick="savePerformance()">${t('performances.add.submit')}</button>
     </div>`);
 }
 
@@ -1048,9 +1061,9 @@ async function savePerformance() {
   const pigeon_id = document.getElementById('fp-pigeon').value;
   const nom_concours = document.getElementById('fp-nom').value.trim();
   const date = document.getElementById('fp-date').value;
-  if (!pigeon_id) { showNotification('Choisissez un pigeon', 'danger'); return; }
-  if (!nom_concours) { showNotification('Le nom du concours est obligatoire', 'danger'); return; }
-  if (!date) { showNotification('La date est obligatoire', 'danger'); return; }
+  if (!pigeon_id) { showNotification(t('performances.msg.choose_pigeon'), 'danger'); return; }
+  if (!nom_concours) { showNotification(t('performances.msg.concours_required'), 'danger'); return; }
+  if (!date) { showNotification(t('performances.msg.date_required'), 'danger'); return; }
 
   const data = {
     pigeon_id,
@@ -1065,7 +1078,7 @@ async function savePerformance() {
 
   try {
     await apiFetch('/performances/', { method: 'POST', body: JSON.stringify(data) });
-    showNotification('Performance enregistrée ✅');
+    showNotification(t('performances.msg.saved'));
     closeModal();
     loadPerformances();
   } catch (err) {
@@ -1074,10 +1087,10 @@ async function savePerformance() {
 }
 
 function deletePerformance(id, nom) {
-  confirmDelete(`Supprimer la performance <strong>${nom}</strong> ?`, async () => {
+  confirmDelete(t('performances.msg.delete_confirm', { nom }), async () => {
     try {
       await apiFetch(`/performances/${id}`, { method: 'DELETE' });
-      showNotification('Performance supprimée');
+      showNotification(t('performances.msg.deleted'));
       loadPerformances();
     } catch (err) {
       console.error(err);
@@ -1089,10 +1102,10 @@ function deletePerformance(id, nom) {
 
 function badgeType(type) {
   const map = {
-    'vaccination':       ['#27AE60', 'Vaccination'],
-    'traitement':        ['#E67E22', 'Traitement'],
-    'visite vétérinaire':['#2980B9', 'Visite vétérinaire'],
-    'observation':       ['#7F8C8D', 'Observation'],
+    'vaccination':       ['#27AE60', t('sante.type.vaccination')],
+    'traitement':        ['#E67E22', t('sante.type.traitement')],
+    'visite vétérinaire':['#2980B9', t('sante.type.visite_veterinaire')],
+    'observation':       ['#7F8C8D', t('sante.type.observation')],
   };
   const [color, label] = map[type] || ['#95A5A6', type];
   return `<span style="display:inline-block; padding:2px 10px; border-radius:12px;
@@ -1113,8 +1126,8 @@ async function loadSante() {
     content.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">🏥</div>
-        <div class="empty-state-text">Aucun événement santé enregistré</div>
-        <div class="empty-state-sub">Suivez la santé de vos pigeons ici</div>
+        <div class="empty-state-text">${t('sante.empty.title')}</div>
+        <div class="empty-state-sub">${t('sante.empty.sub')}</div>
       </div>`;
     return;
   }
@@ -1123,19 +1136,19 @@ async function loadSante() {
     <div style="text-align:right; margin-bottom:12px;">
       <button class="btn btn-secondary"
         onclick="window.location.href='${API_URL}/sante/export/csv'"
-        style="white-space:nowrap;">⬇️ Exporter CSV</button>
+        style="white-space:nowrap;">${t('sante.export_btn')}</button>
     </div>
     <div class="card">
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Pigeon</th>
-              <th>Date</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Produit</th>
-              <th>Actions</th>
+              <th>${t('sante.table.pigeon')}</th>
+              <th>${t('sante.table.date')}</th>
+              <th>${t('sante.table.type')}</th>
+              <th>${t('sante.table.description')}</th>
+              <th>${t('sante.table.produit')}</th>
+              <th>${t('sante.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -1173,42 +1186,42 @@ async function loadSante() {
 async function openAddSante() {
   const pigeons = await apiFetch('/pigeons/');
   const today = new Date().toISOString().split('T')[0];
-  openModal('🏥 Ajouter un événement santé', `
+  openModal(t('sante.add.modal_title'), `
     <div class="form-group">
-      <label class="form-label">Pigeon *</label>
+      <label class="form-label">${t('sante.add.pigeon_label')}</label>
       <select class="form-control" id="fs-pigeon">
-        <option value="">— Choisir un pigeon —</option>
+        <option value="">${t('sante.add.choose_pigeon')}</option>
         ${pigeons.map(p => `<option value="${p.id}">${p.matricule}</option>`).join('')}
       </select>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Type *</label>
+        <label class="form-label">${t('sante.add.type_label')}</label>
         <select class="form-control" id="fs-type">
-          <option value="vaccination">💉 Vaccination</option>
-          <option value="traitement">💊 Traitement</option>
-          <option value="visite vétérinaire">🩺 Visite vétérinaire</option>
-          <option value="observation">👁️ Observation</option>
+          <option value="vaccination">${t('sante.add.type_vaccination')}</option>
+          <option value="traitement">${t('sante.add.type_traitement')}</option>
+          <option value="visite vétérinaire">${t('sante.add.type_visite')}</option>
+          <option value="observation">${t('sante.add.type_observation')}</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Date *</label>
+        <label class="form-label">${t('sante.add.date_label')}</label>
         <input type="date" class="form-control" id="fs-date" value="${today}">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Description</label>
+      <label class="form-label">${t('sante.add.description_label')}</label>
       <textarea class="form-control" id="fs-description" rows="2"
-        placeholder="Détails de l'événement..."></textarea>
+        placeholder="${t('sante.add.description_placeholder')}"></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Produit utilisé</label>
+      <label class="form-label">${t('sante.add.produit_label')}</label>
       <input type="text" class="form-control" id="fs-produit"
-        placeholder="ex: Colombovac PMV">
+        placeholder="${t('sante.add.produit_placeholder')}">
     </div>
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveSante()">➕ Créer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="btn btn-primary" onclick="saveSante()">${t('sante.add.submit')}</button>
     </div>`);
 }
 
@@ -1216,8 +1229,8 @@ async function saveSante() {
   const pigeon_id = document.getElementById('fs-pigeon').value;
   const type = document.getElementById('fs-type').value;
   const date = document.getElementById('fs-date').value;
-  if (!pigeon_id) { showNotification('Choisissez un pigeon', 'danger'); return; }
-  if (!date) { showNotification('La date est obligatoire', 'danger'); return; }
+  if (!pigeon_id) { showNotification(t('sante.msg.choose_pigeon'), 'danger'); return; }
+  if (!date) { showNotification(t('sante.msg.date_required'), 'danger'); return; }
 
   const data = {
     pigeon_id,
@@ -1229,7 +1242,7 @@ async function saveSante() {
 
   try {
     await apiFetch('/sante/', { method: 'POST', body: JSON.stringify(data) });
-    showNotification('Événement santé enregistré ✅');
+    showNotification(t('sante.msg.saved'));
     closeModal();
     loadSante();
   } catch (err) {
@@ -1238,10 +1251,10 @@ async function saveSante() {
 }
 
 function deleteSante(id) {
-  confirmDelete('Supprimer cet événement santé ?', async () => {
+  confirmDelete(t('sante.msg.delete_confirm'), async () => {
     try {
       await apiFetch(`/sante/${id}`, { method: 'DELETE' });
-      showNotification('Événement supprimé');
+      showNotification(t('sante.msg.deleted'));
       loadSante();
     } catch (err) {
       console.error(err);

@@ -6,8 +6,8 @@ async function loadLignees() {
     content.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">👨‍👩‍👧‍👦</div>
-        <div class="empty-state-text">Aucune lignée enregistrée</div>
-        <div class="empty-state-sub">Commencez par créer vos premières lignées</div>
+        <div class="empty-state-text">${t('lignees.empty.title')}</div>
+        <div class="empty-state-sub">${t('lignees.empty.sub')}</div>
       </div>`;
     return;
   }
@@ -18,11 +18,11 @@ async function loadLignees() {
         <table>
           <thead>
             <tr>
-              <th>Couleur</th>
-              <th>Nom</th>
-              <th>Origine</th>
-              <th>Description</th>
-              <th>Actions</th>
+              <th>${t('lignees.table.couleur')}</th>
+              <th>${t('lignees.table.nom')}</th>
+              <th>${t('lignees.table.origine')}</th>
+              <th>${t('lignees.table.description')}</th>
+              <th>${t('lignees.table.actions')}</th>
             </tr>
           </thead>
           <tbody>
@@ -41,15 +41,15 @@ async function loadLignees() {
                 </td>
                 <td>
                   <div style="display:flex; gap:8px;">
-                    <button class="btn btn-secondary" 
+                    <button class="btn btn-secondary"
                       onclick="openEditLignee('${l.id}')"
                       style="padding:6px 12px; font-size:12px;">
-                      ✏️ Modifier
+                      ${t('common.edit')}
                     </button>
-                    <button class="btn btn-danger" 
+                    <button class="btn btn-danger"
                       onclick="deleteLignee('${l.id}', '${l.nom}')"
                       style="padding:6px 12px; font-size:12px;">
-                      🗑️ Supprimer
+                      ${t('common.delete')}
                     </button>
                   </div>
                 </td>
@@ -63,51 +63,51 @@ async function loadLignees() {
 
 // ===== FORMULAIRE AJOUT =====
 function openAddLignee() {
-  openModal('Ajouter une lignée', formLignee());
+  openModal(t('lignees.modal.add_title'), formLignee());
 }
 
 // ===== FORMULAIRE MODIFICATION =====
 async function openEditLignee(id) {
   const lignee = await apiFetch(`/lignees/${id}`);
-  openModal('Modifier la lignée', formLignee(lignee));
+  openModal(t('lignees.modal.edit_title'), formLignee(lignee));
 }
 
 // ===== TEMPLATE FORMULAIRE =====
 function formLignee(lignee = {}) {
   return `
     <div class="form-group">
-      <label class="form-label">Nom de la lignée *</label>
-      <input type="text" class="form-control" id="f-nom" 
-        value="${lignee.nom || ''}" placeholder="ex: Janssen">
+      <label class="form-label">${t('lignees.form.nom_label')}</label>
+      <input type="text" class="form-control" id="f-nom"
+        value="${lignee.nom || ''}" placeholder="${t('lignees.form.nom_placeholder')}">
     </div>
     <div class="form-group">
-      <label class="form-label">Origine</label>
-      <input type="text" class="form-control" id="f-origine" 
-        value="${lignee.origine || ''}" placeholder="ex: Belgique">
+      <label class="form-label">${t('lignees.form.origine_label')}</label>
+      <input type="text" class="form-control" id="f-origine"
+        value="${lignee.origine || ''}" placeholder="${t('lignees.form.origine_placeholder')}">
     </div>
     <div class="form-group">
-      <label class="form-label">Description</label>
-      <textarea class="form-control" id="f-description" 
-        rows="3" placeholder="Description de la lignée..."
+      <label class="form-label">${t('lignees.form.description_label')}</label>
+      <textarea class="form-control" id="f-description"
+        rows="3" placeholder="${t('lignees.form.description_placeholder')}"
       >${lignee.description || ''}</textarea>
     </div>
     <div class="form-group">
-      <label class="form-label">Couleur d'identification</label>
+      <label class="form-label">${t('lignees.form.couleur_label')}</label>
       <div style="display:flex; align-items:center; gap:12px;">
-        <input type="color" id="f-couleur" 
+        <input type="color" id="f-couleur"
           value="${lignee.couleur_label || '#2980B9'}"
-          style="width:48px; height:38px; border:1px solid var(--border); 
+          style="width:48px; height:38px; border:1px solid var(--border);
           border-radius:8px; cursor:pointer; padding:2px;">
         <span style="font-size:13px; color:var(--text-light);">
-          Choisissez une couleur pour identifier cette lignée
+          ${t('lignees.form.couleur_help')}
         </span>
       </div>
     </div>
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" 
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="btn btn-primary"
         onclick="saveLignee('${lignee.id || ''}')">
-        ${lignee.id ? '💾 Modifier' : '➕ Créer'}
+        ${lignee.id ? t('common.save_edit') : t('common.create')}
       </button>
     </div>`;
 }
@@ -122,7 +122,7 @@ async function saveLignee(id = '') {
   };
 
   if (!data.nom) {
-    showNotification('Le nom est obligatoire', 'danger');
+    showNotification(t('lignees.msg.name_required'), 'danger');
     return;
   }
 
@@ -132,13 +132,13 @@ async function saveLignee(id = '') {
         method: 'PUT',
         body: JSON.stringify(data)
       });
-      showNotification('Lignée modifiée avec succès ✅');
+      showNotification(t('lignees.msg.updated'));
     } else {
       await apiFetch('/lignees/', {
         method: 'POST',
         body: JSON.stringify(data)
       });
-      showNotification('Lignée créée avec succès ✅');
+      showNotification(t('lignees.msg.created'));
     }
     closeModal();
     loadLignees();
@@ -149,10 +149,10 @@ async function saveLignee(id = '') {
 
 // ===== SUPPRIMER =====
 function deleteLignee(id, nom) {
-  confirmDelete(`Supprimer la lignée <strong>${nom}</strong> ?`, async () => {
+  confirmDelete(t('lignees.confirm_delete', { nom }), async () => {
     try {
       await apiFetch(`/lignees/${id}`, { method: 'DELETE' });
-      showNotification(`Lignée "${nom}" supprimée`);
+      showNotification(t('lignees.msg.deleted', { nom }));
       loadLignees();
     } catch (err) {
       console.error(err);

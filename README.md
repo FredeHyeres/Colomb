@@ -10,6 +10,7 @@
 ![Python](https://img.shields.io/badge/Python-FastAPI-blue?logo=python)
 ![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
 ![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker)
+![Langues](https://img.shields.io/badge/🌍%20Langues-FR%20%7C%20NL%20%7C%20EN-success)
 
 ---
 
@@ -17,7 +18,8 @@
 
 | Version | Branche | Tag | Statut |
 |---------|---------|-----|--------|
-| V3 (actuelle) | `main` | [v3.0.0](../../releases/tag/v3.0.0) | ✅ Production |
+| V3.3 (actuelle) | `main` | [v3.3](../../releases/tag/v3.3) | ✅ Production |
+| V3 | `main` | [v3.0.0](../../releases/tag/v3.0.0) | ✅ Production |
 | V2 | `v2` | [v2.0.0](../../releases/tag/v2.0.0) | 🔒 Archivée |
 | V1 | `v1` | [v1.0.0](../../releases/tag/v1.0.0) | 🔒 Archivée |
 
@@ -60,6 +62,15 @@
 | ⏱️ **Repos différencié** | 12j yearling / 10j adulte post-concours · messages adaptés par profil |
 | 📝 **Boucle feedback** | Outcome modal · résultat concours · share anonymisé · pending feedback dashboard |
 | 🛡️ **Robustesse UI** | `renderEmptyState()` · zones blanches éliminées · erreurs API gérées partout |
+
+### ✅ V3.3 — Internationalisation FR / NL / EN (stable sur `main`)
+
+| Module | Description |
+|---|---|
+| 🌍 **Interface multilingue** | Traduction complète FR / NL / EN via `frontend/js/i18n.js` et `frontend/locales/*.json` |
+| 🥗 **Catalogue nutrition traduit** | Ingrédients (avec valeurs nutritionnelles), suppléments, mélanges et plans alimentaires localisés par langue |
+| 🌱 **Seeds par langue** | `seed_fr.py` / `seed_nl.py` / `seed_en.py` — catalogue nutrition de base chargé automatiquement au premier lancement selon la langue choisie |
+| 🐦 **Élevages de démo optionnels** | `seed_demo_fr.py` / `seed_demo_nl.py` / `seed_demo_en.py` — élevage complet de démonstration (pigeons, concours, entraînements) à charger manuellement |
 
 ---
 
@@ -107,9 +118,13 @@ docker compose up --build
 # Vider la base de données (conserve la structure)
 docker exec colombo_backend python reset_db.py
 
-# Injecter des données de test
-docker exec colombo_backend python seed.py
+# Charger un élevage de démonstration complet (optionnel, selon la langue)
+docker exec colombo_backend python seed_demo_fr.py
+docker exec colombo_backend python seed_demo_nl.py
+docker exec colombo_backend python seed_demo_en.py
 ```
+
+> ℹ️ Le catalogue nutrition de base (`seed_fr.py` / `seed_nl.py` / `seed_en.py`) est chargé automatiquement au premier lancement selon la langue de l'élevage.
 
 ---
 

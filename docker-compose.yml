@@ -35,6 +35,7 @@ services:
     volumes:
       - ./backend:/app
       - uploads_data:/app/uploads
+      - colomb_config:/data
     ports:
       - "8001:8000"
 
@@ -67,3 +68,4 @@ volumes:
   postgres_data:
   uploads_data:
   pgadmin_data:
+  colomb_config:

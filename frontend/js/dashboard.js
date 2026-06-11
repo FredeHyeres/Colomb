@@ -6,7 +6,7 @@ async function loadDashboard() {
   let pigeons, lignees;
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    content.innerHTML = `<div class="loading">Connexion à l'API... (tentative ${attempt}/${MAX_RETRIES})</div>`;
+    content.innerHTML = `<div class="loading">${t('dashboard.connecting', { attempt, max: MAX_RETRIES })}</div>`;
     try {
       [pigeons, lignees] = await Promise.all([
         apiFetch('/pigeons/'),
@@ -18,10 +18,10 @@ async function loadDashboard() {
         content.innerHTML = `
           <div class="empty-state">
             <div class="empty-state-icon">⚠️</div>
-            <div class="empty-state-text">Impossible de contacter l'API</div>
-            <div class="empty-state-sub">${err.message || 'Erreur réseau — vérifiez que le backend est démarré'}</div>
+            <div class="empty-state-text">${t('dashboard.api_unreachable')}</div>
+            <div class="empty-state-sub">${err.message || t('dashboard.network_error')}</div>
             <button class="btn btn-primary" style="margin-top:16px;" onclick="retryLoad()">
-              🔄 Réessayer
+              ${t('common.retry')}
             </button>
           </div>`;
         return;
@@ -40,8 +40,8 @@ async function loadDashboard() {
   const parLignee = {};
   pigeons.forEach(p => {
     const nom = p.lignee_id
-      ? (lignees.find(l => l.id === p.lignee_id)?.nom || 'Inconnue')
-      : 'Sans lignée';
+      ? (lignees.find(l => l.id === p.lignee_id)?.nom || t('lignee.unknown'))
+      : t('lignee.none');
     parLignee[nom] = (parLignee[nom] || 0) + 1;
   });
 
@@ -52,28 +52,28 @@ async function loadDashboard() {
         <div class="stat-icon">🕊️</div>
         <div>
           <div class="stat-value">${pigeons.length}</div>
-          <div class="stat-label">Total pigeons</div>
+          <div class="stat-label">${t('dashboard.stat.total_pigeons')}</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">✅</div>
         <div>
           <div class="stat-value">${actifs}</div>
-          <div class="stat-label">Actifs</div>
+          <div class="stat-label">${t('dashboard.stat.active')}</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">💑</div>
         <div>
           <div class="stat-value">${reproducteurs}</div>
-          <div class="stat-label">Reproducteurs</div>
+          <div class="stat-label">${t('dashboard.stat.breeders')}</div>
         </div>
       </div>
       <div class="stat-card">
         <div class="stat-icon">🏆</div>
         <div>
           <div class="stat-value">${concours}</div>
-          <div class="stat-label">En concours</div>
+          <div class="stat-label">${t('dashboard.stat.racing')}</div>
         </div>
       </div>
     </div>
@@ -83,18 +83,18 @@ async function loadDashboard() {
 
       <!-- RÉPARTITION PAR LIGNÉE -->
       <div class="card">
-        <div class="card-title">Répartition par lignée</div>
+        <div class="card-title">${t('dashboard.lignee_distribution.title')}</div>
         ${Object.keys(parLignee).length === 0
           ? `<div class="empty-state">
                <div class="empty-state-icon">🌳</div>
-               <div class="empty-state-text">Aucune donnée</div>
+               <div class="empty-state-text">${t('dashboard.lignee_distribution.empty')}</div>
              </div>`
           : `<div class="table-container">
                <table>
                  <thead>
                    <tr>
-                     <th>Lignée</th>
-                     <th>Pigeons</th>
+                     <th>${t('dashboard.table.lignee')}</th>
+                     <th>${t('dashboard.table.pigeons')}</th>
                      <th>%</th>
                    </tr>
                  </thead>
@@ -121,13 +121,13 @@ async function loadDashboard() {
 
       <!-- RÉPARTITION PAR STATUT -->
       <div class="card">
-        <div class="card-title">Répartition par statut</div>
+        <div class="card-title">${t('dashboard.status_distribution.title')}</div>
         <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
           ${[
-            { label: 'Actifs', count: actifs, color: '#27AE60', emoji: '✅' },
-            { label: 'Reproducteurs', count: reproducteurs, color: '#2980B9', emoji: '💑' },
-            { label: 'En concours', count: concours, color: '#F39C12', emoji: '🏆' },
-            { label: 'Perdus', count: perdus, color: '#E74C3C', emoji: '❌' },
+            { label: t('dashboard.stat.active'), count: actifs, color: '#27AE60', emoji: '✅' },
+            { label: t('dashboard.stat.breeders'), count: reproducteurs, color: '#2980B9', emoji: '💑' },
+            { label: t('dashboard.stat.racing'), count: concours, color: '#F39C12', emoji: '🏆' },
+            { label: t('dashboard.stat.lost'), count: perdus, color: '#E74C3C', emoji: '❌' },
           ].map(({ label, count, color, emoji }) => `
             <div style="display:flex; align-items:center; gap:12px;">
               <span>${emoji}</span>
@@ -149,22 +149,22 @@ async function loadDashboard() {
 
       <!-- DERNIERS PIGEONS -->
       <div class="card" style="grid-column: span 2;">
-        <div class="card-title">Derniers pigeons enregistrés</div>
+        <div class="card-title">${t('dashboard.recent.title')}</div>
         ${pigeons.length === 0
           ? `<div class="empty-state">
                <div class="empty-state-icon">🕊️</div>
-               <div class="empty-state-text">Aucun pigeon enregistré</div>
-               <div class="empty-state-sub">Commencez par ajouter vos premiers pigeons</div>
+               <div class="empty-state-text">${t('dashboard.recent.empty')}</div>
+               <div class="empty-state-sub">${t('dashboard.recent.empty_sub')}</div>
              </div>`
           : `<div class="table-container">
                <table>
                  <thead>
                    <tr>
-                     <th>Photo</th>
-                     <th>Matricule</th>
-                     <th>Sexe</th>
-                     <th>Statut</th>
-                     <th>Case</th>
+                     <th>${t('dashboard.table.photo')}</th>
+                     <th>${t('dashboard.table.matricule')}</th>
+                     <th>${t('dashboard.table.sexe')}</th>
+                     <th>${t('dashboard.table.statut')}</th>
+                     <th>${t('dashboard.table.case')}</th>
                    </tr>
                  </thead>
                  <tbody>
@@ -176,7 +176,7 @@ async function loadDashboard() {
                        onclick="navigateTo('pigeons')">
                        <td>${pigeonPhoto(p.photo, p.matricule)}</td>
                        <td><strong>${p.matricule}</strong></td>
-                       <td>${p.sexe === 'male' ? '♂️ Mâle' : '♀️ Femelle'}</td>
+                       <td>${p.sexe === 'male' ? t('gender.male') : t('gender.female')}</td>
                        <td>${badgeStatut(p.statut)}</td>
                        <td>${p.colombier_case || '—'}</td>
                      </tr>`;

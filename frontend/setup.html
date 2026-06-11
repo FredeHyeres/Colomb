@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="setup.title">Bienvenue sur Colomb</title>
+  <link rel="icon" type="image/png" href="images/Logo_Colomb.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    body.setup-body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .setup-wrapper {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    .setup-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      padding: 32px;
+      text-align: center;
+    }
+
+    .setup-logo {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 12px;
+      display: block;
+    }
+
+    .setup-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    .setup-progress {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+
+    .setup-step-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--border);
+      transition: background 0.2s;
+    }
+
+    .setup-step-dot.active { background: var(--accent); }
+
+    .setup-step h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .setup-step > p {
+      font-size: 14px;
+      color: var(--text-light);
+      margin-bottom: 24px;
+    }
+
+    .setup-lang-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .setup-lang-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 28px 12px;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      transition: all 0.2s;
+    }
+
+    .setup-lang-card .flag { font-size: 40px; }
+
+    .setup-lang-card:hover,
+    .setup-lang-card.selected {
+      border-color: var(--accent);
+      background: rgba(41,128,185,0.08);
+    }
+
+    .setup-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 16px;
+      text-align: left;
+    }
+
+    .setup-form-grid .form-group.full { grid-column: 1 / -1; }
+
+    .setup-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .setup-actions .btn { min-width: 110px; }
+
+    .setup-error {
+      color: var(--danger);
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: left;
+    }
+
+    .setup-recap {
+      text-align: left;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 20px;
+      margin-bottom: 8px;
+    }
+
+    .setup-recap-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+      font-size: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .setup-recap-row:last-child { border-bottom: none; }
+
+    .setup-recap-row dt { color: var(--text-light); }
+    .setup-recap-row dd { font-weight: 600; color: var(--text); }
+
+    .setup-progress-bar {
+      width: 100%;
+      height: 8px;
+      border-radius: 4px;
+      background: var(--border);
+      overflow: hidden;
+      margin: 20px 0 4px;
+    }
+
+    .setup-progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+
+    .setup-success {
+      color: var(--success);
+      font-weight: 600;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .setup-lang-grid { grid-template-columns: 1fr; }
+      .setup-form-grid { grid-template-columns: 1fr; }
+      .setup-card { padding: 22px; }
+    }
+  </style>
+</head>
+<body class="setup-body">
+
+  <div class="setup-wrapper">
+    <div class="setup-card">
+      <img src="images/Logo_Colomb.png" class="setup-logo" alt="Colomb logo">
+      <h1 class="setup-title" data-i18n="setup.title">Bienvenue sur Colomb</h1>
+
+      <div class="setup-progress">
+        <div class="setup-step-dot active" data-step-dot="1"></div>
+        <div class="setup-step-dot" data-step-dot="2"></div>
+        <div class="setup-step-dot" data-step-dot="3"></div>
+      </div>
+
+      <!-- ÉTAPE 1 — LANGUE -->
+      <section class="setup-step" id="setup-step-1">
+        <h2 data-i18n="setup.step_lang_title">Choisissez votre langue</h2>
+        <p data-i18n="setup.step_lang_subtitle">Sélectionnez la langue de l'application</p>
+        <div class="setup-lang-grid">
+          <button type="button" class="setup-lang-card" data-lang="fr">
+            <span class="flag">🇫🇷</span>
+            <span>Français</span>
+          </button>
+          <button type="button" class="setup-lang-card" data-lang="nl">
+            <span class="flag">🇧🇪</span>
+            <span>Nederlands</span>
+          </button>
+          <button type="button" class="setup-lang-card" data-lang="en">
+            <span class="flag">🇬🇧</span>
+            <span>English</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ÉTAPE 2 — PROFIL ÉLEVEUR -->
+      <section class="setup-step" id="setup-step-2" hidden>
+        <h2 data-i18n="setup.step_profile_title">Profil de l'éleveur</h2>
+        <p data-i18n="setup.step_profile_subtitle">Quelques informations pour personnaliser votre espace</p>
+        <form id="setup-form" novalidate>
+          <div class="setup-form-grid">
+            <div class="form-group full">
+              <label class="form-label" for="f-nom">
+                <span data-i18n="setup.field_nom">Nom de l'éleveur</span> *
+              </label>
+              <input class="form-control" id="f-nom" required data-i18n-placeholder="setup.placeholder_nom" placeholder="Ex. Dupont">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-prenom" data-i18n="setup.field_prenom">Prénom</label>
+              <input class="form-control" id="f-prenom" data-i18n-placeholder="setup.placeholder_prenom" placeholder="Ex. Frédéric">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-colombier" data-i18n="setup.field_colombier">Nom du colombier</label>
+              <input class="form-control" id="f-colombier" data-i18n-placeholder="setup.placeholder_colombier" placeholder="Ex. Colombier de Hyères">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-ville" data-i18n="setup.field_ville">Ville</label>
+              <input class="form-control" id="f-ville" data-i18n-placeholder="setup.placeholder_ville" placeholder="Ex. Hyères">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="f-pays" data-i18n="setup.field_pays">Pays</label>
+              <select class="form-control" id="f-pays">
+                <option value="france" data-i18n="setup.country_france">France</option>
+                <option value="belgique" data-i18n="setup.country_belgique">Belgique</option>
+                <option value="pays_bas" data-i18n="setup.country_pays_bas">Pays-Bas</option>
+                <option value="royaume_uni" data-i18n="setup.country_royaume_uni">Royaume-Uni</option>
+                <option value="autre" data-i18n="setup.country_autre">Autre</option>
+              </select>
+            </div>
+            <div class="form-group full">
+              <label class="form-label" for="f-federation" data-i18n="setup.field_federation">Fédération colombophile</label>
+              <select class="form-control" id="f-federation"></select>
+              <input class="form-control" id="f-federation-other" hidden
+                     data-i18n-placeholder="setup.field_federation_other" placeholder="Précisez votre fédération"
+                     style="margin-top:8px;">
+            </div>
+            <div class="form-group full">
+              <label class="form-label" for="f-email" data-i18n="setup.field_email">Email de contact</label>
+              <input type="email" class="form-control" id="f-email" data-i18n-placeholder="setup.placeholder_email" placeholder="Ex. nom@exemple.com">
+            </div>
+          </div>
+          <p class="setup-error" id="setup-error-2" hidden></p>
+          <div class="setup-actions">
+            <button type="button" class="btn btn-secondary" data-action="back-1" data-i18n="setup.btn_back">Retour</button>
+            <button type="submit" class="btn btn-primary" data-i18n="setup.btn_next">Suivant</button>
+          </div>
+        </form>
+      </section>
+
+      <!-- ÉTAPE 3 — CONFIRMATION -->
+      <section class="setup-step" id="setup-step-3" hidden>
+        <h2 data-i18n="setup.step_confirm_title">Récapitulatif</h2>
+        <p data-i18n="setup.step_confirm_subtitle">Vérifiez vos informations avant de lancer Colomb</p>
+        <dl class="setup-recap" id="setup-recap"></dl>
+
+        <div class="setup-progress-bar" id="setup-progress-bar" hidden>
+          <div class="setup-progress-bar-fill" id="setup-progress-bar-fill"></div>
+        </div>
+        <p class="setup-success" id="setup-success" hidden data-i18n="setup.success">Configuration terminée ! Redirection...</p>
+        <p class="setup-error" id="setup-error-3" hidden></p>
+
+        <div class="setup-actions">
+          <button type="button" class="btn btn-secondary" data-action="back-2" id="btn-back-2" data-i18n="setup.btn_back">Retour</button>
+          <button type="button" class="btn btn-primary" id="btn-launch" data-i18n="setup.btn_launch">Lancer Colomb</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/setup.js"></script>
+</body>
+</html>

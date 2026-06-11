@@ -50,22 +50,22 @@ async function loadColony() {
         <div class="stat-card stat-blue">
           <div class="stat-icon">🕊️</div>
           <div class="stat-value">${total}</div>
-          <div class="stat-label">Total pigeons</div>
+          <div class="stat-label">${t('sport.colony.stats.total')}</div>
         </div>
         <div class="stat-card stat-green">
           <div class="stat-icon">💚</div>
           <div class="stat-value">${categories.forme.length}</div>
-          <div class="stat-label">En forme</div>
+          <div class="stat-label">${t('sport.colony.stats.forme')}</div>
         </div>
         <div class="stat-card stat-orange">
           <div class="stat-icon">😴</div>
           <div class="stat-value">${categories.repos.length}</div>
-          <div class="stat-label">En repos</div>
+          <div class="stat-label">${t('sport.colony.stats.repos')}</div>
         </div>
         <div class="stat-card stat-red">
           <div class="stat-icon">⚠️</div>
           <div class="stat-value">${surveillance}</div>
-          <div class="stat-label">Surveillance médicale</div>
+          <div class="stat-label">${t('sport.colony.stats.surveillance_medicale')}</div>
         </div>
       </div>
 
@@ -75,16 +75,16 @@ async function loadColony() {
         <!-- Grille pigeons -->
         <div class="card flex-2">
           <div class="card-header">
-            <div class="card-title">🕊️ État de la colonie</div>
-            <div class="card-subtitle">${pigeonData.length} pigeons • Cliquer pour analyser la condition</div>
+            <div class="card-title">${t('sport.colony.title')}</div>
+            <div class="card-subtitle">${t('sport.colony.subtitle', { count: pigeonData.length })}</div>
           </div>
 
           <!-- Légende -->
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-            <span class="badge badge-success">💚 En forme</span>
-            <span class="badge badge-warning">🟡 Moyen</span>
-            <span class="badge badge-secondary">😴 Repos</span>
-            <span class="badge badge-danger">🔴 Alerte</span>
+            <span class="badge badge-success">${t('sport.colony.legend.forme')}</span>
+            <span class="badge badge-warning">${t('sport.colony.legend.moyen')}</span>
+            <span class="badge badge-secondary">${t('sport.colony.legend.repos')}</span>
+            <span class="badge badge-danger">${t('sport.colony.legend.alerte')}</span>
           </div>
 
           <div class="pigeon-grid">
@@ -96,23 +96,23 @@ async function loadColony() {
         <div style="display:flex;flex-direction:column;gap:16px;flex:1;">
           <div class="card">
             <div class="card-header">
-              <div class="card-title">📊 Répartition colonie</div>
+              <div class="card-title">${t('sport.colony.doughnut_title')}</div>
             </div>
             <div style="height:220px;position:relative;">
               <canvas id="colony-chart"></canvas>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;">
-              <span style="font-size:0.78rem;color:var(--sport-green);">● En forme : ${categories.forme.length}</span>
-              <span style="font-size:0.78rem;color:var(--sport-orange);">● Surveillance : ${categories.surveillance.length}</span>
-              <span style="font-size:0.78rem;color:var(--text-light);">● Repos : ${categories.repos.length}</span>
-              <span style="font-size:0.78rem;color:var(--sport-red);">● Problème : ${categories.probleme.length}</span>
+              <span style="font-size:0.78rem;color:var(--sport-green);">${t('sport.colony.legend_summary.forme', { count: categories.forme.length })}</span>
+              <span style="font-size:0.78rem;color:var(--sport-orange);">${t('sport.colony.legend_summary.surveillance', { count: categories.surveillance.length })}</span>
+              <span style="font-size:0.78rem;color:var(--text-light);">${t('sport.colony.legend_summary.repos', { count: categories.repos.length })}</span>
+              <span style="font-size:0.78rem;color:var(--sport-red);">${t('sport.colony.legend_summary.probleme', { count: categories.probleme.length })}</span>
             </div>
           </div>
 
           <!-- Alertes colonie -->
           <div class="card">
             <div class="card-header">
-              <div class="card-title">🚨 Pigeons à surveiller</div>
+              <div class="card-title">${t('sport.colony.alerts_title')}</div>
             </div>
             ${renderColonyAlerts(categories)}
           </div>
@@ -133,7 +133,7 @@ async function loadColony() {
     });
 
   } catch (err) {
-    content.innerHTML = `<div class="card"><p style="color:var(--danger);">Erreur : ${err.message}</p></div>`;
+    content.innerHTML = `<div class="card"><p style="color:var(--danger);">${t('sport.error.prefix', { message: err.message })}</p></div>`;
     showToast(err.message, 'error');
   }
 }
@@ -183,10 +183,10 @@ function renderPigeonMiniCard(d) {
   // Déterminer badge statut sport
   let statusBadge, statusColor;
   if (statut === 'repos' || statut === 'retraite') {
-    statusBadge = '😴 Repos';
+    statusBadge = t('sport.colony.status.repos');
     statusColor = 'badge-secondary';
   } else if (!snap) {
-    statusBadge = '❓ Non évalué';
+    statusBadge = t('sport.colony.status.non_evalue');
     statusColor = 'badge-secondary';
   } else {
     const sf = (snap.features && typeof snap.features === 'object') ? snap.features : {};
@@ -194,13 +194,13 @@ function renderPigeonMiniCard(d) {
     const fatigue = typeof sf.fatigue_risk === 'string' ? (fatigueMap[sf.fatigue_risk] ?? 0) : 0;
     const cond100 = sf.condition_avg_7d != null ? sf.condition_avg_7d * 10 : 50;
     if (fatigue > 70 || cond100 < 30) {
-      statusBadge = '🔴 Alerte';
+      statusBadge = t('sport.colony.status.alerte');
       statusColor = 'badge-danger';
     } else if (fatigue > 50 || cond100 < 50) {
-      statusBadge = '🟡 Moyen';
+      statusBadge = t('sport.colony.status.moyen');
       statusColor = 'badge-warning';
     } else {
-      statusBadge = '💚 En forme';
+      statusBadge = t('sport.colony.status.forme');
       statusColor = 'badge-success';
     }
   }
@@ -210,7 +210,7 @@ function renderPigeonMiniCard(d) {
   const condition = sf2.condition_avg_7d != null ? sf2.condition_avg_7d / 10 : null;
 
   return `
-    <div class="pigeon-mini-card" data-pigeon-id="${pigeon.id}" title="Cliquer pour analyser la condition">
+    <div class="pigeon-mini-card" data-pigeon-id="${pigeon.id}" title="${t('sport.colony.click_to_analyze')}">
       <div class="pigeon-mini-icon">🕊️</div>
       <div class="pigeon-mini-bague">${pigeon.matricule || '—'}</div>
       ${pigeon.nom ? `<div class="pigeon-mini-name">${pigeon.nom}</div>` : '<div class="pigeon-mini-name" style="height:16px;"></div>'}
@@ -218,14 +218,14 @@ function renderPigeonMiniCard(d) {
       ${recovery != null || condition != null ? `
         <div class="pigeon-mini-scores">
           ${recovery != null ? `
-            <div style="font-size:0.7rem;color:var(--text-light);margin-bottom:2px;">Récupération</div>
+            <div style="font-size:0.7rem;color:var(--text-light);margin-bottom:2px;">${t('sport.colony.recovery')}</div>
             ${renderScoreBar(recovery / 10)}
           ` : ''}
           ${condition != null ? `
-            <div style="font-size:0.7rem;color:var(--text-light);margin-top:4px;margin-bottom:2px;">Condition</div>
+            <div style="font-size:0.7rem;color:var(--text-light);margin-top:4px;margin-bottom:2px;">${t('sport.colony.condition')}</div>
             ${renderScoreBar(condition / 10)}
           ` : ''}
-        </div>` : `<div style="font-size:0.72rem;color:var(--text-light);margin-top:4px;">Pas de données</div>`}
+        </div>` : `<div style="font-size:0.72rem;color:var(--text-light);margin-top:4px;">${t('sport.colony.no_data')}</div>`}
     </div>`;
 }
 
@@ -238,8 +238,8 @@ function renderColonyAlerts(categories) {
       <div class="alert-card success">
         <span class="alert-icon">✅</span>
         <div class="alert-content">
-          <div class="alert-title">Colonie en bonne santé</div>
-          <div class="alert-text">Aucun pigeon ne nécessite d'attention particulière.</div>
+          <div class="alert-title">${t('sport.colony.alerts.healthy_title')}</div>
+          <div class="alert-text">${t('sport.colony.alerts.healthy_text')}</div>
         </div>
       </div>`;
   }
@@ -254,10 +254,10 @@ function renderColonyAlerts(categories) {
     const condition = af.condition_avg_7d != null ? af.condition_avg_7d * 10 : null;
 
     let reason = '';
-    if (!snap) reason = 'Aucun snapshot disponible — condition inconnue';
-    else if (fatigue > 70) reason = `Risque fatigue élevé (${fatigueLabel})`;
-    else if (condition != null && condition < 30) reason = `Condition très faible (${condition.toFixed(0)}/100)`;
-    else reason = `Surveillance recommandée`;
+    if (!snap) reason = t('sport.colony.alerts.no_snapshot');
+    else if (fatigue > 70) reason = t('sport.colony.alerts.high_fatigue', { label: t(`sport.colony.fatigue.${fatigueLabel}`) });
+    else if (condition != null && condition < 30) reason = t('sport.colony.alerts.low_condition', { value: condition.toFixed(0) });
+    else reason = t('sport.colony.alerts.monitor');
 
     return `
       <div class="alert-card ${isProbleme ? 'critical' : 'warning'}" style="margin-bottom:8px;">
@@ -285,14 +285,19 @@ function renderColonyDoughnut(categories) {
   // Si tout est à 0, afficher 1 factice
   const total = data.reduce((a, b) => a + b, 0);
   if (total === 0) {
-    ctx.parentElement.innerHTML = '<div class="empty-state" style="padding:30px;"><p>Aucune donnée de condition.</p></div>';
+    ctx.parentElement.innerHTML = `<div class="empty-state" style="padding:30px;"><p>${t('sport.colony.doughnut.no_data')}</p></div>`;
     return;
   }
 
   _colonyChart = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['En forme', 'Surveillance', 'Repos', 'Problème'],
+      labels: [
+        t('sport.colony.doughnut.labels.forme'),
+        t('sport.colony.doughnut.labels.surveillance'),
+        t('sport.colony.doughnut.labels.repos'),
+        t('sport.colony.doughnut.labels.probleme')
+      ],
       datasets: [{
         data,
         backgroundColor: ['#27AE60', '#E67E22', '#95A5A6', '#E74C3C'],
@@ -308,7 +313,7 @@ function renderColonyDoughnut(categories) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.label} : ${ctx.parsed} pigeon(s)`
+            label: ctx => t('sport.colony.doughnut.tooltip', { label: ctx.label, count: ctx.parsed })
           }
         }
       },

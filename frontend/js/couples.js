@@ -14,8 +14,8 @@ async function loadCouples() {
     content.innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">💑</div>
-        <div class="empty-state-text">Aucun couple enregistré</div>
-        <div class="empty-state-sub">Créez votre premier couple reproducteur</div>
+        <div class="empty-state-text">${t('couples.empty.title')}</div>
+        <div class="empty-state-sub">${t('couples.empty.sub')}</div>
       </div>`;
     return;
   }
@@ -23,7 +23,7 @@ async function loadCouples() {
   content.innerHTML = `
     ${actifs.length > 0 ? `
       <div class="card" style="margin-bottom:20px;">
-        <div class="card-title">💑 Couples actifs (${actifs.length})</div>
+        <div class="card-title">${t('couples.active_section', { count: actifs.length })}</div>
         ${renderCouplesTable(actifs, false, lignees)}
       </div>` : ''}
 
@@ -32,11 +32,11 @@ async function loadCouples() {
         <div style="display:flex; justify-content:space-between; align-items:center;
           margin-bottom:12px;">
           <div class="card-title" style="margin-bottom:0;">
-            📁 Historique (${inactifs.length} couple${inactifs.length > 1 ? 's' : ''})
+            ${t('couples.history_section', { count: inactifs.length })}
           </div>
           <button class="btn btn-secondary" style="font-size:12px; padding:6px 12px;"
             onclick="toggleHistorique()">
-            <span id="histo-label">▼ Afficher</span>
+            <span id="histo-label">${t('couples.toggle.show')}</span>
           </button>
         </div>
         <div id="historique-content" style="display:none;">
@@ -50,7 +50,7 @@ function toggleHistorique() {
   const lbl = document.getElementById('histo-label');
   const hidden = el.style.display === 'none';
   el.style.display  = hidden ? '' : 'none';
-  lbl.textContent   = hidden ? '▲ Masquer' : '▼ Afficher';
+  lbl.textContent   = hidden ? t('couples.toggle.hide') : t('couples.toggle.show');
 }
 
 function renderCouplesTable(couples, grise = false, lignees = []) {
@@ -60,12 +60,12 @@ function renderCouplesTable(couples, grise = false, lignees = []) {
       <table>
         <thead>
           <tr>
-            <th>Case</th>
-            <th>♂️ Mâle</th>
-            <th>♀️ Femelle</th>
-            <th>Année</th>
-            <th>Nichées</th>
-            <th>Actions</th>
+            <th>${t('couples.table.case')}</th>
+            <th>${t('couples.table.male')}</th>
+            <th>${t('couples.table.femelle')}</th>
+            <th>${t('couples.table.annee')}</th>
+            <th>${t('couples.table.nichees')}</th>
+            <th>${t('couples.table.actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -115,7 +115,7 @@ function renderCouplesTable(couples, grise = false, lignees = []) {
                   ${c.actif ? `
                     <button class="btn btn-secondary"
                       onclick="dissolveCouple('${c.id}', '${(c.male?.matricule || '')}×${(c.femelle?.matricule || '')}')"
-                      style="padding:6px 10px; font-size:12px;" title="Dissoudre">🔓</button>
+                      style="padding:6px 10px; font-size:12px;" title="${t('couples.msg.dissolve_btn')}">🔓</button>
                   ` : ''}
                   <button class="btn btn-danger"
                     onclick="deleteCouple('${c.id}', '${(c.male?.matricule || '')}×${(c.femelle?.matricule || '')}')"
@@ -143,7 +143,7 @@ async function openDetailCouple(id) {
 
   const nicheeRows = c.nichees.length === 0
     ? `<tr><td colspan="6" style="text-align:center; color:var(--text-light);
-         padding:16px;">Aucune nichée enregistrée</td></tr>`
+         padding:16px;">${t('couples.detail.no_nichee')}</td></tr>`
     : c.nichees.map(n => {
         const anneeEclosion = n.date_eclosion
           ? new Date(n.date_eclosion).getFullYear()
@@ -159,13 +159,13 @@ async function openDetailCouple(id) {
           <td style="padding:8px; white-space:nowrap;">
             <button class="btn btn-secondary"
               onclick="openEditNichee('${n.id}', '${id}')"
-              style="padding:4px 8px; font-size:11px;" title="Modifier">✏️</button>
+              style="padding:4px 8px; font-size:11px;" title="${t('common.edit').replace(/^[^\s]+\s/, '')}">✏️</button>
             <button class="btn btn-secondary"
               onclick="openCreateJeuneFromNichee('${id}', ${anneeEclosion})"
-              style="padding:4px 8px; font-size:11px; margin-left:4px;" title="Créer un jeune">🐣</button>
+              style="padding:4px 8px; font-size:11px; margin-left:4px;" title="${t('couples.jeune.modal_title').replace(/^[^\s]+\s/, '')}">🐣</button>
             <button class="btn btn-danger"
               onclick="deleteNichee('${n.id}', '${id}')"
-              style="padding:4px 8px; font-size:11px; margin-left:4px;" title="Supprimer">🗑️</button>
+              style="padding:4px 8px; font-size:11px; margin-left:4px;" title="${t('common.delete').replace(/^[^\s]+\s/, '')}">🗑️</button>
           </td>
         </tr>`;
       }).join('');
@@ -178,9 +178,9 @@ async function openDetailCouple(id) {
         border-radius:10px; padding:16px;
         border-left:4px solid ${ligneeMale?.couleur_label || '#2980B9'};">
         <div style="font-size:11px; color:var(--text-light); margin-bottom:6px;
-          text-transform:uppercase; font-weight:600;">♂️ Mâle</div>
+          text-transform:uppercase; font-weight:600;">${t('couples.detail.male_label')}</div>
         <div style="font-size:18px; font-weight:700; font-family:'Playfair Display',serif;">
-          ${c.male ? c.male.matricule : 'Inconnu'}
+          ${c.male ? c.male.matricule : t('couples.detail.unknown_male')}
         </div>
         ${c.male?.couleur_plumage
           ? `<div style="font-size:13px; color:var(--text-light); margin-top:4px;">
@@ -194,9 +194,9 @@ async function openDetailCouple(id) {
         border-radius:10px; padding:16px;
         border-left:4px solid ${ligneeFemelle?.couleur_label || '#E91E8C'};">
         <div style="font-size:11px; color:var(--text-light); margin-bottom:6px;
-          text-transform:uppercase; font-weight:600;">♀️ Femelle</div>
+          text-transform:uppercase; font-weight:600;">${t('couples.detail.femelle_label')}</div>
         <div style="font-size:18px; font-weight:700; font-family:'Playfair Display',serif;">
-          ${c.femelle ? c.femelle.matricule : 'Inconnue'}
+          ${c.femelle ? c.femelle.matricule : t('couples.detail.unknown_female')}
         </div>
         ${c.femelle?.couleur_plumage
           ? `<div style="font-size:13px; color:var(--text-light); margin-top:4px;">
@@ -212,11 +212,11 @@ async function openDetailCouple(id) {
     <div style="display:flex; gap:24px; align-items:center;
       background:var(--bg); border-radius:10px; padding:12px 16px;
       margin-bottom:16px; font-size:14px;">
-      <span>📍 Case : <strong>${c.case_numero || '—'}</strong></span>
-      <span>📅 Année : <strong>${c.annee}</strong></span>
-      <span>Statut : ${c.actif
-        ? '<span style="background:#27AE60; color:#fff; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:600;">Actif</span>'
-        : '<span style="background:#95A5A6; color:#fff; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:600;">Inactif</span>'}</span>
+      <span>${t('couples.detail.case_label')} : <strong>${c.case_numero || '—'}</strong></span>
+      <span>${t('couples.detail.annee_label')} : <strong>${c.annee}</strong></span>
+      <span>${t('couples.detail.statut_label')} : ${c.actif
+        ? `<span style="background:#27AE60; color:#fff; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:600;">${t('couples.detail.status_actif')}</span>`
+        : `<span style="background:#95A5A6; color:#fff; padding:2px 10px; border-radius:12px; font-size:12px; font-weight:600;">${t('couples.detail.status_inactif')}</span>`}</span>
     </div>
 
     ${c.notes ? `
@@ -229,11 +229,11 @@ async function openDetailCouple(id) {
     <div style="display:flex; justify-content:space-between; align-items:center;
       margin-bottom:10px;">
       <div style="font-family:'Playfair Display',serif; font-weight:600; font-size:15px;">
-        🥚 Nichées (${c.nichees.length})
+        ${t('couples.detail.nichees_title', { count: c.nichees.length })}
       </div>
       ${c.actif ? `
         <button class="btn btn-primary" style="font-size:12px; padding:6px 14px;"
-          onclick="openAddNichee('${id}')">+ Ajouter une nichée</button>
+          onclick="openAddNichee('${id}')">${t('couples.detail.add_nichee_btn')}</button>
       ` : ''}
     </div>
 
@@ -242,13 +242,13 @@ async function openDetailCouple(id) {
         <thead>
           <tr style="border-bottom:2px solid var(--border);">
             <th style="padding:6px 8px; text-align:left; font-size:11px;
-              color:var(--text-light); text-transform:uppercase;">Date ponte</th>
+              color:var(--text-light); text-transform:uppercase;">${t('couples.detail.nichee_table.ponte')}</th>
             <th style="padding:6px 8px; text-align:left; font-size:11px;
-              color:var(--text-light); text-transform:uppercase;">Date éclosion</th>
+              color:var(--text-light); text-transform:uppercase;">${t('couples.detail.nichee_table.eclosion')}</th>
             <th style="padding:6px 8px; text-align:center; font-size:11px;
-              color:var(--text-light); text-transform:uppercase;">Œufs</th>
+              color:var(--text-light); text-transform:uppercase;">${t('couples.detail.nichee_table.oeufs')}</th>
             <th style="padding:6px 8px; text-align:left; font-size:11px;
-              color:var(--text-light); text-transform:uppercase;">Notes</th>
+              color:var(--text-light); text-transform:uppercase;">${t('couples.detail.nichee_table.notes')}</th>
             <th style="padding:6px 8px;"></th>
           </tr>
         </thead>
@@ -257,15 +257,15 @@ async function openDetailCouple(id) {
     </div>
 
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Fermer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('couples.detail.btn.close')}</button>
       ${c.actif ? `
         <button class="btn btn-secondary"
           onclick="dissolveCouple('${id}', '${(c.male?.matricule || '')}×${(c.femelle?.matricule || '')}')">
-          🔓 Dissoudre
+          ${t('couples.detail.btn.dissolve')}
         </button>` : ''}
       <button class="btn btn-danger"
         onclick="deleteCouple('${id}', '${(c.male?.matricule || '')}×${(c.femelle?.matricule || '')}')">
-        🗑️ Supprimer
+        ${t('couples.detail.btn.delete')}
       </button>
     </div>`;
 
@@ -278,34 +278,34 @@ async function openDetailCouple(id) {
 async function openEditNichee(nicheeId, coupleId) {
   const n = await apiFetch(`/nichees/${nicheeId}`);
 
-  openModal('✏️ Modifier la nichée', `
+  openModal(t('couples.nichee_edit.modal_title'), `
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Date de ponte</label>
+        <label class="form-label">${t('couples.nichee_edit.ponte_label')}</label>
         <input type="date" class="form-control" id="en-ponte"
           value="${n.date_ponte || ''}">
       </div>
       <div class="form-group">
-        <label class="form-label">Date d'éclosion</label>
+        <label class="form-label">${t('couples.nichee_edit.eclosion_label')}</label>
         <input type="date" class="form-control" id="en-eclosion"
           value="${n.date_eclosion || ''}">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Nombre d'œufs</label>
+      <label class="form-label">${t('couples.nichee_edit.oeufs_label')}</label>
       <input type="number" class="form-control" id="en-oeufs"
         value="${n.nombre_oeufs ?? 2}" min="1" max="3">
     </div>
     <div class="form-group">
-      <label class="form-label">Notes</label>
+      <label class="form-label">${t('couples.nichee_edit.notes_label')}</label>
       <textarea class="form-control" id="en-notes" rows="2"
-        placeholder="Observations...">${n.notes || ''}</textarea>
+        placeholder="${t('couples.nichee_edit.notes_placeholder')}">${n.notes || ''}</textarea>
     </div>
     <div class="form-actions">
       <button class="btn btn-secondary"
-        onclick="openDetailCouple('${coupleId}')">Annuler</button>
+        onclick="openDetailCouple('${coupleId}')">${t('common.cancel')}</button>
       <button class="btn btn-primary"
-        onclick="saveEditNichee('${nicheeId}', '${coupleId}')">💾 Modifier</button>
+        onclick="saveEditNichee('${nicheeId}', '${coupleId}')">${t('couples.nichee_edit.submit')}</button>
     </div>`);
   document.getElementById('modal').style.width = '500px';
 }
@@ -323,7 +323,7 @@ async function saveEditNichee(nicheeId, coupleId) {
       method: 'PUT',
       body: JSON.stringify(data),
     });
-    showNotification('Nichée modifiée ✅');
+    showNotification(t('couples.nichee_edit.msg_saved'));
     openDetailCouple(coupleId);
   } catch (err) {
     console.error(err);
@@ -343,46 +343,46 @@ async function openCreateJeuneFromNichee(coupleId, annee) {
   const maleId           = couple.male_id;
   const femelleId        = couple.femelle_id;
 
-  openModal('🐣 Créer un jeune pigeon', `
+  openModal(t('couples.jeune.modal_title'), `
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Matricule *</label>
+        <label class="form-label">${t('couples.jeune.matricule_label')}</label>
         <input type="text" class="form-control" id="cj-matricule"
-          placeholder="ex: FR-${annee}-XXX" autofocus>
+          placeholder="${t('couples.jeune.matricule_placeholder', { annee })}" autofocus>
       </div>
       <div class="form-group">
-        <label class="form-label">Année de naissance *</label>
+        <label class="form-label">${t('couples.jeune.annee_label')}</label>
         <input type="number" class="form-control" id="cj-annee"
           value="${annee}" min="2000" max="2099">
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Sexe *</label>
+        <label class="form-label">${t('couples.jeune.sexe_label')}</label>
         <select class="form-control" id="cj-sexe">
-          <option value="">— Choisir —</option>
-          <option value="male">Mâle</option>
-          <option value="femelle">Femelle</option>
+          <option value="">${t('couples.jeune.choose_sexe')}</option>
+          <option value="male">${t('gender.male')}</option>
+          <option value="femelle">${t('gender.female')}</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Statut</label>
+        <label class="form-label">${t('couples.jeune.statut_label')}</label>
         <select class="form-control" id="cj-statut">
-          <option value="actif" selected>Actif</option>
-          <option value="concours">Concours</option>
-          <option value="reproducteur">Reproducteur</option>
+          <option value="actif" selected>${t('status.actif')}</option>
+          <option value="concours">${t('status.concours')}</option>
+          <option value="reproducteur">${t('status.reproducteur')}</option>
         </select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">♂️ Père</label>
+        <label class="form-label">${t('couples.jeune.pere_label')}</label>
         <input type="text" class="form-control" value="${maleMatricule}" readonly
           style="background:var(--bg); color:var(--text-light); cursor:not-allowed;">
         <input type="hidden" id="cj-pere-id" value="${maleId}">
       </div>
       <div class="form-group">
-        <label class="form-label">♀️ Mère</label>
+        <label class="form-label">${t('couples.jeune.mere_label')}</label>
         <input type="text" class="form-control" value="${femelleMatricule}" readonly
           style="background:var(--bg); color:var(--text-light); cursor:not-allowed;">
         <input type="hidden" id="cj-mere-id" value="${femelleId}">
@@ -390,32 +390,32 @@ async function openCreateJeuneFromNichee(coupleId, annee) {
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Lignée</label>
+        <label class="form-label">${t('couples.jeune.lignee_label')}</label>
         <select class="form-control" id="cj-lignee">
-          <option value="">— Aucune —</option>
+          <option value="">${t('couples.jeune.no_lignee')}</option>
           ${lignees.map(l => `<option value="${l.id}">${l.nom}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Case colombier</label>
-        <input type="text" class="form-control" id="cj-case" placeholder="ex: D5">
+        <label class="form-label">${t('couples.jeune.case_label')}</label>
+        <input type="text" class="form-control" id="cj-case" placeholder="${t('couples.jeune.case_placeholder')}">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Couleur du plumage</label>
+      <label class="form-label">${t('couples.jeune.couleur_label')}</label>
       <input type="text" class="form-control" id="cj-couleur"
-        placeholder="ex: Bleu barré">
+        placeholder="${t('couples.jeune.couleur_placeholder')}">
     </div>
     <div class="form-group">
-      <label class="form-label">Notes</label>
+      <label class="form-label">${t('couples.jeune.notes_label')}</label>
       <textarea class="form-control" id="cj-notes" rows="2"
-        placeholder="Observations..."></textarea>
+        placeholder="${t('couples.jeune.notes_placeholder')}"></textarea>
     </div>
     <div class="form-actions">
       <button class="btn btn-secondary"
-        onclick="openDetailCouple('${coupleId}')">Annuler</button>
+        onclick="openDetailCouple('${coupleId}')">${t('common.cancel')}</button>
       <button class="btn btn-primary"
-        onclick="saveJeuneFromNichee('${coupleId}')">🐣 Créer le jeune</button>
+        onclick="saveJeuneFromNichee('${coupleId}')">${t('couples.jeune.submit')}</button>
     </div>`);
   document.getElementById('modal').style.width = '660px';
 
@@ -428,9 +428,9 @@ async function saveJeuneFromNichee(coupleId) {
   const sexe      = document.getElementById('cj-sexe').value;
   const annee     = parseInt(document.getElementById('cj-annee').value);
 
-  if (!matricule) { showNotification('Le matricule est obligatoire', 'danger'); return; }
-  if (!sexe)      { showNotification('Le sexe est obligatoire', 'danger'); return; }
-  if (!annee)     { showNotification("L'année est obligatoire", 'danger'); return; }
+  if (!matricule) { showNotification(t('couples.jeune.msg.matricule_required'), 'danger'); return; }
+  if (!sexe)      { showNotification(t('couples.jeune.msg.sexe_required'), 'danger'); return; }
+  if (!annee)     { showNotification(t('couples.jeune.msg.annee_required'), 'danger'); return; }
 
   const data = {
     matricule,
@@ -447,7 +447,7 @@ async function saveJeuneFromNichee(coupleId) {
 
   try {
     await apiFetch('/pigeons/', { method: 'POST', body: JSON.stringify(data) });
-    showNotification('Jeune créé et bagué ✅');
+    showNotification(t('couples.jeune.msg.created'));
     openDetailCouple(coupleId);
   } catch (err) {
     console.error(err);
@@ -462,42 +462,42 @@ async function openAddCouple() {
   const femelles = pigeons.filter(p => p.sexe === 'femelle');
   const annee    = new Date().getFullYear();
 
-  openModal('💑 Nouveau couple', `
+  openModal(t('couples.add.modal_title'), `
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Mâle *</label>
+        <label class="form-label">${t('couples.add.male_label')}</label>
         <select class="form-control" id="fc-male">
-          <option value="">— Choisir un mâle —</option>
+          <option value="">${t('couples.add.choose_male')}</option>
           ${males.map(p => `<option value="${p.id}">${p.matricule}${p.couleur_plumage ? ' — ' + p.couleur_plumage : ''}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">Femelle *</label>
+        <label class="form-label">${t('couples.add.femelle_label')}</label>
         <select class="form-control" id="fc-femelle">
-          <option value="">— Choisir une femelle —</option>
+          <option value="">${t('couples.add.choose_femelle')}</option>
           ${femelles.map(p => `<option value="${p.id}">${p.matricule}${p.couleur_plumage ? ' — ' + p.couleur_plumage : ''}</option>`).join('')}
         </select>
       </div>
     </div>
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Case colombier</label>
-        <input type="text" class="form-control" id="fc-case" placeholder="ex: A3">
+        <label class="form-label">${t('couples.add.case_label')}</label>
+        <input type="text" class="form-control" id="fc-case" placeholder="${t('couples.add.case_placeholder')}">
       </div>
       <div class="form-group">
-        <label class="form-label">Année *</label>
+        <label class="form-label">${t('couples.add.annee_label')}</label>
         <input type="number" class="form-control" id="fc-annee"
           value="${annee}" min="2000" max="2099">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Notes</label>
+      <label class="form-label">${t('couples.add.notes_label')}</label>
       <textarea class="form-control" id="fc-notes" rows="2"
-        placeholder="Observations..."></textarea>
+        placeholder="${t('couples.add.notes_placeholder')}"></textarea>
     </div>
     <div class="form-actions">
-      <button class="btn btn-secondary" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-primary" onclick="saveCouple()">➕ Créer</button>
+      <button class="btn btn-secondary" onclick="closeModal()">${t('common.cancel')}</button>
+      <button class="btn btn-primary" onclick="saveCouple()">${t('couples.add.submit')}</button>
     </div>`);
   document.getElementById('modal').style.width = '600px';
 }
@@ -507,9 +507,9 @@ async function saveCouple() {
   const femelle_id = document.getElementById('fc-femelle').value;
   const annee      = parseInt(document.getElementById('fc-annee').value);
 
-  if (!male_id)    { showNotification('Choisissez un mâle', 'danger'); return; }
-  if (!femelle_id) { showNotification('Choisissez une femelle', 'danger'); return; }
-  if (!annee)      { showNotification("L'année est obligatoire", 'danger'); return; }
+  if (!male_id)    { showNotification(t('couples.add.msg.choose_male'), 'danger'); return; }
+  if (!femelle_id) { showNotification(t('couples.add.msg.choose_femelle'), 'danger'); return; }
+  if (!annee)      { showNotification(t('couples.add.msg.annee_required'), 'danger'); return; }
 
   const data = {
     male_id, femelle_id, annee,
@@ -526,7 +526,7 @@ async function saveCouple() {
       apiFetch(`/pigeons/${femelle_id}`, { method: 'PUT', body: JSON.stringify({ statut: 'reproducteur' }) }),
     ]);
 
-    showNotification('Couple créé ✅');
+    showNotification(t('couples.add.msg.created'));
     closeModal();
     loadCouples();
   } catch (err) {
@@ -538,32 +538,32 @@ async function saveCouple() {
 
 async function openAddNichee(coupleId) {
   const today = new Date().toISOString().split('T')[0];
-  openModal('🥚 Ajouter une nichée', `
+  openModal(t('couples.add_nichee.modal_title'), `
     <div class="form-row">
       <div class="form-group">
-        <label class="form-label">Date de ponte</label>
+        <label class="form-label">${t('couples.add_nichee.ponte_label')}</label>
         <input type="date" class="form-control" id="fn-ponte" value="${today}">
       </div>
       <div class="form-group">
-        <label class="form-label">Date d'éclosion</label>
+        <label class="form-label">${t('couples.add_nichee.eclosion_label')}</label>
         <input type="date" class="form-control" id="fn-eclosion">
       </div>
     </div>
     <div class="form-group">
-      <label class="form-label">Nombre d'œufs</label>
+      <label class="form-label">${t('couples.add_nichee.oeufs_label')}</label>
       <input type="number" class="form-control" id="fn-oeufs"
         value="2" min="1" max="3">
     </div>
     <div class="form-group">
-      <label class="form-label">Notes</label>
+      <label class="form-label">${t('couples.add_nichee.notes_label')}</label>
       <textarea class="form-control" id="fn-notes" rows="2"
-        placeholder="Observations..."></textarea>
+        placeholder="${t('couples.add_nichee.notes_placeholder')}"></textarea>
     </div>
     <div class="form-actions">
       <button class="btn btn-secondary"
-        onclick="openDetailCouple('${coupleId}')">Annuler</button>
+        onclick="openDetailCouple('${coupleId}')">${t('common.cancel')}</button>
       <button class="btn btn-primary"
-        onclick="saveNichee('${coupleId}')">➕ Créer</button>
+        onclick="saveNichee('${coupleId}')">${t('couples.add_nichee.submit')}</button>
     </div>`);
   document.getElementById('modal').style.width = '500px';
 }
@@ -581,7 +581,7 @@ async function saveNichee(coupleId) {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    showNotification('Nichée enregistrée ✅');
+    showNotification(t('couples.add_nichee.msg_saved'));
     openDetailCouple(coupleId);
   } catch (err) {
     console.error(err);
@@ -591,12 +591,12 @@ async function saveNichee(coupleId) {
 // ── Actions CRUD ──────────────────────────────────────────────────────────────
 
 function dissolveCouple(id, label) {
-  confirmAction('Dissoudre le couple', `Dissoudre le couple <strong>${label}</strong> ?<br>
-    <span style="font-size:13px;color:var(--text-light);">Les deux pigeons repasseront en statut "actif".</span>`,
-    'Dissoudre', 'btn-danger', async () => {
+  confirmAction(t('couples.msg.dissolve_title'), `${t('couples.msg.dissolve_confirm', { label })}
+    <span style="font-size:13px;color:var(--text-light);">${t('couples.msg.dissolve_note')}</span>`,
+    t('couples.msg.dissolve_btn'), 'btn-danger', async () => {
     try {
       await apiFetch(`/couples/${id}/dissoudre`, { method: 'PATCH' });
-      showNotification('Couple dissous');
+      showNotification(t('couples.msg.dissolved'));
       closeModal();
       loadCouples();
     } catch (err) {
@@ -606,10 +606,10 @@ function dissolveCouple(id, label) {
 }
 
 function deleteCouple(id, label) {
-  confirmDelete(`Supprimer définitivement le couple <strong>${label}</strong> et toutes ses nichées ?`, async () => {
+  confirmDelete(t('couples.msg.delete_confirm', { label }), async () => {
     try {
       await apiFetch(`/couples/${id}`, { method: 'DELETE' });
-      showNotification('Couple supprimé');
+      showNotification(t('couples.msg.deleted'));
       closeModal();
       loadCouples();
     } catch (err) {
@@ -619,10 +619,10 @@ function deleteCouple(id, label) {
 }
 
 function deleteNichee(nicheeId, coupleId) {
-  confirmDelete('Supprimer cette nichée ?', async () => {
+  confirmDelete(t('couples.msg.nichee_delete_confirm'), async () => {
     try {
       await apiFetch(`/nichees/${nicheeId}`, { method: 'DELETE' });
-      showNotification('Nichée supprimée');
+      showNotification(t('couples.msg.nichee_deleted'));
       openDetailCouple(coupleId);
     } catch (err) {
       console.error(err);

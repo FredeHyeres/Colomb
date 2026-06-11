@@ -6,58 +6,58 @@
 /* ——— Pages disponibles ——— */
 const sportPages = {
   dashboard: {
-    title: 'Dashboard Sport',
+    titleKey: 'sport.page.dashboard.title',
     icon: '🏆',
     load: loadSportDashboard,
-    addLabel: null
+    addLabelKey: null
   },
   sessions: {
-    title: 'Séances d\'entraînement',
+    titleKey: 'sport.page.sessions.title',
     icon: '🏃',
     load: loadSessions,
-    addLabel: '+ Nouvelle séance'
+    addLabelKey: 'sport.page.sessions.add'
   },
   history: {
-    title: 'Historique pigeon',
+    titleKey: 'sport.page.history.title',
     icon: '📊',
     load: loadHistory,
-    addLabel: null
+    addLabelKey: null
   },
   nutrition: {
-    title: 'Nutrition',
+    titleKey: 'sport.page.nutrition.title',
     icon: '🌾',
     load: loadNutrition,
-    addLabel: null
+    addLabelKey: null
   },
   plans: {
-    title: 'Plans alimentaires',
+    titleKey: 'sport.page.plans.title',
     icon: '📋',
     load: loadNutritionPlans,
-    addLabel: '+ Nouveau plan'
+    addLabelKey: 'sport.page.plans.add'
   },
   analytics: {
-    title: 'Analytics',
+    titleKey: 'sport.page.analytics.title',
     icon: '📈',
     load: loadAnalytics,
-    addLabel: null
+    addLabelKey: null
   },
   ai: {
-    title: 'Recommandations IA',
+    titleKey: 'sport.page.ai.title',
     icon: '🤖',
     load: loadAIRecommendations,
-    addLabel: null
+    addLabelKey: null
   },
   condition: {
-    title: 'Condition sportive',
+    titleKey: 'sport.page.condition.title',
     icon: '💪',
     load: loadCondition,
-    addLabel: null
+    addLabelKey: null
   },
   colony: {
-    title: 'Monitoring colonie',
+    titleKey: 'sport.page.colony.title',
     icon: '🕊️',
     load: loadColony,
-    addLabel: null
+    addLabelKey: null
   }
 };
 
@@ -79,14 +79,14 @@ function showPage(pageId) {
   // Titre topbar
   const pageConf = sportPages[pageId];
   const titleEl = document.getElementById('page-title');
-  if (titleEl) titleEl.textContent = pageConf.title;
+  if (titleEl) titleEl.textContent = t(pageConf.titleKey);
 
   // Bouton ajouter
   const btnAdd = document.getElementById('btn-add');
   if (btnAdd) {
-    if (pageConf.addLabel) {
+    if (pageConf.addLabelKey) {
       btnAdd.style.display = '';
-      btnAdd.textContent = pageConf.addLabel;
+      btnAdd.textContent = t(pageConf.addLabelKey);
       btnAdd.onclick = null; // réinitialisé par la page
     } else {
       btnAdd.style.display = 'none';
@@ -112,7 +112,7 @@ function showPage(pageId) {
           <div class="alert-card critical">
             <span class="alert-icon">❌</span>
             <div class="alert-content">
-              <div class="alert-title">Erreur de chargement</div>
+              <div class="alert-title">${t('sport.error.load_title')}</div>
               <div class="alert-text">${err.message}</div>
             </div>
           </div>
@@ -198,27 +198,39 @@ function initThemeSport() {
   });
 }
 
+/* ——— Rechargement au changement de langue ——— */
+// Le contenu dynamique (tableaux, cartes...) est généré via t() au moment du
+// rendu : il faut donc recharger la page courante quand la langue change.
+let sportAppStarted = false;
+document.addEventListener('i18n:changed', () => {
+  if (sportAppStarted) showPage(window.currentPage);
+});
+
 /* ——— Init au chargement DOM ——— */
 document.addEventListener('DOMContentLoaded', () => {
   initThemeSport();
   initNavigation();
 
-  // Vérifier si une page est dans l'URL hash
-  const hash = window.location.hash.replace('#', '');
-  const startPage = sportPages[hash] ? hash : 'dashboard';
+  // Attendre que les traductions soient chargées avant d'afficher la page
+  i18nReady.then(() => {
+    // Vérifier si une page est dans l'URL hash
+    const hash = window.location.hash.replace('#', '');
+    const startPage = sportPages[hash] ? hash : 'dashboard';
 
-  showPage(startPage);
+    showPage(startPage);
+    sportAppStarted = true;
 
-  // Mettre à jour le hash quand on change de page
-  const origShowPage = showPage;
-  window.showPage = function(pageId) {
-    origShowPage(pageId);
-    window.location.hash = pageId;
-  };
+    // Mettre à jour le hash quand on change de page
+    const origShowPage = showPage;
+    window.showPage = function(pageId) {
+      origShowPage(pageId);
+      window.location.hash = pageId;
+    };
+  });
 });
 
 /* ——— Gestion erreurs globales non capturées ——— */
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Promesse rejetée non gérée :', event.reason);
-  showToast(event.reason?.message || 'Une erreur inattendue s\'est produite', 'error');
+  showToast(event.reason?.message || t('sport.error.unexpected'), 'error');
 });

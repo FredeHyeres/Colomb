@@ -48,22 +48,22 @@ async function loadAnalytics() {
         <div class="stat-card stat-blue">
           <div class="stat-icon">📊</div>
           <div class="stat-value">${sessionList.length}</div>
-          <div class="stat-label">Total séances</div>
+          <div class="stat-label">${t('sport.analytics.stats.total_sessions')}</div>
         </div>
         <div class="stat-card stat-green">
           <div class="stat-icon">⚡</div>
           <div class="stat-value">${computeGlobalAvgRecovery(sessionList)}</div>
-          <div class="stat-label">Récup. globale moy.</div>
+          <div class="stat-label">${t('sport.analytics.stats.avg_recovery')}</div>
         </div>
         <div class="stat-card stat-orange">
           <div class="stat-icon">🏆</div>
           <div class="stat-value">${sessionList.filter(s => s.session_type === 'race').length}</div>
-          <div class="stat-label">Concours disputés</div>
+          <div class="stat-label">${t('sport.analytics.stats.races')}</div>
         </div>
         <div class="stat-card stat-gold">
           <div class="stat-icon">📅</div>
           <div class="stat-value">${chargeData.avgPerWeek}</div>
-          <div class="stat-label">Séances / semaine moy.</div>
+          <div class="stat-label">${t('sport.analytics.stats.avg_per_week')}</div>
         </div>
       </div>
 
@@ -74,8 +74,8 @@ async function loadAnalytics() {
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">📈 Évolution récupération moyenne</div>
-              <div class="card-subtitle">90 derniers jours</div>
+              <div class="card-title">${t('sport.analytics.charts.recovery.title')}</div>
+              <div class="card-subtitle">${t('sport.analytics.charts.recovery.subtitle')}</div>
             </div>
           </div>
           <div class="chart-container">
@@ -87,8 +87,8 @@ async function loadAnalytics() {
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">💪 Charge d'entraînement</div>
-              <div class="card-subtitle">4 dernières semaines</div>
+              <div class="card-title">${t('sport.analytics.charts.charge.title')}</div>
+              <div class="card-subtitle">${t('sport.analytics.charts.charge.subtitle')}</div>
             </div>
           </div>
           <div class="chart-container">
@@ -100,8 +100,8 @@ async function loadAnalytics() {
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">🌡️ Température vs Récupération</div>
-              <div class="card-subtitle">Corrélation météo / performance</div>
+              <div class="card-title">${t('sport.analytics.charts.temp.title')}</div>
+              <div class="card-subtitle">${t('sport.analytics.charts.temp.subtitle')}</div>
             </div>
           </div>
           <div class="chart-container">
@@ -113,8 +113,8 @@ async function loadAnalytics() {
         <div class="card">
           <div class="card-header">
             <div>
-              <div class="card-title">🕊️ Régularité par pigeon</div>
-              <div class="card-subtitle">Évolution récupération — top ${top3.length} pigeons</div>
+              <div class="card-title">${t('sport.analytics.charts.regularity.title')}</div>
+              <div class="card-subtitle">${t('sport.analytics.charts.regularity.subtitle', { count: top3.length })}</div>
             </div>
           </div>
           <div class="chart-container">
@@ -132,7 +132,7 @@ async function loadAnalytics() {
     renderRegularityChart(regularityData, top3);
 
   } catch (err) {
-    content.innerHTML = `<div class="card"><p style="color:var(--danger);">Erreur analytics : ${err.message}</p></div>`;
+    content.innerHTML = `<div class="card"><p style="color:var(--danger);">${t('sport.analytics.error_prefix', { message: err.message })}</p></div>`;
     showToast(err.message, 'error');
   }
 }
@@ -190,7 +190,7 @@ function computeWeeklyCharge(sessions) {
     const race = inWeek.filter(s => s.session_type === 'race').length;
 
     weeks.push({
-      label: `S-${w === 0 ? 'actuelle' : w}`,
+      label: w === 0 ? t('sport.analytics.charts.charge.week_current') : t('sport.analytics.charts.charge.week_n', { n: w }),
       loft, toss, race, total: inWeek.length
     });
   }
@@ -261,7 +261,7 @@ function renderRecoveryChart(data) {
     data: {
       labels: data.labels,
       datasets: [{
-        label: 'Récupération moyenne',
+        label: t('sport.analytics.charts.recovery.label'),
         data: data.values,
         borderColor: '#2980B9',
         backgroundColor: 'rgba(41,128,185,0.08)',
@@ -309,19 +309,19 @@ function renderChargeChart(data) {
       labels: data.weeks.map(w => w.label),
       datasets: [
         {
-          label: 'Loft',
+          label: t('sport.session_type.loft'),
           data: data.weeks.map(w => w.loft),
           backgroundColor: 'rgba(41,128,185,0.75)',
           borderRadius: 4
         },
         {
-          label: 'Lancer',
+          label: t('sport.session_type.toss'),
           data: data.weeks.map(w => w.toss),
           backgroundColor: 'rgba(39,174,96,0.75)',
           borderRadius: 4
         },
         {
-          label: 'Concours',
+          label: t('sport.session_type.race'),
           data: data.weeks.map(w => w.race),
           backgroundColor: 'rgba(196,150,58,0.85)',
           borderRadius: 4
@@ -351,7 +351,7 @@ function renderTempChart(points) {
     type: 'scatter',
     data: {
       datasets: [{
-        label: 'Température vs Récupération',
+        label: t('sport.analytics.charts.temp.label'),
         data: points,
         backgroundColor: points.map(p => {
           if (p.y >= 7) return 'rgba(39,174,96,0.7)';
@@ -369,18 +369,18 @@ function renderTempChart(points) {
         legend: { display: false },
         tooltip: {
           callbacks: {
-            label: ctx => `${ctx.parsed.x}°C → Récup: ${ctx.parsed.y}/10`
+            label: ctx => t('sport.analytics.charts.temp.tooltip', { x: ctx.parsed.x, y: ctx.parsed.y })
           }
         }
       },
       scales: {
         x: {
-          title: { display: true, text: 'Température (°C)', font: { size: 11 } },
+          title: { display: true, text: t('sport.analytics.charts.temp.axis_x'), font: { size: 11 } },
           grid: { color: '#e8ecf0' }
         },
         y: {
           min: 0, max: 10,
-          title: { display: true, text: 'Récupération', font: { size: 11 } },
+          title: { display: true, text: t('sport.analytics.charts.temp.axis_y'), font: { size: 11 } },
           grid: { color: '#e8ecf0' }
         }
       }
@@ -389,7 +389,7 @@ function renderTempChart(points) {
 
   if (points.length === 0) {
     const wrap = ctx.parentElement;
-    wrap.innerHTML = '<div class="empty-state" style="padding:30px;"><p>Pas assez de données avec température renseignée.</p></div>';
+    wrap.innerHTML = `<div class="empty-state" style="padding:30px;"><p>${t('sport.analytics.charts.temp.empty')}</p></div>`;
   }
 }
 
@@ -409,7 +409,7 @@ function renderRegularityChart(regularityData, pigeons) {
   const datasets = regularityData
     .filter(d => d.scores.length > 0)
     .map((d, idx) => ({
-      label: d.pigeon.matricule || `Pigeon ${idx + 1}`,
+      label: d.pigeon.matricule || t('sport.analytics.charts.regularity.pigeon_default', { n: idx + 1 }),
       data: d.scores,
       borderColor: colors[idx % colors.length],
       backgroundColor: 'transparent',
@@ -418,7 +418,7 @@ function renderRegularityChart(regularityData, pigeons) {
     }));
 
   if (datasets.length === 0) {
-    ctx.parentElement.innerHTML = '<div class="empty-state" style="padding:30px;"><p>Aucune donnée de récupération disponible.</p></div>';
+    ctx.parentElement.innerHTML = `<div class="empty-state" style="padding:30px;"><p>${t('sport.analytics.charts.regularity.empty')}</p></div>`;
     return;
   }
 
