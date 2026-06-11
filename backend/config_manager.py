@@ -112,7 +112,15 @@ async def get_config_mode():
 
 
 @router.get("/status")
-async def get_config_status():
+async def get_config_status(request: Request):
+    if DEMO_MODE:
+        # Premier lancement tant que le visiteur n'a pas choisi sa langue
+        # (cookie demo_lang absent). Une fois choisi, on n'affiche plus
+        # l'assistant pour le reste de la session.
+        return {
+            "first_launch": "demo_lang" not in request.cookies,
+            "config": None,
+        }
     return {
         "first_launch": check_first_launch(),
         "config": load_config(),
