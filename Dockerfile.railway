@@ -6,6 +6,10 @@
 # backend/Dockerfile avec un conteneur nginx séparé pour le frontend).
 FROM python:3.12-slim
 
+# Affiche immédiatement les logs Python (sans buffering) : indispensable
+# pour voir les tracebacks de démarrage dans les logs Railway.
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \

@@ -4,7 +4,10 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import HTTPException as StarletteHTTPException
 from contextlib import asynccontextmanager
+import logging
 import os
+
+logger = logging.getLogger("colomb")
 
 from database import engine, Base
 from routers import (
@@ -25,19 +28,23 @@ from demo_middleware import DemoLangMiddleware
 # Créer les tables au démarrage
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    # Créer le dossier uploads si inexistant
-    os.makedirs("/app/uploads", exist_ok=True)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        # Créer le dossier uploads si inexistant
+        os.makedirs("/app/uploads", exist_ok=True)
 
-    # Premier lancement : on n'exécute pas le seed automatiquement,
-    # l'utilisateur le déclenche via l'assistant de configuration (POST /api/config/setup).
-    # Si une configuration existe déjà mais que la base est vide (ex. volume DB recréé),
-    # on relance le seed dans la langue précédemment choisie.
-    if not config_manager.check_first_launch():
-        config = config_manager.load_config()
-        if config and not await config_manager.is_database_seeded():
-            await config_manager.run_seed(config.get("lang", config_manager.DEFAULT_LANG))
+        # Premier lancement : on n'exécute pas le seed automatiquement,
+        # l'utilisateur le déclenche via l'assistant de configuration (POST /api/config/setup).
+        # Si une configuration existe déjà mais que la base est vide (ex. volume DB recréé),
+        # on relance le seed dans la langue précédemment choisie.
+        if not config_manager.check_first_launch():
+            config = config_manager.load_config()
+            if config and not await config_manager.is_database_seeded():
+                await config_manager.run_seed(config.get("lang", config_manager.DEFAULT_LANG))
+    except Exception:
+        logger.exception("Échec du démarrage (lifespan)")
+        raise
 
     yield
 
