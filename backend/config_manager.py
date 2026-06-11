@@ -145,11 +145,14 @@ async def setup_config(body: SetupRequest, response: Response):
         # Pas de config.json, pas de seed (déjà fait par demo_init.py),
         # pas de modification de l'éleveur : on pose juste le cookie de
         # langue qui détermine le schéma utilisé pour cette session.
+        # Cookie de session (pas de max_age) : expire à la fermeture du
+        # navigateur, conformément au principe "rien ne persiste" du mode
+        # démo. Tant qu'il existe, /api/config/status considère que la
+        # langue a été choisie pour cette session.
         response.set_cookie(
             "demo_lang",
             body.lang,
             samesite="lax",
-            max_age=60 * 60 * 24,
         )
         return {"success": True, "demo": True}
 

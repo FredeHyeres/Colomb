@@ -18,6 +18,9 @@ from database import Base, ASYNCPG_DSN, DEMO_SCHEMAS, get_engine_for_schema
 import seed_fr
 import seed_nl
 import seed_en
+import seed_demo_fr
+import seed_demo_nl
+import seed_demo_en
 
 DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
 
@@ -28,6 +31,12 @@ SEED_MODULES = {
     "fr": seed_fr,
     "nl": seed_nl,
     "en": seed_en,
+}
+
+DEMO_SEED_MODULES = {
+    "fr": seed_demo_fr,
+    "nl": seed_demo_nl,
+    "en": seed_demo_en,
 }
 
 
@@ -50,14 +59,10 @@ async def create_tables(schema: str) -> None:
     logger.info(f"✅ Tables prêtes dans le schéma {schema}")
 
 
-async def is_schema_seeded(schema: str) -> bool:
-    """Vérifie si le schéma contient déjà les données du seed nutrition."""
+async def _table_count(schema: str, table: str) -> int:
     conn = await asyncpg.connect(ASYNCPG_DSN)
     try:
-        count = await conn.fetchval(
-            f'SELECT COUNT(*) FROM "{schema}".feed_ingredients'
-        )
-        return (count or 0) > 0
+        return await conn.fetchval(f'SELECT COUNT(*) FROM "{schema}".{table}') or 0
     finally:
         await conn.close()
 
@@ -66,13 +71,19 @@ async def init_schema(lang: str, schema: str) -> None:
     logger.info(f"--- Initialisation {schema} ({lang}) ---")
     await create_tables(schema)
 
-    if await is_schema_seeded(schema):
-        logger.info(f"⏭️  {schema} déjà seedé, on passe.")
-        return
+    if await _table_count(schema, "feed_ingredients") > 0:
+        logger.info(f"⏭️  {schema} : catalogue nutrition déjà seedé, on passe.")
+    else:
+        logger.info(f"🌱 Seed nutrition de {schema} en cours...")
+        await SEED_MODULES[lang].main(schema=schema)
+        logger.info(f"🎉 {schema} : catalogue nutrition seedé avec succès.")
 
-    logger.info(f"🌱 Seed de {schema} en cours...")
-    await SEED_MODULES[lang].main(schema=schema)
-    logger.info(f"🎉 {schema} seedé avec succès.")
+    if await _table_count(schema, "pigeons") > 0:
+        logger.info(f"⏭️  {schema} : élevage de démo déjà seedé, on passe.")
+    else:
+        logger.info(f"🌱 Seed élevage de démo de {schema} en cours...")
+        await DEMO_SEED_MODULES[lang].main(schema=schema)
+        logger.info(f"🎉 {schema} : élevage de démo seedé avec succès.")
 
 
 async def main() -> None:

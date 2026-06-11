@@ -7,20 +7,17 @@ import asyncpg
 import uuid
 import json
 from datetime import date
-from database import settings
-
-DSN = (
-    f"postgresql://{settings.postgres_user}:{settings.postgres_password}"
-    f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
-)
+from database import ASYNCPG_DSN as DSN
 
 
 def uid():
     return str(uuid.uuid4())
 
 
-async def main():
+async def main(schema: str = None):
     conn = await asyncpg.connect(DSN)
+    if schema:
+        await conn.execute(f'SET search_path TO "{schema}"')
 
     # ══════════════════════════════════════════════════════
     # STEP 3 — FANCIER
