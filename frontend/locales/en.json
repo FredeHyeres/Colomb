@@ -1505,6 +1505,8 @@
     "btn_next": "Next",
     "btn_back": "Back",
     "btn_launch": "Launch Colomb",
+    "btn_launch_demo": "Explore the demo",
+    "demo_banner": "🎯 Demo mode — sample data for illustration purposes",
     "recap_lang": "Language",
     "recap_nom": "Fancier",
     "recap_colombier": "Loft",

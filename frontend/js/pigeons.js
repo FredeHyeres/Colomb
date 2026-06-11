@@ -434,7 +434,7 @@ async function openDetailPigeon(id) {
     <div style="display:flex; gap:24px; margin-bottom:16px;">
       <div style="flex-shrink:0;">
         ${p.photo
-          ? `<img src="http://localhost:8001${p.photo}"
+          ? `<img src="${API_ROOT}${p.photo}"
                style="width:100px; height:100px; border-radius:12px;
                       object-fit:cover; border:2px solid var(--border);">`
           : `<div style="width:100px; height:100px; border-radius:12px;
@@ -655,7 +655,7 @@ async function uploadPhoto(id, input) {
   const formData = new FormData();
   formData.append('file', file);
   try {
-    await fetch(`http://localhost:8001/api/pigeons/${id}/photo`, {
+    await fetch(`${API_ROOT}/api/pigeons/${id}/photo`, {
       method: 'POST',
       body: formData
     });

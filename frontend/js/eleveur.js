@@ -24,7 +24,7 @@ async function loadEleveur() {
         <div class="card" style="text-align:center; padding:24px;">
           <div id="photo-colombier-wrap" style="margin-bottom:16px;">
             ${eleveur.photo_colombier
-              ? `<img src="http://localhost:8001${eleveur.photo_colombier}"
+              ? `<img src="${API_ROOT}${eleveur.photo_colombier}"
                    id="photo-colombier-img"
                    style="width:160px; height:160px; object-fit:cover;
                           border-radius:12px; border:2px solid var(--border);">`
@@ -179,7 +179,7 @@ function carteDeVisite(e) {
       padding:16px; font-size:13px; background:white;">
       <div style="display:flex; gap:12px; align-items:flex-start;">
         ${e.photo_colombier
-          ? `<img src="http://localhost:8001${e.photo_colombier}"
+          ? `<img src="${API_ROOT}${e.photo_colombier}"
                style="width:48px; height:48px; object-fit:cover;
                       border-radius:6px; flex-shrink:0;">`
           : `<div style="width:48px; height:48px; background:var(--bg);
@@ -244,7 +244,7 @@ async function uploadPhotoColombier(input) {
   formData.append('file', file);
 
   try {
-    const eleveur = await fetch('http://localhost:8001/api/eleveur/photo', {
+    const eleveur = await fetch(`${API_ROOT}/api/eleveur/photo`, {
       method: 'POST',
       body: formData,
     }).then(r => r.json());
@@ -254,7 +254,7 @@ async function uploadPhotoColombier(input) {
     // Met à jour la photo affichée sans recharger toute la page
     const wrap = document.getElementById('photo-colombier-wrap');
     if (wrap && eleveur.photo_colombier) {
-      wrap.innerHTML = `<img src="http://localhost:8001${eleveur.photo_colombier}"
+      wrap.innerHTML = `<img src="${API_ROOT}${eleveur.photo_colombier}"
         id="photo-colombier-img"
         style="width:160px; height:160px; object-fit:cover;
                border-radius:12px; border:2px solid var(--border);">`;

@@ -3,7 +3,7 @@
    Chargé en premier — toutes les fonctions globales ici
    ============================================================ */
 
-const API_URL = 'http://localhost:8001/api';
+// API_URL est défini dans ../js/config.js (chargé avant ce script)
 
 /* ——— Fetch générique ——— */
 async function apiFetch(endpoint, options = {}) {

@@ -1,6 +1,3 @@
-// ===== CONFIGURATION =====
-const API_URL = 'http://localhost:8001/api';
-
 // ===== UTILITAIRES API =====
 async function apiFetch(endpoint, options = {}) {
   // Les erreurs réseau (API non joignable) sont propagées silencieusement
@@ -172,7 +169,7 @@ function badgeStatut(statut) {
 // ===== PHOTO PIGEON =====
 function pigeonPhoto(photo, nom) {
   if (photo) {
-    return `<img src="http://localhost:8001${photo}"
+    return `<img src="${API_ROOT}${photo}"
             class="pigeon-photo" alt="${nom}">`;
   }
   return `<div class="pigeon-photo-placeholder">🕊️</div>`;
@@ -324,7 +321,7 @@ document.addEventListener('i18n:changed', () => {
 // vers l'assistant de configuration avant d'afficher l'application.
 async function checkFirstLaunch() {
   try {
-    const res = await fetch('http://localhost:8001/api/config/status');
+    const res = await fetch(`${API_ROOT}/api/config/status`);
     const data = await res.json();
     if (data.first_launch) {
       window.location.href = 'setup.html';

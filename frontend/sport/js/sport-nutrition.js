@@ -1274,7 +1274,7 @@ async function _planExporterPDF(planId) {
   const localite    = [eleveur.code_postal, eleveur.ville].filter(Boolean).join(' ');
   const contact     = [eleveur.telephone, eleveur.email].filter(Boolean).join(' | ');
   const photoHtml   = eleveur.photo_colombier
-    ? `<img class="elevage-photo" src="http://localhost:8001${eleveur.photo_colombier}" alt="colombier">`
+    ? `<img class="elevage-photo" src="${API_ROOT}${eleveur.photo_colombier}" alt="colombier">`
     : `<div class="elevage-photo-placeholder">🏠</div>`;
 
   const elevageHeaderHtml = (nomEleveur || eleveur.nom_colombier) ? `

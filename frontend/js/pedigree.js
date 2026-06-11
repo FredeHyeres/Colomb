@@ -142,7 +142,7 @@ function pedigreeCard(p, type) {
         document.getElementById('modal').style.width='560px';">
       
       ${type === 'principal' && p.photo ? `
-        <img src="http://localhost:8001${p.photo}"
+        <img src="${API_ROOT}${p.photo}"
           style="width:50px; height:50px; border-radius:50%; 
           object-fit:cover; display:block; margin:0 auto 8px; 
           border:2px solid ${color.border};">` : ''}

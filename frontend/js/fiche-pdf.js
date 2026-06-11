@@ -33,11 +33,11 @@ async function exportFichePDF(pigeonId) {
   const photos = {};
   await Promise.all([
     pigeon.photo
-      ? imageToBase64(`http://localhost:8001${pigeon.photo}`)
+      ? imageToBase64(`${API_ROOT}${pigeon.photo}`)
           .then(b64 => { if (b64) photos.pigeon = b64; })
       : Promise.resolve(),
     eleveur.photo_colombier
-      ? imageToBase64(`http://localhost:8001${eleveur.photo_colombier}`)
+      ? imageToBase64(`${API_ROOT}${eleveur.photo_colombier}`)
           .then(b64 => { if (b64) photos.colombier = b64; })
       : Promise.resolve(),
     imageToBase64('images/Logo_Colomb.png')

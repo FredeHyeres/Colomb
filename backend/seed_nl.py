@@ -7,16 +7,13 @@ zie seed_demo_nl.py.
 import asyncio
 import asyncpg
 import json
-from database import settings
-
-DSN = (
-    f"postgresql://{settings.postgres_user}:{settings.postgres_password}"
-    f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
-)
+from database import ASYNCPG_DSN as DSN
 
 
-async def main():
+async def main(schema: str = None):
     conn = await asyncpg.connect(DSN)
+    if schema:
+        await conn.execute(f'SET search_path TO "{schema}"')
 
     # ══════════════════════════════════════════════════════
     # VOEDING — Grondstoffen, supplementen, mengsels, schema's

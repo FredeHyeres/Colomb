@@ -176,6 +176,17 @@
       margin-top: 16px;
     }
 
+    .setup-demo-banner {
+      background: rgba(41,128,185,0.1);
+      border: 1px solid var(--accent);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      margin-bottom: 18px;
+    }
+
     @media (max-width: 480px) {
       .setup-lang-grid { grid-template-columns: 1fr; }
       .setup-form-grid { grid-template-columns: 1fr; }
@@ -188,6 +199,7 @@
   <div class="setup-wrapper">
     <div class="setup-card">
       <img src="images/Logo_Colomb.png" class="setup-logo" alt="Colomb logo">
+      <p class="setup-demo-banner" id="setup-demo-banner" hidden data-i18n="setup.demo_banner">🎯 Mode démonstration — données fictives à titre d'exemple</p>
       <h1 class="setup-title" data-i18n="setup.title">Bienvenue sur Colomb</h1>
 
       <div class="setup-progress">
@@ -291,6 +303,7 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/setup.js"></script>
 </body>

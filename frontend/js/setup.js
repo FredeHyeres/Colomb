@@ -1,5 +1,5 @@
 // ===== ASSISTANT DE CONFIGURATION (premier lancement) =====
-const SETUP_API_ROOT = 'http://localhost:8001';
+// API_ROOT est défini dans js/config.js (chargé avant ce script)
 
 const FEDERATIONS_BY_COUNTRY = {
   france: ['FFC'],
@@ -12,6 +12,14 @@ const FEDERATIONS_BY_COUNTRY = {
 const setupState = {
   step: 1,
   lang: null,
+  demo: false,
+};
+
+// Mode démo : profil éleveur fictif pré-rempli selon la langue choisie
+const DEMO_PREFILL = {
+  fr: { prenom: 'Jean', nom: 'Dupont', nom_colombier: 'Colombier des Flandres', ville: 'Lille', pays: 'france' },
+  nl: { prenom: 'Jan', nom: 'De Smet', nom_colombier: 'Duiventil De Kempen', ville: 'Antwerpen', pays: 'belgique' },
+  en: { prenom: 'John', nom: 'Smith', nom_colombier: 'The Racing Loft', ville: 'Manchester', pays: 'royaume_uni' },
 };
 
 function setupGoToStep(step) {
@@ -123,7 +131,7 @@ async function setupSubmitConfig() {
   }, 300);
 
   try {
-    const res = await fetch(`${SETUP_API_ROOT}/api/config/setup`, {
+    const res = await fetch(`${API_ROOT}/api/config/setup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -148,9 +156,36 @@ async function setupSubmitConfig() {
   }
 }
 
+async function setupCheckDemoMode() {
+  try {
+    const res = await fetch(`${API_ROOT}/api/config/mode`);
+    const data = await res.json();
+    setupState.demo = !!data.demo;
+  } catch (err) {
+    setupState.demo = false;
+  }
+  setupApplyDemoUI();
+}
+
+function setupApplyDemoUI() {
+  document.getElementById('setup-demo-banner').hidden = !setupState.demo;
+  const launchBtn = document.getElementById('btn-launch');
+  launchBtn.textContent = t(setupState.demo ? 'setup.btn_launch_demo' : 'setup.btn_launch');
+}
+
+function setupApplyDemoPrefill() {
+  const data = DEMO_PREFILL[setupState.lang];
+  if (!setupState.demo || !data) return;
+  document.getElementById('f-prenom').value = data.prenom;
+  document.getElementById('f-nom').value = data.nom;
+  document.getElementById('f-colombier').value = data.nom_colombier;
+  document.getElementById('f-ville').value = data.ville;
+  document.getElementById('f-pays').value = data.pays;
+}
+
 async function setupCheckExistingConfig() {
   try {
-    const res = await fetch(`${SETUP_API_ROOT}/api/config/status`);
+    const res = await fetch(`${API_ROOT}/api/config/status`);
     const data = await res.json();
     if (!data.first_launch) {
       window.location.href = 'index.html';
@@ -160,8 +195,11 @@ async function setupCheckExistingConfig() {
   }
 }
 
+document.addEventListener('i18n:changed', setupApplyDemoUI);
+
 document.addEventListener('DOMContentLoaded', () => {
   setupCheckExistingConfig();
+  setupCheckDemoMode();
 
   // Étape 1 — choix de la langue
   document.querySelectorAll('.setup-lang-card').forEach(card => {
@@ -170,6 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
       card.classList.add('selected');
       setupState.lang = card.dataset.lang;
       await setLanguage(setupState.lang);
+      setupApplyDemoPrefill();
       setupPopulateFederations();
       setupGoToStep(2);
     });

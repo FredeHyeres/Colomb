@@ -60,10 +60,10 @@ async function exportPedigreePDF(pigeonId) {
     ...[pedigree, pedigree.pere, pedigree.mere]
       .filter(p => p && p.photo)
       .map(async p => {
-        photosBase64[p.id] = await imageToBase64(`http://localhost:8001${p.photo}`);
+        photosBase64[p.id] = await imageToBase64(`${API_ROOT}${p.photo}`);
       }),
     eleveur.photo_colombier
-      ? imageToBase64(`http://localhost:8001${eleveur.photo_colombier}`)
+      ? imageToBase64(`${API_ROOT}${eleveur.photo_colombier}`)
           .then(b64 => { photosBase64['colombier'] = b64; })
       : Promise.resolve(),
     imageToBase64('images/Logo_Colomb.png')

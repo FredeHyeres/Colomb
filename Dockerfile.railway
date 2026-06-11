@@ -1,0 +1,24 @@
+# Image "tout-en-un" pour le déploiement démo Railway :
+# sert l'API FastAPI (backend/) ET les fichiers statiques du frontend
+# (frontend/) sur le même service, même origine, même port.
+#
+# N'affecte pas le développement local (docker-compose continue d'utiliser
+# backend/Dockerfile avec un conteneur nginx séparé pour le frontend).
+FROM python:3.12-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY backend/ .
+COPY frontend/ ./frontend/
+
+RUN mkdir -p /app/uploads
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

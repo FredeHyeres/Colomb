@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import select, func
 
@@ -35,14 +35,29 @@ SEED_MODULES = {
 
 DEFAULT_LANG = "fr"
 
+# Mode démo (Railway) : pas de config.json, pas de persistance entre
+# sessions, chaque visiteur est traité comme un premier lancement.
+DEMO_MODE = os.environ.get("DEMO_MODE", "false").lower() == "true"
+
 
 def check_first_launch() -> bool:
-    """Retourne True si aucune configuration n'a encore été enregistrée."""
+    """Retourne True si aucune configuration n'a encore été enregistrée.
+
+    En mode démo, toujours True : chaque visiteur passe par l'assistant
+    de configuration (setup.html), sans rien persister.
+    """
+    if DEMO_MODE:
+        return True
     return not CONFIG_PATH.exists()
 
 
 def load_config() -> Optional[dict]:
-    """Charge la configuration sauvegardée, ou None si absente."""
+    """Charge la configuration sauvegardée, ou None si absente.
+
+    En mode démo, il n'y a jamais de config.json persistée.
+    """
+    if DEMO_MODE:
+        return None
     if not CONFIG_PATH.exists():
         return None
     with open(CONFIG_PATH, "r", encoding="utf-8") as f:
@@ -50,7 +65,13 @@ def load_config() -> Optional[dict]:
 
 
 def save_config(config: dict) -> None:
-    """Sauvegarde la configuration dans /data/config.json."""
+    """Sauvegarde la configuration dans /data/config.json.
+
+    En mode démo, ne fait rien : aucune donnée ne doit persister
+    après la fermeture du navigateur.
+    """
+    if DEMO_MODE:
+        return
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     with open(CONFIG_PATH, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
@@ -84,6 +105,12 @@ class SetupRequest(BaseModel):
     email: Optional[EmailStr] = None
 
 
+@router.get("/mode")
+async def get_config_mode():
+    """Indique au frontend si l'instance tourne en mode démonstration."""
+    return {"demo": DEMO_MODE}
+
+
 @router.get("/status")
 async def get_config_status():
     return {
@@ -93,16 +120,30 @@ async def get_config_status():
 
 
 @router.get("/lang")
-async def get_config_lang():
+async def get_config_lang(request: Request):
+    if DEMO_MODE:
+        return {"lang": getattr(request.state, "demo_lang", DEFAULT_LANG)}
     config = load_config()
     lang = (config or {}).get("lang", DEFAULT_LANG)
     return {"lang": lang}
 
 
 @router.post("/setup")
-async def setup_config(body: SetupRequest):
+async def setup_config(body: SetupRequest, response: Response):
     if body.lang not in SEED_MODULES:
         raise HTTPException(status_code=400, detail=f"Langue non supportée : {body.lang}")
+
+    if DEMO_MODE:
+        # Pas de config.json, pas de seed (déjà fait par demo_init.py),
+        # pas de modification de l'éleveur : on pose juste le cookie de
+        # langue qui détermine le schéma utilisé pour cette session.
+        response.set_cookie(
+            "demo_lang",
+            body.lang,
+            samesite="lax",
+            max_age=60 * 60 * 24,
+        )
+        return {"success": True, "demo": True}
 
     save_config(body.model_dump())
 

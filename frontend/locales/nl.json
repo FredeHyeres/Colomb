@@ -1505,6 +1505,8 @@
     "btn_next": "Volgende",
     "btn_back": "Terug",
     "btn_launch": "Colomb starten",
+    "btn_launch_demo": "Demo verkennen",
+    "demo_banner": "🎯 Demomodus — fictieve gegevens als voorbeeld",
     "recap_lang": "Taal",
     "recap_nom": "Liefhebber",
     "recap_colombier": "Duivenhok",

@@ -1505,6 +1505,8 @@
     "btn_next": "Suivant",
     "btn_back": "Retour",
     "btn_launch": "Lancer Colomb",
+    "btn_launch_demo": "Explorer la démo",
+    "demo_banner": "🎯 Mode démonstration — données fictives à titre d'exemple",
     "recap_lang": "Langue",
     "recap_nom": "Éleveur",
     "recap_colombier": "Colombier",

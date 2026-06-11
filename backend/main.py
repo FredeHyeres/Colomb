@@ -20,6 +20,7 @@ from routers import (
 from routers.concours_feedback import router as feedback_router
 from routers.concours import router as concours_router
 import config_manager
+from demo_middleware import DemoLangMiddleware
 
 # Créer les tables au démarrage
 @asynccontextmanager
@@ -47,16 +48,26 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-ALLOWED_ORIGINS = ["http://localhost:8080", "http://127.0.0.1:8080"]
+_default_origins = "http://localhost:8080,http://127.0.0.1:8080"
+ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", _default_origins).split(",")
+    if origin.strip()
+]
 
 # CORS — permet au frontend d'appeler l'API
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
-    allow_credentials=False,
+    # True : nécessaire pour que le cookie demo_lang (mode démo) circule
+    # entre le frontend et l'API si servis sur des origines différentes.
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mode démo : bascule de schéma PostgreSQL selon la langue du visiteur
+app.add_middleware(DemoLangMiddleware)
 
 
 @app.exception_handler(StarletteHTTPException)
@@ -114,3 +125,13 @@ async def root():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+# Déploiement "un seul service" (Railway) : si le dossier frontend a été
+# copié dans l'image, FastAPI le sert directement (mêmes origine/port que
+# l'API). En local (Docker Desktop), le frontend est servi par un conteneur
+# nginx séparé et ce dossier n'existe pas dans l'image backend : on ne
+# monte donc rien, comportement inchangé.
+FRONTEND_DIR = "/app/frontend"
+if os.path.isdir(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
