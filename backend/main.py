@@ -120,15 +120,6 @@ app.include_router(concours_router, prefix="/api/concours", tags=["Concours"])
 app.include_router(config_manager.router)
 
 
-@app.get("/")
-async def root():
-    return {
-        "message": "Colombophilie API",
-        "version": "1.0.0",
-        "docs": "/docs"
-    }
-
-
 @app.get("/health")
 async def health():
     return {"status": "ok"}
@@ -142,3 +133,11 @@ async def health():
 FRONTEND_DIR = "/app/frontend"
 if os.path.isdir(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
+else:
+    @app.get("/")
+    async def root():
+        return {
+            "message": "Colombophilie API",
+            "version": "1.0.0",
+            "docs": "/docs"
+        }
