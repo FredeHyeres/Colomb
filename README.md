@@ -13,7 +13,6 @@
 ![Langues](https://img.shields.io/badge/🌍%20Langues-FR%20%7C%20NL%20%7C%20EN-success)
 [![Licence](https://img.shields.io/badge/Licence-CC%20BY--NC--ND%204.0-lightgrey)](LICENSE)
 
----
 
 ## Versions
 
@@ -153,6 +152,19 @@ Ce projet est sous licence **CC BY-NC-ND 4.0** ([texte complet](https://creative
 - ✅ Utilisation et distribution gratuites
 - ❌ Modification / création d'œuvres dérivées interdite
 - ❌ Usage commercial interdit
+
+---
+
+## 🔍 Mots-clés / Keywords
+
+**Français** : colombophilie · gestion élevage pigeons voyageurs · suivi concours ·
+pedigree pigeon · santé colombophile · logiciel colombophile gratuit ·
+application pigeon voyageur · suivi loft · baguage pigeon
+
+**Nederlands** : reisduiven beheer · duivensport software · gratis duivenprogramma
+
+**English** : racing pigeon management · homing pigeon loft software ·
+free pigeon racing app · pigeon pedigree tracker
 
 ---
 
