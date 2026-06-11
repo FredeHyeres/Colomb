@@ -43,7 +43,8 @@ async def main():
         row = await conn.fetchrow("""
             INSERT INTO feed_ingredients
               (name, category, proteines_pct, lipides_pct, glucides_pct, energie_kcal, notes_eleveurs, created_at)
-            VALUES ($1,$2::ingredientcategory,$3,$4,$5,$6,$7, now()) RETURNING id
+            VALUES ($1,$2::ingredientcategory,$3,$4,$5,$6,$7, now())
+            ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id
         """, name, cat, prot, lip, gluc, energ, notes)
         ING[name] = row["id"]
 
@@ -62,7 +63,8 @@ async def main():
     for name, stype, dosage in SUP_DATA:
         row = await conn.fetchrow("""
             INSERT INTO supplements (name, type, dosage, created_at)
-            VALUES ($1,$2::supplementtype,$3, now()) RETURNING id
+            VALUES ($1,$2::supplementtype,$3, now())
+            ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id
         """, name, stype, dosage)
         SUP[name] = row["id"]
 
@@ -104,7 +106,8 @@ async def main():
     for mname, usage, ings, sups in MIXES_DEF:
         row = await conn.fetchrow("""
             INSERT INTO feed_mixes (name, usage, composition, created_at)
-            VALUES ($1,$2::mixusage,$3, now()) RETURNING id
+            VALUES ($1,$2::mixusage,$3, now())
+            ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id
         """, mname, usage, make_comp(ings, sups))
         MIX[mname] = row["id"]
     print(f"✅ {len(MIX)} mengsels ingevoegd")
@@ -285,7 +288,8 @@ async def main():
         row = await conn.fetchrow("""
             INSERT INTO nutrition_plans
               (name, goal, description, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche, created_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now()) RETURNING id
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10, now())
+            ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name RETURNING id
         """, name, goal, description, lun, mar, mer, jeu, ven, sam, dim)
         PLAN[name] = row["id"]
     print(f"✅ {len(PLAN)} voedingsschema's ingevoegd")
