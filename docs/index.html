@@ -99,8 +99,8 @@
     }
 
     .logo {
-      width: 110px;
-      height: 110px;
+      width: 220px;
+      height: 220px;
       object-fit: contain;
       margin: 12px auto 18px;
       border-radius: 24px;
@@ -135,6 +135,33 @@
     .cta:hover {
       background: var(--accent-dark);
       transform: translateY(-2px);
+    }
+
+    .cta-secondary {
+      display: inline-block;
+      margin-top: 28px;
+      margin-left: 12px;
+      background: #fff;
+      color: var(--accent-dark);
+      font-weight: 700;
+      font-size: 1.05rem;
+      padding: 14px 32px;
+      border-radius: 999px;
+      text-decoration: none;
+      border: 2px solid var(--accent);
+      transition: transform .15s ease, background .15s ease;
+    }
+
+    .cta-secondary:hover {
+      background: var(--bg-alt);
+      transform: translateY(-2px);
+    }
+
+    .demo-note {
+      max-width: 700px;
+      margin: 14px auto 0;
+      font-size: 0.92rem;
+      color: var(--text-muted);
     }
 
     /* ===== BADGES ===== */
@@ -391,10 +418,30 @@
 
     <div class="container">
       <img class="logo" src="https://raw.githubusercontent.com/FredeHyeres/Colomb/main/frontend/images/Logo_Colomb.png" alt="Logo COLOMB">
-      <h1>COLOMB — Application Colombophile Gratuite</h1>
+      <h1>
+        <span class="lang-inline active" data-lang="fr">Application Colombophile Gratuite</span>
+        <span class="lang-inline" data-lang="nl">Gratis Duivensport Applicatie</span>
+        <span class="lang-inline" data-lang="en">Free Racing Pigeon Software</span>
+      </h1>
       <p class="subtitle">Gérez votre élevage de pigeons voyageurs. Gratis · Vrij · Free</p>
 
       <a class="cta" href="https://github.com/FredeHyeres/Colomb/archive/refs/heads/main.zip" rel="noopener">⬇ Télécharger COLOMB</a>
+      <a class="cta-secondary" href="https://colomb-production.up.railway.app" target="_blank" rel="noopener">🕊️ Voir la démo en ligne</a>
+
+      <p class="demo-note">
+        <span class="lang-block active" data-lang="fr">
+          La démo en ligne contient un élevage fictif déjà rempli : une trentaine de pigeons, leurs lignées,
+          des couples, des concours, le suivi nutrition et santé... pour découvrir COLOMB sans rien installer.
+        </span>
+        <span class="lang-block" data-lang="nl">
+          De online demo bevat een fictieve duiventil die al is ingevuld: een dertigtal duiven, hun lijnen,
+          koppels, wedvluchten, voeding en gezondheidsopvolging... om COLOMB te ontdekken zonder te installeren.
+        </span>
+        <span class="lang-block" data-lang="en">
+          The online demo comes pre-filled with a fictional loft: about thirty pigeons, their bloodlines,
+          pairs, races, nutrition and health tracking... so you can explore COLOMB without installing anything.
+        </span>
+      </p>
 
       <div class="badges">
         <img src="https://img.shields.io/badge/Python-FastAPI-blue?logo=python" alt="Python FastAPI">
