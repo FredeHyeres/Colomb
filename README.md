@@ -11,6 +11,7 @@
 ![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?logo=postgresql)
 ![Docker](https://img.shields.io/badge/Deploy-Docker-2496ED?logo=docker)
 ![Langues](https://img.shields.io/badge/🌍%20Langues-FR%20%7C%20NL%20%7C%20EN-success)
+[![Licence](https://img.shields.io/badge/Licence-CC%20BY--NC--ND%204.0-lightgrey)](LICENSE)
 
 ---
 
@@ -144,12 +145,14 @@ Les contributions sont les bienvenues ! N'hésite pas à ouvrir une [issue](../.
 
 ## 📜 Licence
 
-© 2025 Tourneur Fred — Tous droits réservés.
+© 2025 Tourneur Fred — [Creative Commons BY-NC-ND 4.0](LICENSE)
 
-- ✅ Utilisation gratuite autorisée
-- ✅ Distribution gratuite autorisée
-- ❌ Modification interdite sans autorisation
-- ❌ Usage commercial interdit sans autorisation
+Ce projet est sous licence **CC BY-NC-ND 4.0** ([texte complet](https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr)) :
+
+- ✅ Partage et redistribution autorisés (avec attribution)
+- ✅ Utilisation et distribution gratuites
+- ❌ Modification / création d'œuvres dérivées interdite
+- ❌ Usage commercial interdit
 
 ---
 
