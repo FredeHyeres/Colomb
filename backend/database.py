@@ -1,3 +1,4 @@
+import os
 from typing import Optional
 
 from fastapi import Request
@@ -42,7 +43,13 @@ else:
         f"@{settings.postgres_host}:{settings.postgres_port}/{settings.postgres_db}"
     )
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+# SQLAlchemy echo : très verbeux (chaque requête + introspection des
+# catalogues pg_catalog). En mode démo, ce volume de logs dépasse la
+# limite de débit de Railway (500 logs/s) et fait perdre des messages.
+# Activable via DEBUG=true pour le débogage local.
+SQL_ECHO = os.environ.get("DEBUG", "false").lower() == "true"
+
+engine = create_async_engine(DATABASE_URL, echo=SQL_ECHO)
 
 AsyncSessionLocal = sessionmaker(
     engine,
