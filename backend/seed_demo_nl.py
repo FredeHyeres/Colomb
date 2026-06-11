@@ -5,7 +5,6 @@ Gebruik: docker exec colombo_backend python seed_demo_nl.py
 import asyncio
 import asyncpg
 import uuid
-import json
 from datetime import date
 from database import ASYNCPG_DSN as DSN
 
@@ -324,104 +323,36 @@ async def main(schema: str = None):
     print(f"✅ {sess_count} trainingen, {res_count} trainingsresultaten ingevoegd")
 
     # ══════════════════════════════════════════════════════
-    # STAP 10 — VOEDING (catalogus basis, version eenvoudig)
+    # STAP 10 — VOEDING
+    # De voedingscatalogus (grondstoffen, supplementen, mengsels, schema's)
+    # is al ingevoegd door seed_nl.py: we halen hier enkel de bestaande ids
+    # op voor de toewijzingen hieronder (vermijdt dubbels / UniqueViolation).
     # ══════════════════════════════════════════════════════
-    ING_DATA = [
-        ("Maïs",                       "energie"),
-        ("Tarwe",                      "energie"),
-        ("Gerst",                      "depuratif"),
-        ("Witte dari",                 "energie"),
-        ("Erwten",                     "proteine"),
-        ("Voederwikke",                "proteine"),
-        ("Linzen",                     "proteine"),
-        ("Kardizaad",                  "energie"),
-        ("Gepelde zonnebloempitten",   "graisse"),
-        ("Hennepzaad",                 "graisse"),
-        ("Pinda's",                    "graisse"),
-        ("Esparcette",                 "depuratif"),
+    ING_NAMES = [
+        "Maïs", "Tarwe", "Gerst", "Witte dari", "Erwten", "Voederwikke",
+        "Linzen", "Kardizaad", "Gepelde zonnebloempitten", "Hennepzaad",
+        "Pinda's", "Esparcette",
     ]
     ING = {}
-    for name, cat in ING_DATA:
-        row = await conn.fetchrow("""
-            INSERT INTO feed_ingredients (name, category, created_at)
-            VALUES ($1,$2::ingredientcategory, now()) RETURNING id
-        """, name, cat)
-        ING[name] = row["id"]
+    for name in ING_NAMES:
+        ING[name] = await conn.fetchval("SELECT id FROM feed_ingredients WHERE name = $1", name)
 
-    SUP_DATA = [
-        ("Elektrolyten", "electrolyte","5 ml/l"),
-        ("Probiotica",   "probiotique","2 g/kg"),
-        ("Aminozuren",   "autre",     "5 ml/kg"),
-        ("Biergist",     "autre",     "3 g/kg"),
-        ("Zalmolie",     "autre",     "3 ml/kg"),
-    ]
+    SUP_NAMES = ["Elektrolyten", "Probiotica", "Aminozuren", "Biergist", "Zalmolie"]
     SUP = {}
-    for name, stype, dosage in SUP_DATA:
-        row = await conn.fetchrow("""
-            INSERT INTO supplements (name, type, dosage, created_at)
-            VALUES ($1,$2::supplementtype,$3, now()) RETURNING id
-        """, name, stype, dosage)
-        SUP[name] = row["id"]
+    for name in SUP_NAMES:
+        SUP[name] = await conn.fetchval("SELECT id FROM supplements WHERE name = $1", name)
 
-    print(f"✅ {len(ING)} grondstoffen, {len(SUP)} supplementen ingevoegd")
-
-    def make_comp(ings, sups):
-        items = []
-        for n, pct in ings:
-            items.append({"id": f"ing_{ING[n]}", "type": "ingredient", "name": n, "pct": pct})
-        for n, qty, unit in sups:
-            items.append({"id": f"sup_{SUP[n]}", "type": "supplement", "name": n,
-                          "quantity": qty, "unit": unit})
-        return json.dumps(items)
-
-    MIXES_DEF = [
-        ("Rustmengsel",       "recuperation",
-         [("Gerst",40),("Tarwe",30),("Voederwikke",20),("Esparcette",10)],
-         [("Probiotica","2","g/kg")]),
-        ("Licht sportmengsel","entrainement",
-         [("Maïs",25),("Tarwe",25),("Witte dari",25),("Erwten",25)],
-         [("Elektrolyten","5","ml/l")]),
-        ("Energiemengsel",    "entrainement",
-         [("Maïs",35),("Witte dari",25),("Kardizaad",20),("Hennepzaad",10),("Erwten",10)],
-         [("Zalmolie","3","ml/kg")]),
-        ("Wedvluchtmengsel",  "pre_panier",
-         [("Maïs",30),("Witte dari",25),("Pinda's",20),("Gepelde zonnebloempitten",15),("Hennepzaad",10)],
-         [("Aminozuren","5","ml/kg"),("Biergist","3","g/kg")]),
-        ("Herstelmengsel",    "recuperation",
-         [("Gerst",35),("Tarwe",30),("Linzen",20),("Esparcette",15)],
-         [("Elektrolyten","8","ml/l"),("Probiotica","3","g/kg")]),
-    ]
+    MIX_NAMES = ["Rustmengsel", "Licht sportmengsel", "Energiemengsel", "Wedvluchtmengsel", "Herstelmengsel"]
     MIX = {}
-    for mname, usage, ings, sups in MIXES_DEF:
-        row = await conn.fetchrow("""
-            INSERT INTO feed_mixes (name, usage, composition, created_at)
-            VALUES ($1,$2::mixusage,$3, now()) RETURNING id
-        """, mname, usage, make_comp(ings, sups))
-        MIX[mname] = row["id"]
-    print(f"✅ {len(MIX)} mengsels ingevoegd")
+    for name in MIX_NAMES:
+        MIX[name] = await conn.fetchval("SELECT id FROM feed_mixes WHERE name = $1", name)
 
-    def day_json(*names):
-        return json.dumps([MIX[n] for n in names])
-
-    PLANS_DEF = [
-        ("Halve fond seizoen","wedvlucht",
-         day_json("Licht sportmengsel"),day_json("Licht sportmengsel"),day_json("Energiemengsel"),
-         day_json("Energiemengsel"),day_json("Wedvluchtmengsel"),day_json("Herstelmengsel"),
-         day_json("Rustmengsel")),
-        ("Rustperiode","rust",
-         day_json("Rustmengsel"),day_json("Licht sportmengsel"),day_json("Licht sportmengsel"),
-         day_json("Energiemengsel"),day_json("Energiemengsel"),day_json("Herstelmengsel"),
-         day_json("Rustmengsel")),
-    ]
+    PLAN_NAMES = ["Halve fond seizoen", "Rustperiode"]
     PLAN = {}
-    for name,goal,lun,mar,mer,jeu,ven,sam,dim in PLANS_DEF:
-        row = await conn.fetchrow("""
-            INSERT INTO nutrition_plans
-              (name, goal, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche, created_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now()) RETURNING id
-        """, name, goal, lun, mar, mer, jeu, ven, sam, dim)
-        PLAN[name] = row["id"]
-    print(f"✅ {len(PLAN)} voedingsschema's ingevoegd")
+    for name in PLAN_NAMES:
+        PLAN[name] = await conn.fetchval("SELECT id FROM nutrition_plans WHERE name = $1", name)
+
+    print(f"✅ {len(ING)} grondstoffen, {len(SUP)} supplementen, {len(MIX)} mengsels, {len(PLAN)} schema's opgehaald")
 
     concours_pigs = ["P_G202","P_G203","P_G205","P_G207","P_G301","P_G302","P_G305","P_G307"]
     actif_pigs    = ["P_G303","P_G304","P_G308","P_G309","P_G310","P_G312"]

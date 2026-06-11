@@ -5,7 +5,6 @@ Usage : docker exec colombo_backend python seed_demo_fr.py
 import asyncio
 import asyncpg
 import uuid
-import json
 from datetime import date
 from database import ASYNCPG_DSN as DSN
 
@@ -325,103 +324,34 @@ async def main(schema: str = None):
 
     # ══════════════════════════════════════════════════════
     # ÉTAPE 10 — NUTRITION
+    # Le catalogue nutrition (ingrédients, suppléments, mélanges, plans) est
+    # déjà inséré par seed_fr.py : on récupère simplement les ids existants
+    # pour les affectations ci-dessous (évite les doublons / UniqueViolation).
     # ══════════════════════════════════════════════════════
-    ING_DATA = [
-        ("Maïs",                 "energie"),
-        ("Blé",                  "energie"),
-        ("Orge",                 "depuratif"),
-        ("Dari",                 "energie"),
-        ("Pois",                 "proteine"),
-        ("Vesce",                "proteine"),
-        ("Lentilles",            "proteine"),
-        ("Cardi",                "energie"),
-        ("Tournesol décortiqué", "graisse"),
-        ("Chanvre",              "graisse"),
-        ("Cacahuètes",           "graisse"),
-        ("Sainfoin",             "depuratif"),
+    ING_NAMES = [
+        "Maïs", "Blé", "Orge", "Dari", "Pois", "Vesce", "Lentilles", "Cardi",
+        "Tournesol décortiqué", "Chanvre", "Cacahuètes", "Sainfoin",
     ]
     ING = {}
-    for name, cat in ING_DATA:
-        row = await conn.fetchrow("""
-            INSERT INTO feed_ingredients (name, category, created_at)
-            VALUES ($1,$2::ingredientcategory, now()) RETURNING id
-        """, name, cat)
-        ING[name] = row["id"]
+    for name in ING_NAMES:
+        ING[name] = await conn.fetchval("SELECT id FROM feed_ingredients WHERE name = $1", name)
 
-    SUP_DATA = [
-        ("Électrolytes",    "electrolyte","5 ml/litre"),
-        ("Probiotiques",    "probiotique","2 g/kg"),
-        ("Acides aminés",   "autre",     "5 ml/kg"),
-        ("Levure de bière", "autre",     "3 g/kg"),
-        ("Huile de saumon", "autre",     "3 ml/kg"),
-    ]
+    SUP_NAMES = ["Électrolytes", "Probiotiques", "Acides aminés", "Levure de bière", "Huile de saumon"]
     SUP = {}
-    for name, stype, dosage in SUP_DATA:
-        row = await conn.fetchrow("""
-            INSERT INTO supplements (name, type, dosage, created_at)
-            VALUES ($1,$2::supplementtype,$3, now()) RETURNING id
-        """, name, stype, dosage)
-        SUP[name] = row["id"]
+    for name in SUP_NAMES:
+        SUP[name] = await conn.fetchval("SELECT id FROM supplements WHERE name = $1", name)
 
-    print(f"✅ {len(ING)} ingrédients, {len(SUP)} suppléments insérés")
-
-    def make_comp(ings, sups):
-        items = []
-        for n, pct in ings:
-            items.append({"id": f"ing_{ING[n]}", "type": "ingredient", "name": n, "pct": pct})
-        for n, qty, unit in sups:
-            items.append({"id": f"sup_{SUP[n]}", "type": "supplement", "name": n,
-                          "quantity": qty, "unit": unit})
-        return json.dumps(items)
-
-    MIXES_DEF = [
-        ("Dépuratif",   "recuperation",
-         [("Orge",40),("Blé",30),("Vesce",20),("Sainfoin",10)],
-         [("Probiotiques","2","g/kg")]),
-        ("Sport léger", "entrainement",
-         [("Maïs",25),("Blé",25),("Dari",25),("Pois",25)],
-         [("Électrolytes","5","ml/litre")]),
-        ("Énergie",     "entrainement",
-         [("Maïs",35),("Dari",25),("Cardi",20),("Chanvre",10),("Pois",10)],
-         [("Huile de saumon","3","ml/kg")]),
-        ("Pré-concours","pre_panier",
-         [("Maïs",30),("Dari",25),("Cacahuètes",20),("Tournesol décortiqué",15),("Chanvre",10)],
-         [("Acides aminés","5","ml/kg"),("Levure de bière","3","g/kg")]),
-        ("Récupération","recuperation",
-         [("Orge",35),("Blé",30),("Lentilles",20),("Sainfoin",15)],
-         [("Électrolytes","8","ml/litre"),("Probiotiques","3","g/kg")]),
-    ]
+    MIX_NAMES = ["Dépuratif", "Sport léger", "Énergie", "Pré-concours", "Récupération"]
     MIX = {}
-    for mname, usage, ings, sups in MIXES_DEF:
-        row = await conn.fetchrow("""
-            INSERT INTO feed_mixes (name, usage, composition, created_at)
-            VALUES ($1,$2::mixusage,$3, now()) RETURNING id
-        """, mname, usage, make_comp(ings, sups))
-        MIX[mname] = row["id"]
-    print(f"✅ {len(MIX)} mélanges insérés")
+    for name in MIX_NAMES:
+        MIX[name] = await conn.fetchval("SELECT id FROM feed_mixes WHERE name = $1", name)
 
-    def day_json(*names):
-        return json.dumps([MIX[n] for n in names])
-
-    PLANS_DEF = [
-        ("Demi-fond Saison","pré-concours",
-         day_json("Sport léger"),day_json("Sport léger"),day_json("Énergie"),
-         day_json("Énergie"),day_json("Pré-concours"),day_json("Récupération"),
-         day_json("Dépuratif")),
-        ("Intersaison","récupération",
-         day_json("Dépuratif"),day_json("Sport léger"),day_json("Sport léger"),
-         day_json("Énergie"),day_json("Énergie"),day_json("Récupération"),
-         day_json("Dépuratif")),
-    ]
+    PLAN_NAMES = ["Demi-fond Saison", "Intersaison"]
     PLAN = {}
-    for name,goal,lun,mar,mer,jeu,ven,sam,dim in PLANS_DEF:
-        row = await conn.fetchrow("""
-            INSERT INTO nutrition_plans
-              (name, goal, lundi, mardi, mercredi, jeudi, vendredi, samedi, dimanche, created_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9, now()) RETURNING id
-        """, name, goal, lun, mar, mer, jeu, ven, sam, dim)
-        PLAN[name] = row["id"]
-    print(f"✅ {len(PLAN)} plans alimentaires insérés")
+    for name in PLAN_NAMES:
+        PLAN[name] = await conn.fetchval("SELECT id FROM nutrition_plans WHERE name = $1", name)
+
+    print(f"✅ {len(ING)} ingrédients, {len(SUP)} suppléments, {len(MIX)} mélanges, {len(PLAN)} plans récupérés")
 
     concours_pigs = ["P_G202","P_G203","P_G205","P_G207","P_G301","P_G302","P_G305","P_G307"]
     actif_pigs    = ["P_G303","P_G304","P_G308","P_G309","P_G310","P_G312"]
